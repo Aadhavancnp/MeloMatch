@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="home-container">
+        <!-- Hero Section -->
+        <section class="hero-section rounded-5">
+            <div class="container text-center">
+                <h1 class="display-3 fw-bold mb-4">Discover Your Next Favorite Song</h1>
+                <p class="lead mb-5">AI-powered music recommendations tailored just for you</p>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'signup' %}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold">
+                        Get Started
+                    </a>
+                {% else %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold">
+                        Go to Dashboard
+                    </a>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <div class="container">
+                <h2 class="text-center mb-5">Why Choose MeloMatch?</h2>
+                <div class="row g-4 justify-content-center">
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <i class="fa-solid fa-brain feature-icon"></i>
+                            <h3>AI-Powered Recommendations</h3>
+                            <p>Our advanced AI algorithm learns your taste and suggests music you'll love.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <i class="fa-solid fa-music feature-icon"></i>
+                            <h3>Vast Music Library</h3>
+                            <p>Access millions of songs across all genres and eras.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <i class="fa-solid fa-headphones-simple feature-icon"></i>
+                            <h3>High-Quality Audio</h3>
+                            <p>Experience your music in crystal clear, high-definition audio quality.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="how-it-works-section">
+            <div class="container">
+                <h2 class="text-center mb-5">How It Works</h2>
+                <div class="row g-4 justify-content-center">
+                    <div class="col-md-3">
+                        <div class="step-card">
+                            <div class="step-number">1</div>
+                            <h4>Sign Up</h4>
+                            <p>Create your free account in seconds</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="step-card">
+                            <div class="step-number">2</div>
+                            <h4>Set Preferences</h4>
+                            <p>Tell us about your music taste</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="step-card">
+                            <div class="step-number">3</div>
+                            <h4>Get Recommendations</h4>
+                            <p>Receive personalized song suggestions</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="step-card">
+                            <div class="step-number">4</div>
+                            <h4>Enjoy & Discover</h4>
+                            <p>Listen and explore new music</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action Section -->
+        <section class="cta-section rounded-5">
+            <div class="container text-center">
+                <h2 class="mb-4">Ready to Start Your Musical Journey?</h2>
+                <p class="lead mb-4">Join thousands of music lovers discovering new songs every day.</p>
+                <a href="{% url 'signup' %}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold">
+                    Sign Up Now
+                </a>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+

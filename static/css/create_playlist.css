@@ -1,0 +1,140 @@
+.create-playlist-container {
+    padding: 4rem 0;
+    min-height: calc(100vh - 56px);
+}
+
+.create-playlist-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: none;
+    overflow: hidden;
+    position: relative;
+}
+
+.card-title {
+    color: var(--bs-primary);
+    font-weight: bold;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.input-group-text {
+    background-color: var(--bs-primary);
+    color: white;
+    border: none;
+}
+
+.form-control {
+    border: 2px solid #e0e0e0;
+    border-radius: 0 5px 5px 0;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.create-btn {
+    background-color: var(--bs-primary);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.create-btn:hover {
+    background-color: #0a58ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.cover-image-container {
+    display: flex;
+    gap: 1rem;
+}
+
+.cover-image-preview {
+    width: 150px;
+    height: 150px;
+    border: 2px dashed var(--bs-primary);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--bs-primary);
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-size: cover;
+    background-position: center;
+}
+
+.cover-image-preview:hover {
+    border-color: #0a58ca;
+}
+
+.cover-image-preview i {
+    margin-bottom: 0.5rem;
+}
+
+.cover-image-preview span {
+    font-size: 1rem;
+}
+
+.cover-image-input {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.cover-image-input input[type="file"] {
+    display: none;
+}
+
+.create-playlist-card::before,
+.create-playlist-card::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: var(--bs-primary);
+    opacity: 0.1;
+    border-radius: 50%;
+}
+
+.create-playlist-card::before {
+    top: -100px;
+    left: -100px;
+}
+
+.create-playlist-card::after {
+    bottom: -100px;
+    right: -100px;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.create-playlist-card::before {
+    animation: float 6s ease-in-out infinite;
+}
+
+.create-playlist-card::after {
+    animation: float 5s ease-in-out infinite;
+}
+

@@ -1,0 +1,134 @@
+.dashboard-container {
+    padding-top: 2rem;
+    /*background-color: #f8f9fa;*/
+    min-height: calc(100vh - 56px);
+}
+
+.main-content {
+    padding-right: 2rem;
+}
+
+.sidebar {
+    padding-left: 2rem;
+}
+
+.welcome-section .card {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    border: none;
+    border-radius: 15px;
+}
+
+.profile-picture {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.profile-picture-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.welcome-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.welcome-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    /*color: #333;*/
+}
+
+.track-card, .playlist-card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.track-card:hover, .playlist-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.track-card .card-img-top, .playlist-card .card-img-top {
+    height: 180px;
+    object-fit: cover;
+}
+
+[data-bs-theme="dark"] img#playlist_icon {
+    filter: none !important;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+    font-weight: bold;
+    /*color: #333;*/
+}
+
+.stats-section .list-group-item {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem 0;
+}
+
+.activity-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.activity-list .list-group-item {
+    border: none;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.activity-list .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.subscription-info p {
+    margin-bottom: 0.5rem;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #218838;
+}
+
+@media (max-width: 991.98px) {
+    .main-content, .sidebar {
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+}
+

@@ -1,0 +1,27 @@
+.about-container {
+    padding: 20px 0;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    color: var(--bs-primary);
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .about-container {
+        padding: 40px 0;
+    }
+}
+

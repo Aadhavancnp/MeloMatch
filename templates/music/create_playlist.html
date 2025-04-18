@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create New Playlist - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/create_playlist.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="create-playlist-container bg-primary text-white">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card create-playlist-card">
+                        <div class="card-body">
+                            <h1 class="card-title text-center mb-4">Create Your New Playlist</h1>
+                            <form method="post" action="{% url 'create_playlist' %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="mb-4">
+                                    <label for="playlist-name" class="form-label">Playlist Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fa-solid fa-music"></i></span>
+                                        <input type="text" class="form-control" id="playlist-name" name="name" required
+                                               placeholder="Enter playlist name">
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="playlist-description" class="form-label">Description (optional)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fa-solid fa-pencil"></i></span>
+                                        <textarea class="form-control" id="playlist-description" name="description"
+                                                  rows="3" placeholder="Describe your playlist"></textarea>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="cover-image" class="form-label">Cover Image</label>
+                                    <div class="cover-image-container">
+                                        <div class="cover-image-preview" id="cover-image-preview">
+                                            <i class="fa-solid fa-image"></i>
+                                            <span>Preview</span>
+                                        </div>
+                                        <div class="cover-image-input">
+                                            <input type="file" class="form-control" id="cover-image" name="cover_image"
+                                                   accept="image/*">
+                                            <label for="cover-image" class="btn btn-outline-primary w-100">
+                                                <i class="fa-solid fa-upload me-2"></i>Upload Image
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg create-btn">
+                                        <i class="fa-solid fa-circle-plus me-2"></i>Create Playlist
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/create_playlist.js' %}"></script>
+{% endblock %}
+

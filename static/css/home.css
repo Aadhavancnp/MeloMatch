@@ -1,0 +1,80 @@
+.home-container {
+    overflow-x: hidden;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    padding: 100px 0;
+    margin-top: -2rem;
+}
+
+.features-section {
+    padding: 80px 0;
+    /*background-color: #f8f9fa;*/
+}
+
+.feature-card {
+    /*background-color: white;*/
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    color: var(--bs-primary);
+    margin-bottom: 20px;
+}
+
+.how-it-works-section {
+    padding: 80px 0;
+}
+
+.step-card {
+    /*background-color: white;*/
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.step-number {
+    background-color: var(--bs-primary);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px;
+    font-weight: bold;
+}
+
+.cta-section {
+    background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+    color: white;
+    padding: 80px 0;
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 60px 0;
+    }
+
+    .features-section,
+    .how-it-works-section,
+    .cta-section {
+        padding: 40px 0;
+    }
+}
+

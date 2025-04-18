@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container profile-container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="profile-image-container text-center">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="profile-image"
+                             alt="Profile Picture">
+                    {% else %}
+                        <img src="/media/profile_pics/default.jpg" class="profile-image" alt="Default Profile Picture">
+                    {% endif %}
+                    <h2 class="mt-3">{{ user.username }}</h2>
+                    <p class="text-muted">Member since {{ user.date_joined|date:"F j, Y" }}</p>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">Edit Profile</h3>
+                        {{ profile_form.media }}
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% for field in profile_form %}
+                                <div class="mb-3">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                                    {% endif %}
+                                    {% for error in field.errors %}
+                                        <p class="text-danger">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

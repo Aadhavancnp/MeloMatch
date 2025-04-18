@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subscription Plans - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/subscription_plans.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <h1 class="display-4 mb-5 text-center">Choose Your Subscription Plan</h1>
+        <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
+            {% for plan in plans %}
+                <div class="col">
+                    <div class="card h-100 plan-card {% if user_subscription.plan == plan %}current-plan{% endif %}">
+                        <div class="card-header bg-{% if plan.name == 'Free' %}light{% elif plan.name == 'Pro' %}info{% else %}warning{% endif %} text-{% if plan.name == 'Free' %}dark{% else %}white{% endif %}">
+                            <h2 class="card-title h4 mb-0">{{ plan.name }}</h2>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h3 class="card-subtitle mb-4 text-center">
+                                <span class="display-4">${{ plan.price }}</span>
+                                <small class="text-muted">/month</small>
+                            </h3>
+                            <p class="card-text text-center mb-4">{{ plan.description }}</p>
+                            <ul class="list-group list-group-flush mb-4">
+                                {% for feature in plan.features_list %}
+                                    <li class="list-group-item">
+                                        <i class="fa-solid fa-circle-check text-success me-2"></i>
+                                        {{ feature }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <div class="mt-auto">
+                                {% if user_subscription.plan == plan %}
+                                    <button class="btn btn-primary w-100" disabled>
+                                        <i class="fa-solid fa-check me-2"></i>Current Plan
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'subscribe' plan.id %}" class="btn btn-outline-primary w-100">
+                                        {% if plan.name == 'Free' %}
+                                            Switch to Free
+                                        {% else %}
+                                            Subscribe Now
+                                        {% endif %}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/about.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="about-container">
+        <div class="container">
+            <h1 class="text-center mb-5">About MeloMatch</h1>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h2 class="card-title">Our Story</h2>
+                            <p class="card-text">
+                                MeloMatch is revolutionizing the way people discover and enjoy music through
+                                the power of artificial intelligence. Our platform combines cutting-edge
+                                technology with a passion for music to create a unique listening experience
+                                for every user.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h2 class="card-title">Our Mission</h2>
+                            <p class="card-text">
+                                We believe that everyone deserves to discover music that moves them.
+                                Our mission is to connect listeners with the perfect songs, artists,
+                                and genres through personalized recommendations and a vast library of content.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h2 class="card-title">The Technology</h2>
+                            <p class="card-text">
+                                Our AI-powered recommendation engine analyzes various aspects of music,
+                                including rhythm, harmony, instrumentation, and lyrical themes, to understand
+                                what makes each song unique. This technology, combined with your listening
+                                history and preferences, creates a personalized music discovery experience.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 class="card-title">Join Our Community</h2>
+                            <p class="card-text">
+                                Whether you're a casual listener or a dedicated audiophile, MeloMatch has
+                                something for everyone. Join our growing community of music lovers and
+                                start discovering your next favorite song today.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

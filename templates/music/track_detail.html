@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load duration_filters %}
+
+{% block title %}{{ track.title }} - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/track_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="card track-info-card">
+                    <img src="{{ track.image_url }}" alt="{{ track.title }}" class="card-img-top">
+                    <div class="card-body">
+                        <h1 class="card-title">{{ track.title }}</h1>
+                        <p class="card-text">
+                            By
+                            {% for artist in artists %}
+                                <a href="{{ artist.url }}" class="artist-link">{{ artist.name }}</a>
+                                {% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        </p>
+                        <p class="card-text"><strong>Album:</strong> {{ track.album }}</p>
+                        <p class="card-text"><strong>Duration:</strong> {{ track.duration|duration_format }}</p>
+                        {% if track.preview_url %}
+                            <audio controls src="{{ track.preview_url }}" class="w-100 mt-3">
+                                Your browser does not support the audio element.
+                            </audio>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title">Audio Features</h2>
+                        {% if track.audio_features %}
+                            <div class="row">
+                                {% for feature, value in track.audio_features.items %}
+                                    <div class="col-md-4 mb-3">
+                                        <h5 class="h6">{{ feature|title }}</h5>
+                                        <div class="progress">
+                                            <div class="progress-bar" role="progressbar"
+                                                 style="width: {{ value|multiply:100 }}%"
+                                                 aria-valuenow="{{ value|multiply:100 }}" aria-valuemin="0"
+                                                 aria-valuemax="100">
+                                                {{ value|floatformat:2 }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p>No audio features available for this track.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <h2 class="h3 mb-3">Similar Tracks</h2>
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    {% for track in recommendations %}
+                        <div class="col">
+                            <div class="card h-100 similar-track-card">
+                                <div class="row g-0">
+                                    <div class="col-4">
+                                        <img src="{{ track.image_url }}" alt="{{ track.title }}"
+                                             class="img-fluid rounded-start h-100 object-fit-cover">
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ track.title }}</h5>
+                                            <p class="card-text">
+                                                {% for artist in track.artists.all %}
+                                                    {{ artist.name }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}                                            </p>
+                                            <p class="card-text"><small class="text-muted">{{ track.album }}</small></p>
+                                            <a href="{% url 'track_detail' track.spotify_id %}"
+                                               class="btn btn-primary btn-sm">View Details</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

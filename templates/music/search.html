@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/search.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container search-container">
+        <h1 class="display-4 mb-4 text-center">Discover Your Next Favorite Track</h1>
+        <form method="get" action="{% url 'search' %}" id="search-form" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="q" id="search-input" value="{{ query }}" class="form-control form-control-lg"
+                       placeholder="Search for tracks, artists, or albums" aria-label="Search for music">
+                <select name="sort" id="sort-select" class="form-select form-select-lg">
+                    <option value="">Sort by</option>
+                    <option value="popularity" {% if sort == 'popularity' %}selected{% endif %}>Popularity (High to
+                        Low)
+                    </option>
+                    <option value="-popularity" {% if sort == '-popularity' %}selected{% endif %}>Popularity (Low to
+                        High)
+                    </option>
+                    <option value="release_date" {% if sort == 'release_date' %}selected{% endif %}>Release Date (Newest
+                        First)
+                    </option>
+                    <option value="-release_date" {% if sort == '-release_date' %}selected{% endif %}>Release Date
+                        (Oldest First)
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+                <button type="button" id="voice-search-btn" class="btn btn-secondary btn-lg">
+                    <i class="fa-solid fa-microphone" aria-hidden="true"></i>
+                    <span class="visually-hidden">Voice Search</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="voice-animation" class="voice-animation" aria-hidden="true">
+            <div class="voice-circle"></div>
+            <div class="voice-circle"></div>
+            <div class="voice-circle"></div>
+        </div>
+
+        {% if query %}
+            <h2 class="h3 mb-4 text-center" id="query">Search Results for "{{ query }}"</h2>
+        {% endif %}
+
+        <div class="search-results-container">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="search-results">
+                {% for track in tracks %}
+                    <div class="col fade-in">
+                        <div class="card h-100 shadow-sm hover-effect">
+                            <img src="{{ track.image_url }}" class="card-img-top" alt="Album art for {{ track.title }}">
+                            <div class="card-body d-flex flex-column">
+                                <h3 class="card-title h5 mb-1">{{ track.title }}</h3>
+                                <p class="card-text text-muted mb-1">
+                                    {% for artist in track.artists.all %}
+                                        {{ artist.name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}                                </p>
+                                <p class="card-text small text-muted mb-2">{{ track.album }}
+                                    ({{ track.release_date|date:"Y" }})</p>
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <span class="badge bg-primary">Popularity: {{ track.popularity }}</span>
+                                    <a href="{% url 'track_detail' track.spotify_id %}"
+                                       class="btn btn-outline-primary btn-sm">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 fade-in">
+                        <p class="text-muted text-center">No tracks found. Try a different search term or check your
+                            spelling.</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div id="loading" class="text-center mt-4 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/voice_search.js' %}"></script>
+{% endblock %}
+

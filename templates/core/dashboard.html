@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard-container">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-8 main-content">
+                    <div class="welcome-section mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}"
+                                             class="profile-picture rounded-circle"
+                                             alt="{{ user.username }}'s profile picture">
+                                    {% else %}
+                                        <div class="profile-picture-placeholder">
+                                            {{ user.username|make_list|first|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="ms-3 pt-2">
+                                        <h2 class="welcome-title">Welcome back, {{ user.username }}!</h2>
+                                        <p class="welcome-subtitle">Ready to discover new music?</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recommendations-section mb-4">
+                        <h3 class="section-title">Recommended for You</h3>
+                        <div class="row">
+                            {% for track in recommended_tracks %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card track-card h-100">
+                                        <img src="{{ track.image_url }}" class="card-img-top" alt="{{ track.title }}">
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title">{{ track.title }}</h5>
+                                            <p class="card-text">
+                                                {{ track.artists.all|join:", " }}
+                                                <br/>
+                                                <small class="text-muted">{{ track.album }}</small>
+                                            </p>
+                                            <div class="mt-auto">
+                                                <a href="{% url 'track_detail' track.spotify_id %}"
+                                                   class="btn btn-primary btn-sm">View Details</a>
+                                                <button class="btn btn-outline-secondary btn-sm"
+                                                        onclick="addToPlaylist('{{ track.spotify_id }}')">
+                                                    <i class="fa-solid fa-plus"></i> Add to Playlist
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="playlists-section mb-4">
+                        <h3 class="section-title">Your Playlists</h3>
+                        <div class="row">
+                            {% for playlist in user_playlists %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card playlist-card h-100">
+                                        <img src="{{ playlist.image_url }}" class="card-img-top"
+                                             alt="{{ playlist.name }}">
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title">{{ playlist.name }}</h5>
+                                            <p class="card-text">{{ playlist.track_count }} tracks</p>
+                                            <a href="{% url 'playlist_detail' playlist.spotify_id %}"
+                                               class="btn btn-primary btn-sm mt-auto">View Playlist</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="col-12">
+                                    <p class="text-muted">No playlists yet. Start creating your music collections!</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'create_playlist' %}" class="btn btn-success mt-3">
+                            <i class="fa-solid fa-plus"></i> Create New Playlist
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 sidebar">
+                    <div class="stats-section mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="card-title">Your Stats</h3>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><i class="fa-solid fa-clock"></i> Listening Time</span>
+                                        <span class="badge bg-primary rounded-pill">{{ listening_time|floatformat:2 }} hours</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><i class="fa-solid fa-music"></i> Favorite Genre</span>
+                                        <span class="badge bg-secondary rounded-pill">{{ favorite_genre|default:"Not enough data" }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><img src="{% static 'img/playlist.svg' %}"
+                                                   style="width: 25px;height: 25px;filter: brightness(0);"
+                                                   id="playlist_icon"
+                                                   alt="Playlist"/> Playlist Count</span>
+                                        <span class="badge bg-success rounded-pill">{{ playlist_count }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="activity-section mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="card-title">Recent Activity</h3>
+                                <ul class="list-group list-group-flush activity-list">
+                                    {% for activity in recent_activities %}
+                                        <li class="list-group-item">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> {{ activity.description }}
+                                            <small class="text-muted d-block">{{ activity.timestamp|timesince }}
+                                                ago</small>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <a href="{% url 'user_activities' %}" class="btn btn-outline-primary btn-sm mt-3">
+                                    View All Activities
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subscription-section mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="card-title">Subscription Status</h3>
+                                {% if subscription %}
+                                    <div class="subscription-info">
+                                        <p><i class="fa-solid fa-crown"></i> Current Plan:
+                                            <strong>{{ subscription.plan.name }}</strong></p>
+                                        <p><i class="fa-solid fa-calendar-days"></i>
+                                            Expires: {{ subscription.end_date }}</p>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted"><i class="fa-solid fa-circle-exclamation"></i> No active
+                                        subscription</p>
+                                    <a href="{% url 'subscription_plans' %}" class="btn btn-primary btn-sm">Subscribe
+                                        Now</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Playlist Modal -->
+    <div class="modal fade" id="addToPlaylistModal" tabindex="-1" aria-labelledby="addToPlaylistModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addToPlaylistModalLabel">Add to Playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <select id="playlistSelect" class="form-select">
+                        {% for playlist in user_playlists %}
+                            <option value="{{ playlist.spotify_id }}">{{ playlist.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAddToPlaylist()">Add to Playlist
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}
+

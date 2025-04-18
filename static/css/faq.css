@@ -1,0 +1,24 @@
+.faq-container {
+    padding: 60px 0;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(0, 0, 0, .125);
+}
+
+.input-group-text {
+    /*background-color: #f8f9fa;*/
+}
+
+@media (max-width: 768px) {
+    .faq-container {
+        padding: 40px 0;
+    }
+}
+

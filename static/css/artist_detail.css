@@ -1,0 +1,94 @@
+.artist-header {
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.artist-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.artist-header .container {
+    position: relative;
+    z-index: 1;
+}
+
+.artist-image {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out;
+}
+
+.artist-image:hover {
+    transform: scale(1.05);
+}
+
+.popularity-meter {
+    width: 150px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.popularity-fill {
+    height: 100%;
+    background-color: #1DB954;
+    transition: width 1s ease-in-out;
+}
+
+.section-title {
+    position: relative;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background-color: #1DB954;
+}
+
+.track-card, .album-card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.track-card:hover, .album-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.btn-success {
+    background-color: #1DB954;
+    border-color: #1DB954;
+}
+
+.btn-success:hover {
+    background-color: #1ed760;
+    border-color: #1ed760;
+}
+
+.btn-outline-success {
+    color: #1DB954;
+    border-color: #1DB954;
+}
+
+.btn-outline-success:hover {
+    background-color: #1DB954;
+    color: white;
+}
+

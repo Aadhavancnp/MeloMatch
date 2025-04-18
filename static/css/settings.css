@@ -1,0 +1,31 @@
+.settings-container {
+    padding-top: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    color: var(--bs-primary);
+    border-bottom: 2px solid var(--bs-primary);
+    padding-bottom: 0.5rem;
+}
+
+.form-select, .form-control {
+    border-radius: 0.25rem;
+}
+
+.btn-primary {
+    padding: 0.5rem 2rem;
+}
+
+@media (max-width: 768px) {
+    .settings-container {
+        padding-top: 1rem;
+    }
+}
+

@@ -1,0 +1,20 @@
+.contact-container {
+    padding: 20px 0;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: var(--bs-primary);
+}
+
+@media (max-width: 768px) {
+    .contact-container {
+        padding: 40px 0;
+    }
+}
+

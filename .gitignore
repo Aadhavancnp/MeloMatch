@@ -1,0 +1,14 @@
+.cache
+.DS_Store
+.env
+*.pyc
+*.sqlite3
+*.log
+*.swp
+.venv/
+.idea/
+__pycache__/
+migrations/
+media/**/*
+!media/profile_pics/
+!media/profile_pics/default.jpg

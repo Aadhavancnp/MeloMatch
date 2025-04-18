@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FAQ - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/faq.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="faq-container">
+        <div class="container">
+            <h1 class="text-center mb-5">Frequently Asked Questions</h1>
+
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" id="faqSearch" class="form-control" placeholder="Search FAQs...">
+                    </div>
+                </div>
+            </div>
+
+            <div id="faqList" class="accordion">
+                {% for faq in faqs %}
+                    <div class="accordion-item faq-item">
+                        <h2 class="accordion-header" id="heading{{ faq.id }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#faq{{ faq.id }}" aria-expanded="false"
+                                    aria-controls="faq{{ faq.id }}">
+                                {{ faq.question }}
+                            </button>
+                        </h2>
+                        <div id="faq{{ faq.id }}" class="accordion-collapse collapse"
+                             aria-labelledby="heading{{ faq.id }}">
+                            <div class="accordion-body">
+                                {{ faq.answer|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-center">No FAQs available at the moment.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/faq.js' %}"></script>
+{% endblock %}
+

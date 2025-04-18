@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Activity History - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/user_activities.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="activities-container">
+        <div class="container">
+            <h1 class="page-title">Your Activity History</h1>
+            <div class="activity-timeline">
+                {% for activity in activities %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            {% if activity.activity_type == 'listen' %}
+                                <i class="fa-solid fa-headphones"></i>
+                            {% elif activity.activity_type == 'search' %}
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            {% elif activity.activity_type == 'view_artist' %}
+                                <img src="{% static 'img/artist.svg' %}"
+                                     alt="Artist"/>
+                            {% elif activity.activity_type == 'add_to_playlist' or activity.activity_type == 'create_playlist' or activity.activity_type == 'view_playlist' %}
+                                <img src="{% static 'img/playlist.svg' %}"
+                                     alt="Playlist"/>
+                            {% else %}
+                                <i class="fa-solid fa-music"></i>
+                            {% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <h3 class="activity-title">{{ activity.activity_type|title }}</h3>
+                            <p class="activity-description">{{ activity.description }}</p>
+                            <span class="activity-time">{{ activity.timestamp|timesince }} ago</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="no-activity">
+                        <i class="fa-solid fa-music no-activity-icon"></i>
+                        <p>No activities recorded yet. Start exploring music to see your activity here!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

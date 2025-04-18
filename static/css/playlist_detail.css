@@ -1,0 +1,70 @@
+.playlist-header {
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.playlist-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.playlist-header .container {
+    position: relative;
+    z-index: 1;
+}
+
+.playlist-image {
+    transition: transform 0.3s ease-in-out;
+}
+
+.playlist-image:hover {
+    transform: scale(1.05);
+}
+
+.track-card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.track-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.btn-outline-light:hover, .btn-outline-danger:hover {
+    transform: translateY(-2px);
+}
+
+#track-search {
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.input-group-text {
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.track-item {
+    animation: fadeIn 0.5s ease-in-out;
+}
+

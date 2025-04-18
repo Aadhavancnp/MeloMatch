@@ -1,0 +1,93 @@
+.search-container {
+    padding-top: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.search-results-container {
+    position: relative;
+    min-height: 200px;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hover-effect {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.hover-effect:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.voice-animation {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    margin-bottom: 20px;
+}
+
+.voice-circle {
+    background-color: var(--bs-primary);
+    border-radius: 50%;
+    margin: 0 10px;
+    height: 20px;
+    width: 20px;
+    transform: scale(0);
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+.voice-circle:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.voice-circle:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1);
+    }
+}
+
+#voice-search-btn {
+    transition: all 0.3s ease;
+}
+
+#voice-search-btn:hover {
+    transform: scale(1.1);
+}
+
+#voice-search-btn:active {
+    transform: scale(0.9);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        padding-top: 1rem;
+    }
+}
+
