@@ -1,0 +1,15 @@
+django
+python-dotenv
+django-bootstrap-datepicker-plus
+psycopg2-binary
+librosa
+spotipy
+googletrans==4.0.0-rc1
+Pillow
+stripe
+django-debug-toolbar
+celery
+redis
+yt-dlp
+pydub
+apple-music-python

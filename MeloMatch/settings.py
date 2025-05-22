@@ -45,9 +45,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -93,16 +95,34 @@ WSGI_APPLICATION = 'MeloMatch.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+database_url = os.getenv("DATABASE_URL")
+db_name = ''
+db_user = ''
+db_password = ''
+db_host = ''
+db_port = 5432
+
+if database_url:
+    tmpPostgres = urlparse(database_url)
+    db_name = str(tmpPostgres.path or '').lstrip('/')
+    db_user = tmpPostgres.username
+    db_password = tmpPostgres.password
+    db_host = tmpPostgres.hostname
+    if tmpPostgres.port:
+        db_port = tmpPostgres.port
+
+# If db_name is still empty, provide a dummy name for makemigrations
+if not db_name:
+    db_name = "dummy_db_for_migrations"
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
+        'NAME': db_name,
+        'USER': db_user,
+        'PASSWORD': db_password,
+        'HOST': db_host,
+        'PORT': db_port,
     }
 }
 
@@ -150,3 +170,28 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Stripe API Keys
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+
+INTERNAL_IPS = ['127.0.0.1']
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# Apple Music API Configuration
+APPLE_MUSIC_TEAM_ID = os.getenv('APPLE_MUSIC_TEAM_ID')
+APPLE_MUSIC_KEY_ID = os.getenv('APPLE_MUSIC_KEY_ID')
+APPLE_MUSIC_PRIVATE_KEY_P8_FILE_PATH = os.getenv('APPLE_MUSIC_PRIVATE_KEY_P8_FILE_PATH')
+# Note: For APPLE_MUSIC_PRIVATE_KEY_P8_FILE_PATH, the application will need to read the file content.
+# Alternatively, the content of the .p8 file itself could be stored in an environment variable,
+# e.g., APPLE_MUSIC_PRIVATE_KEY_CONTENT = os.getenv('APPLE_MUSIC_PRIVATE_KEY_CONTENT')
+# and then passed directly to the library. Using a file path is often more convenient for local dev
+# and some deployment methods. Ensure the file is accessible at the given path in the runtime environment.

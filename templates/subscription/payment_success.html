@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Successful{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Payment Successful!</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <p>Thank you for your payment. Your order has been processed successfully.</p>
+    
+    {% if order %}
+        <h4>Order ID: {{ order.id }}</h4>
+        <p>Status: {{ order.get_status_display }}</p>
+        <p>Date Placed: {{ order.created_at|date:"F j, Y, g:i a" }}</p>
+        
+        <h5>Order Summary:</h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Track</th>
+                    <th>Quantity</th>
+                    <th>Price per item</th>
+                    <th>Total Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ item.track.title }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.price }}</td>
+                        <td>${{ item.quantity|stringformat:".0f"|add:"0"|multiply:item.price|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h4>Grand Total: ${{ order.total_price }}</h4>
+    {% else %}
+        <p>Order details are not available at the moment. Please check your order history.</p>
+    {% endif %}
+    
+    <a href="{% url 'order_history' %}" class="btn btn-primary">View Order History</a>
+    <a href="{% url 'search' %}" class="btn btn-secondary">Continue Shopping</a>
+</div>
+
+<script>
+// Helper function for template tag like multiplication if not directly available
+function multiply(a, b) {
+    return (parseFloat(a) * parseFloat(b)).toFixed(2);
+}
+</script>
+{% endblock %}

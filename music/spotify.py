@@ -36,7 +36,10 @@ def get_spotify_client(request):
     return spotipy.Spotify(auth_manager=auth_manager)
 
 
+@tiered_cache('spotify_search_tracks', timeout=900) # Cache for 15 minutes
 def search_tracks(sp, query, limit=10):
+    # Cache key will be based on sp (or rather, its auth token if cache is user-specific)
+    # and query arguments. The tiered_cache decorator handles this.
     try:
         results = sp.search(q=query, type='track', limit=limit)
         tracks = []
@@ -117,20 +120,60 @@ def get_or_create_track(track_data, sp: Spotify):
             audio_features={}
         )
         track.artists.set(artists)
+        # track.save() # Save is called after attempting to fetch Spotify audio features
+
+        # Attempt to fetch and store Spotify audio features
+        if not track.audio_features and sp:
+            try:
+                spotify_features_list = sp.audio_features(tracks=[track.spotify_id])
+                if spotify_features_list and spotify_features_list[0]:
+                    sf = spotify_features_list[0]
+                    # Select relevant features from Spotify
+                    # Common features: tempo, energy, danceability, valence, acousticness, instrumentalness, liveness, speechiness, loudness
+                    track.audio_features = {
+                        'source': 'spotify', # Indicate the source
+                        'tempo': sf.get('tempo'),
+                        'energy': sf.get('energy'),
+                        'danceability': sf.get('danceability'),
+                        'valence': sf.get('valence'),
+                        'acousticness': sf.get('acousticness'),
+                        'instrumentalness': sf.get('instrumentalness'),
+                        'liveness': sf.get('liveness'),
+                        'speechiness': sf.get('speechiness'),
+                        'loudness': sf.get('loudness'),
+                        'mode': sf.get('mode'),
+                        'key': sf.get('key'),
+                        'time_signature': sf.get('time_signature'),
+                        # Add any other desired features from Spotify
+                    }
+                    print(f"Successfully fetched Spotify audio features for track {track.spotify_id}")
+                else:
+                    print(f"No Spotify audio features returned for track {track.spotify_id}")
+                    # Optionally, mark that Spotify features were checked but not found
+                    # track.audio_features = {'source': 'spotify', 'found': False} 
+            except Exception as e:
+                print(f"Error fetching Spotify audio features for track {track.spotify_id}: {str(e)}")
+        
         track.save()
         return track
 
 
-def update_song_audio_features(song, audio_features):
+def update_song_custom_audio_features(song, audio_features): # Renamed function
+    # Ensure audio_features is not None and is a dictionary
+    if song.audio_features is None:
+        song.audio_features = {}
+    
     song.audio_features.update({
-        "tempo": audio_features['tempo'],
-        "chroma_stft_mean": audio_features['chroma_stft_mean'],
-        "rmse_mean": audio_features['rmse_mean'],
-        "spectral_centroid_mean": audio_features['spectral_centroid_mean'],
-        "spectral_bandwidth_mean": audio_features['spectral_bandwidth_mean'],
-        "rolloff_mean": audio_features['rolloff_mean'],
-        "zero_crossing_rate_mean": audio_features['zero_crossing_rate_mean'],
-        "mfcc_mean": audio_features['mfcc_mean']
+        'source': 'librosa', # Indicate the source
+        "tempo": audio_features.get('tempo'), # Use .get for safety
+        "chroma_stft_mean": audio_features.get('chroma_stft_mean'),
+        "rmse_mean": audio_features.get('rmse_mean'),
+        "spectral_centroid_mean": audio_features.get('spectral_centroid_mean'),
+        "spectral_bandwidth_mean": audio_features.get('spectral_bandwidth_mean'),
+        "rolloff_mean": audio_features.get('rolloff_mean'),
+        "zero_crossing_rate_mean": audio_features.get('zero_crossing_rate_mean'),
+        "mfcc_mean": audio_features.get('mfcc_mean')
+        # Add any other Librosa features that are extracted
     })
     song.save()
 
@@ -261,6 +304,16 @@ def get_user_recently_played(sp: Spotify):
 def get_artist_top_tracks(sp, artist_id):
     results = sp.artist_top_tracks(artist_id)
     return results['tracks']
+
+
+@tiered_cache('spotify_artist_details', timeout=3600) # Cache for 1 hour
+def get_artist_details(sp, artist_id):
+    return sp.artist(artist_id)
+
+
+@tiered_cache('spotify_artist_albums', timeout=3600) # Cache for 1 hour
+def get_artist_albums(sp, artist_id, album_type='album', limit=5):
+    return sp.artist_albums(artist_id, album_type=album_type, limit=limit)['items']
 
 
 @tiered_cache('jiosaavn_search', timeout=3600)
@@ -490,134 +543,186 @@ def download_preview(preview_url, track_id):
 #
 #     recommendations = sorted(similarities, key=lambda x: x['similarity'], reverse=True)[:limit]
 #     return recommendations
-@tiered_cache('recommendations', timeout=3600)
-def get_recommendations(track_id, stored_tracks, limit=10):
-    track = Track.objects.get(spotify_id=track_id)
+# Standard feature keys for cosine similarity.
+# These are primarily based on Spotify's audio features for easier direct use.
+# Librosa features will be mapped/approximated to these.
+STANDARD_SIMILARITY_FEATURES = [
+    'acousticness', 'danceability', 'energy', 'instrumentalness',
+    'liveness', 'loudness', 'speechiness', 'tempo', 'valence', 'mode', 'key'
+]
 
-    # Prepare a list to collect tracks that need audio feature extraction
-    tracks_to_process = []
-    target_preview_file = None
+def _normalize_loudness(loudness_db):
+    """Normalizes loudness from dB (e.g., -60 to 0) to a 0-1 scale."""
+    if loudness_db is None:
+        return 0.5 # Default if missing
+    return max(0.0, min(1.0, (loudness_db + 60) / 60))
 
-    # First check if the target track needs feature extraction
-    if not track.audio_features:
-        # If no features, extract them
-        try:
-            search = f"{track.title} {track.artists.all().first().name}"
-            search_results = search_jiosaavn(search)
+def _normalize_tempo(tempo_bpm):
+    """Normalizes tempo (e.g., 50-250 BPM) to a 0-1 scale."""
+    if tempo_bpm is None:
+        return 0.5 # Default if missing
+    # Assuming a typical BPM range, this is a simplified normalization
+    return max(0.0, min(1.0, (tempo_bpm - 50) / 200))
 
-            if not search_results:
-                return []
 
-            search_song = search_results[0]
-            target_track = get_track_details_jiosaavn(search_song['id'])
+def _get_standardized_features_for_track(track_obj, sp_client):
+    """
+    Fetches/extracts audio features for a track_obj, standardizes them, and saves if newly fetched.
+    Priority: DB -> Spotify API -> Librosa.
+    Returns a list of feature values in the order of STANDARD_SIMILARITY_FEATURES, or None.
+    """
+    features_to_standardize = None
+    source_of_features = None
 
-            if not target_track:
-                return []
+    if track_obj.audio_features and isinstance(track_obj.audio_features, dict) and 'source' in track_obj.audio_features:
+        features_to_standardize = track_obj.audio_features
+        source_of_features = track_obj.audio_features['source']
+        print(f"Using existing features for track {track_obj.spotify_id} from source: {source_of_features}")
 
-            if not track.preview_url and target_track.get('preview_url'):
-                track.preview_url = target_track['preview_url']
-                track.save()
+    # Try Spotify API if no features or if existing features are not from Spotify (or spotify_attempted/error)
+    if not features_to_standardize or source_of_features not in ['spotify', 'librosa']: # Allow reprocessing if 'spotify_attempted' etc.
+        if track_obj.spotify_id and sp_client:
+            try:
+                print(f"Attempting to fetch Spotify features for track {track_obj.spotify_id}...")
+                spotify_api_features_list = sp_client.audio_features(tracks=[track_obj.spotify_id])
+                if spotify_api_features_list and spotify_api_features_list[0]:
+                    sf = spotify_api_features_list[0]
+                    track_obj.audio_features = {
+                        'source': 'spotify',
+                        'tempo': sf.get('tempo'), 'energy': sf.get('energy'),
+                        'danceability': sf.get('danceability'), 'valence': sf.get('valence'),
+                        'acousticness': sf.get('acousticness'), 'instrumentalness': sf.get('instrumentalness'),
+                        'liveness': sf.get('liveness'), 'speechiness': sf.get('speechiness'),
+                        'loudness': sf.get('loudness'), 'mode': sf.get('mode'), 'key': sf.get('key'),
+                        'time_signature': sf.get('time_signature'),
+                    }
+                    track_obj.save()
+                    features_to_standardize = track_obj.audio_features
+                    source_of_features = 'spotify'
+                    print(f"Fetched and saved Spotify features for track {track_obj.spotify_id}")
+                else:
+                    # Mark that Spotify API was tried but returned no features
+                    track_obj.audio_features = {'source': 'spotify_no_data'}
+                    track_obj.save()
+                    print(f"Spotify API returned no audio features for track {track_obj.spotify_id}")
+            except Exception as e:
+                print(f"Error fetching Spotify features for {track_obj.spotify_id}: {str(e)}")
+                track_obj.audio_features = {'source': 'spotify_error', 'error': str(e)} # Log error state
+                track_obj.save()
+        
+    # Fallback to Librosa if still no usable features (Spotify failed or track is not on Spotify)
+    if not features_to_standardize or source_of_features not in ['spotify', 'librosa']:
+        print(f"Attempting Librosa feature extraction for track {track_obj.spotify_id} ({track_obj.title})...")
+        preview_url_to_use = track_obj.preview_url
+        if not preview_url_to_use:
+            try:
+                artist_name_for_search = track_obj.artists.first().name if track_obj.artists.exists() else ""
+                search_query = f"{track_obj.title} {artist_name_for_search}".strip()
+                jiosaavn_results = search_jiosaavn(search_query, limit=1) # This is cached
+                if jiosaavn_results and jiosaavn_results[0].get('preview_url'):
+                    preview_url_to_use = jiosaavn_results[0]['preview_url']
+            except Exception as e:
+                print(f"Error finding JioSaavn preview for {track_obj.spotify_id}: {str(e)}")
 
-            target_preview_file = download_preview(target_track['preview_url'], track_id)
-            if not target_preview_file:
-                return []
+        if preview_url_to_use:
+            preview_file_path = download_preview(preview_url_to_use, track_obj.spotify_id)
+            if preview_file_path:
+                librosa_features = extract_audio_features(preview_file_path) # Librosa core call
+                if librosa_features:
+                    update_song_custom_audio_features(track_obj, librosa_features) # Saves with 'source': 'librosa'
+                    features_to_standardize = track_obj.audio_features
+                    source_of_features = 'librosa'
+                    print(f"Extracted and saved Librosa features for track {track_obj.spotify_id}")
+        else:
+            print(f"No preview URL for Librosa for track {track_obj.spotify_id}")
 
-            # Add target track to the list of tracks to process
-            tracks_to_process.append((track_id, target_preview_file))
-        except Exception as e:
-            print(f"Error preparing target track for feature extraction: {str(e)}")
-            return []
+    # If after all attempts, no features, return None
+    if not features_to_standardize or source_of_features not in ['spotify', 'librosa']:
+        print(f"Failed to obtain/extract any usable audio features for track {track_obj.spotify_id}")
+        return None
+
+    # Standardize the features into a vector
+    feature_vector = []
+    if source_of_features == 'spotify':
+        for key in STANDARD_SIMILARITY_FEATURES:
+            val = features_to_standardize.get(key)
+            if key == 'loudness': val = _normalize_loudness(val)
+            elif key == 'tempo': val = _normalize_tempo(val)
+            elif key == 'key': val = float(val / 11) if val is not None else 0.5 # Normalize key (0-11)
+            elif key == 'mode': val = float(val) if val is not None else 0.5 # Mode is 0 or 1
+            # For other features, assume they are already 0-1 or use as is if direct mapping.
+            feature_vector.append(float(val) if val is not None else 0.5) # Default 0.5 for missing
+    elif source_of_features == 'librosa':
+        # Map Librosa features to STANDARD_SIMILARITY_FEATURES
+        # This mapping is crucial and needs to be refined based on feature characteristics
+        # Using simplified mapping for now.
+        feature_vector.append(_normalize_tempo(features_to_standardize.get('tempo'))) # tempo
+        feature_vector.append(features_to_standardize.get('rmse_mean', 0.5)) # energy (proxy)
+        feature_vector.append(0.5) # danceability (placeholder)
+        feature_vector.append(0.5) # valence (placeholder)
+        feature_vector.append(features_to_standardize.get('zero_crossing_rate_mean', 0.5)) # acousticness (crude proxy)
+        feature_vector.append(0.5) # instrumentalness (placeholder)
+        feature_vector.append(0.5) # liveness (placeholder)
+        feature_vector.append(features_to_standardize.get('spectral_bandwidth_mean', 0.5)) # speechiness (crude proxy from bandwidth)
+        feature_vector.append(features_to_standardize.get('rmse_mean', 0.5)) # loudness (proxy, not normalized like dB)
+        feature_vector.append(0.5) # mode (placeholder)
+        feature_vector.append(0.5) # key (placeholder)
+        # Trim or pad to match length of STANDARD_SIMILARITY_FEATURES
+        feature_vector = (feature_vector + [0.5] * len(STANDARD_SIMILARITY_FEATURES))[:len(STANDARD_SIMILARITY_FEATURES)]
     else:
-        target_features = track.audio_features
+        return None # Should not happen if previous checks are correct
 
-    # Collect stored tracks that need feature extraction
-    tracks_needing_features = []
-    stored_track_map = {}
+    return feature_vector
 
-    for stored_track in stored_tracks:
-        stored_track_map[stored_track['id']] = stored_track
-        try:
-            stored_song = Track.objects.get(spotify_id=stored_track['id'])
-            if stored_song.audio_features:
-                continue  # Skip tracks that already have features
-        except Track.DoesNotExist:
-            pass
 
-        # Track needs features extraction
-        search = f"{stored_track['name']} {stored_track['artist']}"
-        results = search_jiosaavn(search)
-        if not results:
-            continue
+@tiered_cache('recommendations', timeout=3600)
+def get_recommendations(track_id, stored_tracks_data, limit=10, sp_client=None):
+    # Ensure sp_client is available if not passed (e.g. from a non-request context)
+    # This is tricky; for now, assume sp_client is available or get_spotify_client can be adapted.
+    # For this subtask, we'll assume sp_client is passed if Spotify interaction is needed.
+    # If sp_client is None, Spotify features won't be fetched.
 
-        preview_path = download_preview(results[0]['preview_url'], stored_track['id'])
-        if not preview_path:
-            continue
-
-        tracks_to_process.append((stored_track['id'], preview_path))
-        tracks_needing_features.append(stored_track['id'])
-
-    # Extract features in batch if there are tracks to process
-    extracted_features = {}
-    if tracks_to_process:
-        extracted_features = batch_extract_audio_features(tracks_to_process)
-
-        # Update target track features if needed
-        if track_id in extracted_features:
-            target_features = extracted_features[track_id]
-            track.audio_features = target_features
-            track.save()
-
-        # Update stored tracks with extracted features
-        for track_id in tracks_needing_features:
-            if track_id in extracted_features:
-                try:
-                    stored_song = Track.objects.get(spotify_id=track_id)
-                    stored_song.audio_features = extracted_features[track_id]
-                    stored_song.save()
-                except Track.DoesNotExist:
-                    pass
-
-    # If we still don't have target features, return empty list
-    if not track.audio_features and track_id not in extracted_features:
+    try:
+        target_track_obj = Track.objects.select_related('genres').prefetch_related('artists').get(spotify_id=track_id)
+    except Track.DoesNotExist:
+        print(f"Target track {track_id} not found in DB for recommendations.")
         return []
 
-    # Use the target features (either from DB or newly extracted)
-    if track_id in extracted_features:
-        target_features = extracted_features[track_id]
+    target_feature_vector = _get_standardized_features_for_track(target_track_obj, sp_client)
+    if not target_feature_vector:
+        print(f"Could not get standardized features for target track {track_id}.")
+        return []
 
-    target_features_scalar = {k: float(v) for k, v in target_features.items()}
-
-    # Calculate similarities
+    # Fetch all stored_track objects from DB to avoid N+1 in loop
+    stored_track_ids = [st['id'] for st in stored_tracks_data if st['id'] != target_track_obj.spotify_id] # Exclude target itself
+    db_stored_tracks = Track.objects.filter(spotify_id__in=stored_track_ids)\
+                                  .select_related('genres').prefetch_related('artists')
+    db_stored_tracks_map = {t.spotify_id: t for t in db_stored_tracks}
+    
     similarities = []
-    for stored_track in stored_tracks:
-        track_id = stored_track['id']
-        try:
-            # Get features either from extracted batch or from database
-            if track_id in extracted_features:
-                stored_features = extracted_features[track_id]
-            else:
-                stored_song = Track.objects.get(spotify_id=track_id)
-                if stored_song.audio_features:
-                    stored_features = stored_song.audio_features
-                else:
-                    continue  # Skip if no features available
-
-            stored_features_scalar = {k: float(v) for k, v in stored_features.items()}
-            target_vector = np.array(list(target_features_scalar.values()))
-            stored_vector = np.array(list(stored_features_scalar.values()))
-
-            similarity = cosine_similarity(
-                target_vector.reshape(1, -1),
-                stored_vector.reshape(1, -1)
-            )[0][0]
-
-            similarities.append({
-                'id': track_id,
-                'similarity': similarity
-            })
-        except Exception as e:
-            print(f"Error calculating similarity for track {track_id}: {str(e)}")
+    for input_track_data in stored_tracks_data:
+        current_track_id = input_track_data['id']
+        if current_track_id == target_track_obj.spotify_id:
             continue
+
+        stored_track_obj = db_stored_tracks_map.get(current_track_id)
+        if not stored_track_obj:
+            # This might happen if stored_tracks_data contains IDs not in DB (e.g., from live Spotify search results)
+            # Create a temporary Track-like object or fetch it. For simplicity, skip if not in map.
+            print(f"Stored track {current_track_id} not found in pre-fetched DB map. Skipping.")
+            continue
+            
+        stored_feature_vector = _get_standardized_features_for_track(stored_track_obj, sp_client)
+        if not stored_feature_vector:
+            print(f"Could not get standardized features for stored track {current_track_id}. Skipping.")
+            continue
+
+        # Cosine similarity
+        target_np = np.array(target_feature_vector).reshape(1, -1)
+        stored_np = np.array(stored_feature_vector).reshape(1, -1)
+        
+        similarity = cosine_similarity(target_np, stored_np)[0][0]
+        similarities.append({'id': current_track_id, 'similarity': similarity})
 
     recommendations = sorted(similarities, key=lambda x: x['similarity'], reverse=True)[:limit]
     return recommendations
