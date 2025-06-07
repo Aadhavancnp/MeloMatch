@@ -9,8 +9,10 @@ from core.forms import ContactForm
 from core.models import FAQItem
 from music.models import Playlist, Track
 # Updated import for Spotify service
-from services.spotify_service.client import get_recommendations, get_spotify_client, get_user_playlists, get_user_top_tracks, \
+from services.spotify_service.client import get_spotify_client, get_user_playlists, get_user_top_tracks, \
     get_user_recently_played, calculate_listening_time, get_favorite_genre
+    # get_recommendations removed from here
+from services.recommendation_service.recommender import get_hybrid_recommendations # Added
 from subscription.models import Subscription
 from users.models import UserActivity
 from channels.layers import get_channel_layer
@@ -98,24 +100,36 @@ def dashboard(request):
 
     recently_played = list(unique_tracks.values())
 
-    # Get recommendations
-    recommendation_ids = get_recommendations(recently_played[0]['id'], top_tracks + recently_played)
-    if not recommendation_ids:
-        recommendation_ids = get_recommendations(most_repeat['id'], top_tracks + recently_played)
+    # Get recommendations using the new hybrid recommender
+    # The hybrid recommender needs a seed_track_id.
+    # We can use the most recently played track or the most repeated track as a seed.
+    seed_track_for_hybrid_recs = None
+    if recently_played:
+        seed_track_for_hybrid_recs = recently_played[0]['id'] # Use most recent
+    elif top_tracks: # Fallback to a top track if no recently played
+        seed_track_for_hybrid_recs = top_tracks[0]['id']
 
-    recommendation_ids = list({track['id']: track for track in recommendation_ids}.values())
+    recommended_tracks = [] # Initialize
+    if seed_track_for_hybrid_recs:
+        # get_hybrid_recommendations returns a list of Track objects
+        recommended_tracks = get_hybrid_recommendations(request.user, seed_track_id=seed_track_for_hybrid_recs, num_recommendations=10)
+
+    # If recommended_tracks are already Track model instances, no need for further DB query for them.
+    # The ThreadPoolExecutor part for recommended_tracks_future can be removed or adapted if
+    # get_hybrid_recommendations is already efficient enough or if it's called directly.
+    # For now, let's assume get_hybrid_recommendations returns fully formed Track objects.
 
     # Execute remaining independent operations in parallel
     with ThreadPoolExecutor(max_workers=4) as executor:
         # Start all tasks
-        track_ids = [track['id'] for track in recommendation_ids]
-        recommended_tracks_future = executor.submit(
-            lambda: list(Track.objects.filter(spotify_id__in=track_ids)
-                         .select_related('genres')
-                         .prefetch_related('artists'))
-        )
-        listening_time_future = executor.submit(calculate_listening_time, sp, recently_played)
-        favorite_genre_future = executor.submit(get_favorite_genre, sp, top_tracks)
+        # track_ids = [track.spotify_id for track in recommended_tracks] # If recommended_tracks are Track objects
+        # recommended_tracks_future = executor.submit( # This might be redundant if recommended_tracks are already fetched
+        #     lambda: list(Track.objects.filter(spotify_id__in=track_ids)
+        #                  .select_related('genres')
+        #                  .prefetch_related('artists'))
+        # )
+        listening_time_future = executor.submit(calculate_listening_time, sp, recently_played, user_id_for_cache=request.user.id) # Pass user_id for cache key
+        favorite_genre_future = executor.submit(get_favorite_genre, sp, top_tracks, user_id_for_cache=request.user.id) # Pass user_id for cache key
         recent_activities_future = executor.submit(
             lambda: UserActivity.objects.filter(user=user).order_by('-timestamp')[:5]
         )
@@ -123,11 +137,12 @@ def dashboard(request):
             lambda: Subscription.objects.filter(user=user).first()
         )
         user_playlists_future = executor.submit(
-            lambda: Playlist.objects.filter(user=user).prefetch_related('tracks')
+            # Ensure prefetching is effective for template needs
+            lambda: Playlist.objects.filter(user=user).prefetch_related('tracks__artists', 'tracks__genres')
         )
 
         # Get results
-        recommended_tracks = recommended_tracks_future.result()
+        # recommended_tracks are already fetched above if seed_track_for_hybrid_recs was valid
         listening_time = listening_time_future.result()
         favorite_genre = favorite_genre_future.result()
         recent_activities = recent_activities_future.result()

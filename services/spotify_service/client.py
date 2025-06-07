@@ -11,17 +11,17 @@ import requests
 import spotipy
 from django.conf import settings
 from django.db.models import Q
-from sklearn.metrics.pairwise import cosine_similarity
+# from sklearn.metrics.pairwise import cosine_similarity # No longer needed here
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
-from django.core.cache import cache # Keep for direct use if decorator is not suitable for all
+from django.core.cache import cache
 import hashlib
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from music.models import Track, Playlist, Artist, Genre
 from music.utils import translate_text
-from services.utils import cache_api_call # Import the new decorator
+from services.utils import cache_api_call
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +59,15 @@ def get_spotify_client_for_user(user_id):
             new_token_info = sp_oauth.refresh_access_token(spotify_refresh_token)
             if new_token_info:
                 current_access_token = new_token_info.get('access_token')
-                # Conceptual save:
-                # user.spotify_access_token = current_access_token
-                # ... (update other token fields on user model) ...
-                # user.save()
-                logger.info(f"Refreshed Spotify token for {user.username} (conceptual save).")
+                user.spotify_access_token = current_access_token
+                new_refresh_token_val = new_token_info.get('refresh_token')
+                if new_refresh_token_val: user.spotify_refresh_token = new_refresh_token_val
+                new_expires_at_ts = new_token_info.get('expires_at')
+                if new_expires_at_ts: user.spotify_token_expiry = timezone.make_aware(datetime.fromtimestamp(new_expires_at_ts))
+                user.spotify_scope = new_token_info.get('scope', spotify_scope)
+                update_fields_list = ['spotify_access_token', 'spotify_refresh_token', 'spotify_token_expiry', 'spotify_scope']
+                user.save(update_fields=[f for f in update_fields_list if hasattr(user, f)])
+                logger.info(f"Successfully refreshed and saved Spotify token for user {user.username}.")
             else: logger.error(f"Refreshing token returned None for {user.username}."); return None
         except Exception as e: logger.error(f"Error refreshing token for {user.username}: {e}"); return None
 
@@ -71,7 +75,7 @@ def get_spotify_client_for_user(user_id):
     return spotipy.Spotify(auth=current_access_token)
 
 @cache_api_call(key_prefix="spotify_search_tracks", timeout=900)
-def search_tracks(sp, query, limit=10, user_id_for_cache=None): # user_id_for_cache for keying if sp is not user specific enough
+def search_tracks(sp, query, limit=10, user_id_for_cache=None):
     try:
         results = sp.search(q=query, type='track', limit=limit)
         tracks = []
@@ -81,12 +85,11 @@ def search_tracks(sp, query, limit=10, user_id_for_cache=None): # user_id_for_ca
         return tracks
     except Exception as e: logger.error(f"Error searching Spotify tracks: {e}"); return []
 
-def get_or_create_track(track_data, sp: Spotify): # Not cached directly, called by cached functions
+def get_or_create_track(track_data, sp: Spotify):
     spotify_id = track_data.get('id')
     if not spotify_id: return None
     try: track = Track.objects.get(spotify_id=spotify_id); return track
     except Track.DoesNotExist:
-        # ... (rest of get_or_create_track logic as previously defined, it's long) ...
         artists = []
         if 'artists' in track_data:
             for artist_data in track_data['artists']:
@@ -126,11 +129,11 @@ def get_or_create_track(track_data, sp: Spotify): # Not cached directly, called 
             except Exception as e: logger.error(f"Error fetching Spotify audio features for new track {new_track.spotify_id}: {e}")
         return new_track
 
-def update_song_custom_audio_features(song, audio_features): # Not an API call, direct DB update
+def update_song_custom_audio_features(song, audio_features):
     if song.audio_features is None: song.audio_features = {}
     song.audio_features.update({'source': 'librosa', **audio_features}); song.save()
 
-def get_or_create_playlist(playlist_id, request_or_user, sp: Spotify): # Not cached directly
+def get_or_create_playlist(playlist_id, request_or_user, sp: Spotify):
     user_obj = request_or_user.user if hasattr(request_or_user, 'user') and request_or_user.user.is_authenticated else (request_or_user if isinstance(request_or_user, get_user_model()) else None)
     if not user_obj: logger.error("get_or_create_playlist: invalid user/request."); return None
     playlist = Playlist.objects.filter(spotify_id=playlist_id, user=user_obj).first()
@@ -138,14 +141,19 @@ def get_or_create_playlist(playlist_id, request_or_user, sp: Spotify): # Not cac
     return playlist
 
 @cache_api_call(key_prefix="spotify_user_playlists", timeout=3600)
-def get_user_playlists(sp: Spotify, request_or_user_id): # Pass user_id for cache key if request not available
-    user_id = request_or_user_id.user.id if hasattr(request_or_user_id, 'user') else request_or_user_id
+def get_user_playlists(sp: Spotify, request_or_user_id):
+    user_id = request_or_user_id.user.id if hasattr(request_or_user_id, 'user') and hasattr(request_or_user_id.user, 'id') else request_or_user_id
     logger.info(f"Fetching fresh user playlists for user ID: {user_id}")
     playlists_data = sp.current_user_playlists()
     result = []
-    for playlist_item in playlists_data['items']: # Pass user object for get_or_create_playlist
-        user_obj = get_user_model().objects.get(id=user_id) if isinstance(user_id, int) else request_or_user_id
-        pl = get_or_create_playlist(playlist_item['id'], user_obj, sp)
+    user_obj_for_playlist = None
+    if isinstance(user_id, int):
+        try: user_obj_for_playlist = get_user_model().objects.get(id=user_id)
+        except get_user_model().DoesNotExist: logger.error(f"User not found for ID {user_id} in get_user_playlists"); return []
+    elif hasattr(request_or_user_id, 'user'): user_obj_for_playlist = request_or_user_id.user
+    if not user_obj_for_playlist or not user_obj_for_playlist.is_authenticated: logger.warning(f"Invalid user object or unauthenticated user for get_user_playlists (user_id: {user_id})"); return []
+    for playlist_item in playlists_data['items']:
+        pl = get_or_create_playlist(playlist_item['id'], user_obj_for_playlist, sp)
         if pl: result.append(pl)
     return result
 
@@ -159,8 +167,8 @@ def get_playlist_tracks(sp: Spotify, playlist_id):
     return tracks
 
 @cache_api_call(key_prefix="spotify_user_top_tracks", timeout=3600)
-def get_user_top_tracks(sp: Spotify, user_id_for_cache=None): # user_id_for_cache is for keying
-    if not user_id_for_cache: # Try to get from sp if possible, but it's an extra call
+def get_user_top_tracks(sp: Spotify, user_id_for_cache=None):
+    if not user_id_for_cache:
         try: user_id_for_cache = sp.current_user()['id'] if sp.current_user() else 'unknown_spotify_user'
         except: user_id_for_cache = 'default_spotify_user_top_tracks'
     results = sp.current_user_top_tracks(limit=15, time_range='medium_term'); top_tracks = []
@@ -195,7 +203,7 @@ def get_artist_albums(sp, artist_id, album_type='album', limit=5):
     return sp.artist_albums(artist_id, album_type=album_type, limit=limit)['items']
 
 @cache_api_call(key_prefix="jiosaavn_search", timeout=3600)
-def search_jiosaavn(query, limit=10): # Note: This calls get_track_details_jiosaavn internally (which is also cached)
+def search_jiosaavn(query, limit=10):
     try:
         url = f"https://www.jiosaavn.com/api.php?__call=autocomplete.get&_format=json&_marker=0&cc=in&includeMetaTags=1&query={query}"
         response = requests.get(url, timeout=10)
@@ -206,7 +214,7 @@ def search_jiosaavn(query, limit=10): # Note: This calls get_track_details_jiosa
         songs_to_process = data['songs']['data'][:limit]
         for song in songs_to_process:
             try:
-                song_details = get_track_details_jiosaavn(song['id']) # This will use its own cache
+                song_details = get_track_details_jiosaavn(song['id'])
                 if song_details: processed_tracks.append({'id': song['id'], 'name': song['title'], 'artist': song_details['artist'], 'album': song_details['album'], 'year': song_details['year'], 'image_url': song_details['image_url'], 'duration': song_details['duration'], 'preview_url': song_details['preview_url']})
             except Exception as e: logger.error(f"Error processing JioSaavn track {song.get('id')}: {str(e)}")
         return processed_tracks
@@ -224,14 +232,14 @@ def get_track_details_jiosaavn(track_id):
         return {'id': song_data['id'], 'name': song_data['song'], 'artist': song_data['primary_artists'], 'album': song_data['album'], 'year': song_data['year'], 'image_url': re.sub(r'\d+x\d+', '500x500', song_data['image']), 'duration': int(song_data['duration']) * 1000, 'preview_url': song_data.get('vlink') or song_data.get('media_preview_url', '')}
     except Exception as e: logger.error(f"Error getting JioSaavn track details: {str(e)}"); return None
 
-@cache_api_call(key_prefix="librosa_features", timeout=None) # Cache indefinitely
-def extract_audio_features(audio_file, file_mod_time_for_key=None): # Pass mod time for key
+@cache_api_call(key_prefix="librosa_features", timeout=None)
+def extract_audio_features(audio_file, file_mod_time_for_key=None):
     try: y, sr = librosa.load(audio_file, duration=30, res_type='kaiser_fast')
     except Exception as e: logger.error(f"Error loading audio file {audio_file}: {e}"); return None
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
     return {'tempo': float(tempo), 'chroma_stft_mean': float(np.mean(librosa.feature.chroma_stft(y=y, sr=sr))), 'rmse_mean': float(np.mean(librosa.feature.rms(y=y))), 'spectral_centroid_mean': float(np.mean(librosa.feature.spectral_centroid(y=y, sr=sr))), 'spectral_bandwidth_mean': float(np.mean(librosa.feature.spectral_bandwidth(y=y, sr=sr))), 'rolloff_mean': float(np.mean(librosa.feature.spectral_rolloff(y=y, sr=sr))), 'zero_crossing_rate_mean': float(np.mean(librosa.feature.zero_crossing_rate(y))), 'mfcc_mean': float(np.mean(librosa.feature.mfcc(y=y, sr=sr)))}
 
-def download_preview(preview_url, track_id): # Not cached as it deals with filesystem
+def download_preview(preview_url, track_id):
     if not preview_url or not preview_url.startswith("http"): return None
     file_path = os.path.join(settings.MEDIA_ROOT, 'previews', f'{track_id}.mp3')
     if os.path.exists(file_path): return file_path
@@ -243,116 +251,36 @@ def download_preview(preview_url, track_id): # Not cached as it deals with files
         return file_path
     except (requests.RequestException, IOError) as e: logger.error(f"Error downloading preview for {track_id}: {str(e)}"); return None
 
-STANDARD_SIMILARITY_FEATURES = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'tempo', 'valence', 'mode', 'key']
-def _normalize_loudness(val): return max(0.0, min(1.0, (val + 60) / 60)) if val is not None else 0.5
-def _normalize_tempo(val): return max(0.0, min(1.0, (val - 50) / 200)) if val is not None else 0.5
-
-def _get_standardized_features_for_track(track_obj, sp_client): # Internal helper, not directly cached
-    # ... (logic as previously defined, ensuring it calls cached extract_audio_features if needed) ...
-    # This function fetches/processes features, potentially using cached sub-results.
-    # The actual Librosa extraction is cached by `extract_audio_features`.
-    # Spotify API calls for features are made by `get_or_create_track` and are cached there.
-    features_to_standardize = None; source_of_features = None
-    if track_obj.audio_features and isinstance(track_obj.audio_features, dict) and 'source' in track_obj.audio_features:
-        features_to_standardize = track_obj.audio_features; source_of_features = track_obj.audio_features['source']
-
-    if not features_to_standardize or source_of_features not in ['spotify', 'librosa']:
-        if track_obj.spotify_id and sp_client: # Attempt to fetch from Spotify
-            # This call is within get_or_create_track which saves features, so direct call here might be redundant if track just created
-            # For existing tracks without features, this is the spot.
-            try:
-                sf_list = sp_client.audio_features(tracks=[track_obj.spotify_id])
-                if sf_list and sf_list[0]:
-                    sf = sf_list[0]
-                    track_obj.audio_features = {'source': 'spotify', 'tempo': sf.get('tempo'), 'energy': sf.get('energy'), 'danceability': sf.get('danceability'), 'valence': sf.get('valence'), 'acousticness': sf.get('acousticness'), 'instrumentalness': sf.get('instrumentalness'), 'liveness': sf.get('liveness'), 'speechiness': sf.get('speechiness'), 'loudness': sf.get('loudness'), 'mode': sf.get('mode'), 'key': sf.get('key'), 'time_signature': sf.get('time_signature')}
-                    track_obj.save(update_fields=['audio_features']); features_to_standardize = track_obj.audio_features; source_of_features = 'spotify'
-                else: track_obj.audio_features = {'source': 'spotify_no_data'}; track_obj.save()
-            except Exception as e: track_obj.audio_features = {'source': 'spotify_error', 'error': str(e)}; track_obj.save()
-
-    if not features_to_standardize or source_of_features not in ['spotify', 'librosa']: # Fallback to Librosa
-        preview_url = track_obj.preview_url
-        if not preview_url: # Try JioSaavn for preview URL if track doesn't have one
-            try:
-                artist_name = track_obj.artists.first().name if track_obj.artists.exists() else ""
-                js_results = search_jiosaavn(f"{track_obj.title} {artist_name}".strip(), limit=1) # search_jiosaavn is cached
-                if js_results and js_results[0].get('preview_url'): preview_url = js_results[0]['preview_url']
-            except Exception: pass
-        if preview_url:
-            dl_path = download_preview(preview_url, track_obj.spotify_id) # Not cached
-            if dl_path:
-                # For extract_audio_features, pass mod time for better cache key if file exists
-                mod_time = os.path.getmtime(dl_path) if os.path.exists(dl_path) else None
-                lib_feats = extract_audio_features(dl_path, file_mod_time_for_key=mod_time) # This is cached
-                if lib_feats: update_song_custom_audio_features(track_obj, lib_feats); features_to_standardize = track_obj.audio_features; source_of_features = 'librosa'
-
-    if not features_to_standardize or source_of_features not in ['spotify', 'librosa']: return None
-    vec = []
-    if source_of_features == 'spotify':
-        for key in STANDARD_SIMILARITY_FEATURES:
-            val = features_to_standardize.get(key)
-            if key == 'loudness': val = _normalize_loudness(val)
-            elif key == 'tempo': val = _normalize_tempo(val)
-            elif key == 'key': val = float(val / 11) if val is not None else 0.5
-            elif key == 'mode': val = float(val) if val is not None else 0.5
-            vec.append(float(val) if val is not None else 0.5)
-    elif source_of_features == 'librosa':
-        vec.extend([_normalize_tempo(features_to_standardize.get('tempo')), features_to_standardize.get('rmse_mean', 0.5), 0.5, 0.5, features_to_standardize.get('zero_crossing_rate_mean', 0.5), 0.5, 0.5, features_to_standardize.get('spectral_bandwidth_mean', 0.5), features_to_standardize.get('rmse_mean', 0.5), 0.5, 0.5])
-        vec = (vec + [0.5] * len(STANDARD_SIMILARITY_FEATURES))[:len(STANDARD_SIMILARITY_FEATURES)]
-    else: return None
-    return vec
-
-@cache_api_call(key_prefix="spotify_recommendations", timeout=3600)
-def get_recommendations(track_id, stored_tracks_data, limit=10, sp_client=None, user_id_for_cache=None): # Added user_id for key
-    # sp_client is needed by _get_standardized_features_for_track
-    try: target_track_obj = Track.objects.select_related('genres').prefetch_related('artists').get(spotify_id=track_id)
-    except Track.DoesNotExist: return []
-    target_feature_vector = _get_standardized_features_for_track(target_track_obj, sp_client)
-    if not target_feature_vector: return []
-
-    stored_track_ids = [st['id'] for st in stored_tracks_data if st['id'] != target_track_obj.spotify_id]
-    db_stored_tracks = Track.objects.filter(spotify_id__in=stored_track_ids).select_related('genres').prefetch_related('artists')
-    db_stored_tracks_map = {t.spotify_id: t for t in db_stored_tracks}
-    similarities = []
-    for input_track_data in stored_tracks_data:
-        current_track_id = input_track_data['id']
-        if current_track_id == target_track_obj.spotify_id: continue
-        stored_track_obj = db_stored_tracks_map.get(current_track_id)
-        if not stored_track_obj: continue
-        stored_feature_vector = _get_standardized_features_for_track(stored_track_obj, sp_client)
-        if not stored_feature_vector: continue
-        target_np = np.array(target_feature_vector).reshape(1, -1); stored_np = np.array(stored_feature_vector).reshape(1, -1)
-        similarity = cosine_similarity(target_np, stored_np)[0][0]
-        similarities.append({'id': current_track_id, 'similarity': similarity})
-    return sorted(similarities, key=lambda x: x['similarity'], reverse=True)[:limit]
-
-def batch_extract_audio_features(audio_files): # Not using @cache_api_call as it iterates
+def batch_extract_audio_features(audio_files):
     results = {}
     with ThreadPoolExecutor(max_workers=min(8, len(audio_files))) as executor:
-        future_to_file = {executor.submit(extract_audio_features, file_path): track_id for track_id, file_path in audio_files} # extract_audio_features is cached
+        future_to_file = {executor.submit(extract_audio_features, file_path, file_mod_time_for_key=os.path.getmtime(file_path) if os.path.exists(file_path) else None): track_id for track_id, file_path in audio_files}
         for future in concurrent.futures.as_completed(future_to_file):
             track_id = future_to_file[future]
-            try: features = future.result();
+            try:
+                features = future.result()
                 if features: results[track_id] = features
-            except Exception as e: logger.error(f"Error extracting features for file linked to track_id {track_id}: {str(e)}")
+            except Exception as e:
+                logger.error(f"Error processing future result for track_id {track_id} in batch_extract_audio_features: {str(e)}")
     return results
 
-def create_playlist_spotify(sp: Spotify, name, description=""): # Direct API call, not cached itself
+def create_playlist_spotify(sp: Spotify, name, description=""):
     user_id = sp.current_user()['id']
     return sp.user_playlist_create(user_id, name, public=False, description=description)
 
-def add_tracks_to_playlist_spotify(sp: Spotify, playlist_id, track_ids): # Direct API call
+def add_tracks_to_playlist_spotify(sp: Spotify, playlist_id, track_ids):
     track_ids_formatted = [f"spotify:track:{track_id}" for track_id in track_ids]
     sp.playlist_add_items(playlist_id, track_ids_formatted)
 
-def remove_tracks_from_playlist_spotify(sp: Spotify, playlist_id, track_ids): # Direct API call
+def remove_tracks_from_playlist_spotify(sp: Spotify, playlist_id, track_ids):
     track_ids_formatted = [f"spotify:track:{track_id}" for track_id in track_ids]
     sp.playlist_remove_all_occurrences_of_items(playlist_id, track_ids_formatted)
 
-def delete_playlist_spotify(sp: Spotify, playlist_id): # Direct API call
+def delete_playlist_spotify(sp: Spotify, playlist_id):
     sp.current_user_unfollow_playlist(playlist_id)
 
 @cache_api_call(key_prefix="spotify_listening_time", timeout=3600)
-def calculate_listening_time(sp: Spotify, recently_played, user_id_for_cache=None): # sp not directly used if recently_played is sufficient
+def calculate_listening_time(sp: Spotify, recently_played, user_id_for_cache=None):
     if not recently_played: return 0.0
     total_duration_ms = sum(track.get('duration', 0) for track in recently_played if isinstance(track, dict))
     return total_duration_ms / (1000 * 60 * 60)
@@ -390,3 +318,7 @@ def get_favorite_genre(sp: Spotify, top_tracks, user_id_for_cache=None):
         except Exception as e_outer: logger.error(f"Error fetching artist genres from Spotify: {e_outer}")
     if not all_genres: return None
     return Counter(all_genres).most_common(1)[0][0]
+
+# Removed _get_standardized_features_for_track, STANDARD_SIMILARITY_FEATURES,
+# _normalize_loudness, _normalize_tempo, and get_recommendations
+# These are now intended to be in services/recommendation_service/

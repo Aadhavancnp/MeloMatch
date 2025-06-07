@@ -22,11 +22,11 @@ class CustomUser(AbstractUser):
     theme_preference = models.CharField(max_length=10, choices=THEME_CHOICES, default='system')
     last_active = models.DateTimeField(default=timezone.now)
 
-    # Spotify OAuth Token Fields
-    spotify_access_token = models.CharField(max_length=255, blank=True, null=True)
-    spotify_refresh_token = models.CharField(max_length=255, blank=True, null=True)
-    spotify_token_expiry = models.DateTimeField(blank=True, null=True)
-    spotify_scope = models.TextField(blank=True, null=True) # To store the scopes granted
+    # Spotify OAuth Token Fields - Ensure these are correctly defined or added if missing
+    spotify_access_token = models.TextField(null=True, blank=True)
+    spotify_refresh_token = models.TextField(null=True, blank=True)
+    spotify_token_expiry = models.DateTimeField(null=True, blank=True)
+    spotify_scope = models.TextField(null=True, blank=True)
 
     class Meta:
         indexes = [

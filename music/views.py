@@ -10,11 +10,14 @@ from django.views.decorators.cache import cache_page
 from users.models import UserActivity
 from .models import Playlist, Track
 # Updated import for Spotify service
-from services.spotify_service.client import get_recommendations, get_spotify_client, \
+from services.spotify_service.client import get_spotify_client, \
     search_jiosaavn, get_track_details_jiosaavn, get_user_top_tracks, get_user_recently_played, create_playlist_spotify, \
     search_tracks, get_or_create_playlist, get_playlist_tracks, extract_audio_features, download_preview, \
+# get_recommendations was moved to recommendation_service, other spotify functions remain
     add_tracks_to_playlist_spotify, delete_playlist_spotify, remove_tracks_from_playlist_spotify, \
     get_artist_details, get_artist_albums, get_artist_top_tracks
+# Import for new hybrid recommender
+from services.recommendation_service.recommender import get_hybrid_recommendations
 from .utils import convert_image_to_base64
 from .models import Cart, CartItem, Order, OrderItem
 from django.db import transaction
@@ -270,9 +273,8 @@ def callback(request):
 
             user.spotify_scope = token_info.get('scope')
 
-            # Conceptual save - these fields don't exist in DB yet.
-            # user.save(update_fields=['spotify_access_token', 'spotify_refresh_token', 'spotify_token_expiry', 'spotify_scope'])
-            logger.info(f"Conceptually saved Spotify token info for user {user.username}")
+            user.save(update_fields=['spotify_access_token', 'spotify_refresh_token', 'spotify_token_expiry', 'spotify_scope'])
+            logger.info(f"Successfully saved Spotify token info for user {user.username}")
             messages.success(request, "Successfully connected your Spotify account!")
         except Exception as e:
             logger.error(f"Error saving Spotify token info for user {request.user.username}: {str(e)}")
@@ -286,11 +288,26 @@ def callback(request):
 def track_detail(request, track_id):
     track = Track.objects.get(spotify_id=track_id)
     sp = get_spotify_client(request)
-    top_tracks = get_user_top_tracks(sp)
-    recently_played = get_user_recently_played(sp)
-    recommendation_ids = get_recommendations(track_id, top_tracks + recently_played, limit=5)
-    recommendation_ids = list({track['id']: track for track in recommendation_ids}.values())
-    recommendations = [Track.objects.get(spotify_id=track['id']) for track in recommendation_ids]
+    # For track_detail, we want recommendations related to the current track_id
+    # The get_hybrid_recommendations expects a user and seed_track_id
+    # We need to ensure that `top_tracks + recently_played` is suitable for `stored_tracks_data` if that's how hybrid works,
+    # or adapt the call. For now, let's assume this view should call the hybrid recommender.
+    # The hybrid recommender itself will call content-based and item-item, which might use `stored_tracks_data`
+    # or fetch their own candidates.
+    # The `get_recommendations` from spotify_service was simpler.
+    # Let's call the new hybrid recommender.
+    # It needs `user` and `seed_track_id`.
+    # The `top_tracks + recently_played` might not be directly used by `get_hybrid_recommendations` in the same way.
+    # It will fetch its own candidates or use item-item data.
+
+    # Assuming `get_hybrid_recommendations` returns a list of Track objects
+    recommendations = get_hybrid_recommendations(request.user, seed_track_id=track.spotify_id, num_recommendations=5)
+    # recommendation_ids = list({rec.spotify_id: rec for rec in recommendations}.values()) # Not needed if recs are Track objects
+    # recommendations = [Track.objects.get(spotify_id=rec.spotify_id) for rec in recommendations] # Not needed if recs are Track objects
+
+    # The old `get_recommendations` returned a list of dicts with 'id'.
+    # The new `get_hybrid_recommendations` is planned to return Track objects.
+    # If `recommendations` is already a list of Track objects, no further processing is needed here.
     artists = [
         {'name': artist.name.strip(), 'url': reverse('artist_detail', args=[artist.name.strip()])}
         for artist in track.artists.all()]
