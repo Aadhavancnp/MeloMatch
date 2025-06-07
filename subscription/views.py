@@ -24,7 +24,7 @@ def create_checkout_session(request, order_id):
     if order.status == 'completed':
         messages.error(request, "This order has already been paid.")
         return redirect('order_history')
-    
+
     if order.status == 'failed': # Allow retrying payment for failed orders
         order.status = 'pending'
         order.save()
@@ -96,14 +96,14 @@ def stripe_webhook(request):
                 order.status = 'completed'
                 order.stripe_payment_intent_id = payment_intent_id
                 order.save()
-                
+
                 # Log successful payment activity
                 UserActivity.objects.create(
                     user=order.user,
                     activity_type='payment_successful',
                     description=f"Payment successful for Order ID: {order.id}, Stripe PI: {payment_intent_id}"
                 )
-                
+
                 # Clear the cart for the user (if items were from a cart-based order)
                 # This logic might be better placed immediately after order creation if payment is deferred
                 # For now, we assume cart was cleared when order was initiated
@@ -133,7 +133,7 @@ def stripe_webhook(request):
                 )
         except Order.DoesNotExist:
             return HttpResponse(status=404) # Order not found
-            
+
     # Other event types can be handled here
 
     return HttpResponse(status=200)
@@ -145,7 +145,7 @@ def payment_success(request, order_id):
     if order.status == 'completed':
         messages.success(request, "Your payment was successful and the order is confirmed.")
     else: # Should ideally be completed by webhook, but handle if webhook is delayed
-        order.status = 'completed' 
+        order.status = 'completed'
         order.save()
         messages.info(request, "Payment successful. Order status updated.")
         # Log user activity if not already logged by webhook (idempotency check needed in webhook)

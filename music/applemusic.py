@@ -27,7 +27,7 @@ def generate_developer_token():
     team_id = settings.APPLE_MUSIC_TEAM_ID
     key_id = settings.APPLE_MUSIC_KEY_ID
     private_key_path = settings.APPLE_MUSIC_PRIVATE_KEY_P8_FILE_PATH
-    
+
     if not all([team_id, key_id, private_key_path]):
         logger.error("Apple Music API credentials (Team ID, Key ID, or Private Key Path) are not configured.")
         return None
@@ -47,7 +47,7 @@ def generate_developer_token():
     # apple-music-python might prefer a longer expiry if it doesn't auto-refresh.
     # For now, let's generate a token valid for 1 hour.
     # The library itself might handle token generation and refreshing if we pass the components.
-    
+
     # Check if existing token is still valid (e.g., within 50 minutes for a 1-hour token)
     if _apple_music_token and _apple_music_token_generated_time:
         if time.time() - _apple_music_token_generated_time < 3000: # 50 minutes
@@ -103,7 +103,7 @@ def get_apple_music_client():
     if not os.path.exists(private_key_path):
         logger.error(f"Apple Music private key file not found at: {private_key_path}")
         return None
-    
+
     try:
         with open(private_key_path, 'r') as f:
             private_key_content = f.read()
@@ -123,7 +123,7 @@ def get_apple_music_client():
         # A simple test call could be added here to verify credentials if needed.
         # For example, fetching storefronts: am.storefronts()
         # However, to avoid unnecessary calls, we'll initialize and let subsequent calls fail if auth is wrong.
-        
+
         _apple_music_client = am # Cache the client
         logger.info("Apple Music client initialized successfully.")
         return am
@@ -150,7 +150,7 @@ def search_apple_music(query, limit=10, types=['songs', 'artists'], storefront='
         # The apple-music-python library's search method takes 'types' as a string or list of strings.
         # It returns a dictionary where keys are the types requested.
         search_results = client.search(query, types=types, limit=limit, storefront=storefront)
-        
+
         # Process songs
         if 'songs' in types and 'songs' in search_results and search_results['songs']['data']:
             for item in search_results['songs']['data']:
@@ -158,12 +158,12 @@ def search_apple_music(query, limit=10, types=['songs', 'artists'], storefront='
                 artwork = attributes.get('artwork', {})
                 # Construct artwork URL: replace {w} and {h} with desired dimensions
                 artwork_url = artwork.get('url', '').replace('{w}', '300').replace('{h}', '300') if artwork.get('url') else None
-                
+
                 # Preview URL - usually in 'previews' array
                 preview_url = None
                 if attributes.get('previews'):
                     preview_url = attributes['previews'][0]['url']
-                
+
                 song_data = {
                     'id': item.get('id'),
                     'title': attributes.get('name'),
@@ -171,7 +171,7 @@ def search_apple_music(query, limit=10, types=['songs', 'artists'], storefront='
                     'album': attributes.get('albumName'),
                     'artwork_url': artwork_url,
                     'preview_url': preview_url,
-                    'source': 'Apple Music' 
+                    'source': 'Apple Music'
                 }
                 results_songs.append(song_data)
 
@@ -188,7 +188,7 @@ def search_apple_music(query, limit=10, types=['songs', 'artists'], storefront='
                     'source': 'Apple Music'
                 }
                 results_artists.append(artist_data)
-        
+
         logger.info(f"Apple Music search for '{query}' returned {len(results_songs)} songs and {len(results_artists)} artists.")
 
     except Exception as e:
@@ -197,5 +197,5 @@ def search_apple_music(query, limit=10, types=['songs', 'artists'], storefront='
         # If token is invalid, get_apple_music_client() might need to handle regeneration more explicitly
         # or the library itself should.
         # For now, we just log and return empty.
-    
+
     return {'songs': results_songs, 'artists': results_artists}

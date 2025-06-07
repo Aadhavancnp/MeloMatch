@@ -45,7 +45,7 @@ def get_or_create_local_audio_clip(track_id):
         try:
             response = requests.get(track.preview_url, stream=True, timeout=10)
             response.raise_for_status()
-            
+
             # Determine a temporary path for this downloaded preview
             temp_preview_download_path = os.path.join(settings.MEDIA_ROOT, 'temp_audio_downloads', f"{temp_download_filename_stem}_spotify.mp3")
             os.makedirs(os.path.dirname(temp_preview_download_path), exist_ok=True)
@@ -53,11 +53,11 @@ def get_or_create_local_audio_clip(track_id):
             with open(temp_preview_download_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-            
+
             logger.info(f"Successfully downloaded from Track.preview_url to {temp_preview_download_path}")
 
             extracted_clip_path = extract_30_second_clip(temp_preview_download_path, final_clip_path_stem)
-            
+
             if extracted_clip_path:
                 with open(extracted_clip_path, 'rb') as clip_file:
                     django_file = File(clip_file, name=f"{final_clip_filename_stem}.mp3")
@@ -66,7 +66,7 @@ def get_or_create_local_audio_clip(track_id):
                         audio_file=django_file,
                         source_url=track.preview_url,
                         source_type='spotify_preview_dl', # Or more generic like 'direct_preview_dl'
-                        duration=30 
+                        duration=30
                     )
                 logger.info(f"Created LocalAudioClip from Track.preview_url for {track.title}: {new_clip.audio_file.url}")
                 # Clean up temp downloaded full preview
@@ -97,11 +97,11 @@ def get_or_create_local_audio_clip(track_id):
     if youtube_url:
         logger.info(f"Found YouTube URL: {youtube_url}. Attempting download for track {track.title}")
         # temp_audio_downloads is where download_audio_from_youtube_url saves the initial full download
-        downloaded_full_audio_path = download_audio_from_youtube_url(youtube_url, temp_download_filename_stem) 
-        
+        downloaded_full_audio_path = download_audio_from_youtube_url(youtube_url, temp_download_filename_stem)
+
         if downloaded_full_audio_path:
             extracted_clip_path = extract_30_second_clip(downloaded_full_audio_path, final_clip_path_stem)
-            
+
             if extracted_clip_path:
                 with open(extracted_clip_path, 'rb') as clip_file:
                     django_file = File(clip_file, name=f"{final_clip_filename_stem}.mp3")

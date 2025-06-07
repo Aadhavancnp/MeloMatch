@@ -349,7 +349,7 @@ body {
 
 /* Add to Playlist Button on Track Cards */
 /* (This was in the original dashboard.html for recommendations, re-add if used in new discovery cards) */
-.discovery-card .btn-add-playlist { 
+.discovery-card .btn-add-playlist {
     /* Style as needed, e.g. make it an icon button */
     /* For example: */
     /* background: rgba(255,255,255,0.1);
@@ -411,14 +411,14 @@ The `dashboard.html` from the previous step includes a basic JavaScript snippet 
 
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = "{% url 'add_to_playlist' %}"; 
+            form.action = "{% url 'add_to_playlist' %}";
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}';
 
             // ... (rest of the form submission logic) ...
-            
+
             document.body.appendChild(form);
             form.submit();
-            
+
             var currentModal = bootstrap.Modal.getInstance(document.getElementById('addToPlaylistModal'));
             if (currentModal) {
                 currentModal.hide();

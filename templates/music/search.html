@@ -89,7 +89,7 @@
                                         <span class="badge bg-info text-dark">Popularity: {{ item.popularity }}</span>
                                     {% endif %}
                                 </div>
-                                
+
                                 <div class="d-flex justify-content-between align-items-center mt-auto">
                                     {% if item.source == 'Spotify' and item.is_db_track %}
                                         <a href="{% url 'track_detail' item.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
@@ -97,7 +97,7 @@
                                         {# For non-Spotify tracks, a generic detail link might not exist or needs different handling #}
                                         {# <a href="#" class="btn btn-outline-secondary btn-sm disabled">Details N/A</a> #}
                                     {% endif %}
-                                    
+
                                     {% if item.source == 'Spotify' and item.is_db_track %}
                                      <button class="btn btn-outline-success btn-sm add-to-playlist-btn"
                                                 data-track-id="{{ item.id }}">

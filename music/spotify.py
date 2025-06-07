@@ -150,10 +150,10 @@ def get_or_create_track(track_data, sp: Spotify):
                 else:
                     print(f"No Spotify audio features returned for track {track.spotify_id}")
                     # Optionally, mark that Spotify features were checked but not found
-                    # track.audio_features = {'source': 'spotify', 'found': False} 
+                    # track.audio_features = {'source': 'spotify', 'found': False}
             except Exception as e:
                 print(f"Error fetching Spotify audio features for track {track.spotify_id}: {str(e)}")
-        
+
         track.save()
         return track
 
@@ -162,7 +162,7 @@ def update_song_custom_audio_features(song, audio_features): # Renamed function
     # Ensure audio_features is not None and is a dictionary
     if song.audio_features is None:
         song.audio_features = {}
-    
+
     song.audio_features.update({
         'source': 'librosa', # Indicate the source
         "tempo": audio_features.get('tempo'), # Use .get for safety
@@ -609,7 +609,7 @@ def _get_standardized_features_for_track(track_obj, sp_client):
                 print(f"Error fetching Spotify features for {track_obj.spotify_id}: {str(e)}")
                 track_obj.audio_features = {'source': 'spotify_error', 'error': str(e)} # Log error state
                 track_obj.save()
-        
+
     # Fallback to Librosa if still no usable features (Spotify failed or track is not on Spotify)
     if not features_to_standardize or source_of_features not in ['spotify', 'librosa']:
         print(f"Attempting Librosa feature extraction for track {track_obj.spotify_id} ({track_obj.title})...")
@@ -698,7 +698,7 @@ def get_recommendations(track_id, stored_tracks_data, limit=10, sp_client=None):
     db_stored_tracks = Track.objects.filter(spotify_id__in=stored_track_ids)\
                                   .select_related('genres').prefetch_related('artists')
     db_stored_tracks_map = {t.spotify_id: t for t in db_stored_tracks}
-    
+
     similarities = []
     for input_track_data in stored_tracks_data:
         current_track_id = input_track_data['id']
@@ -711,7 +711,7 @@ def get_recommendations(track_id, stored_tracks_data, limit=10, sp_client=None):
             # Create a temporary Track-like object or fetch it. For simplicity, skip if not in map.
             print(f"Stored track {current_track_id} not found in pre-fetched DB map. Skipping.")
             continue
-            
+
         stored_feature_vector = _get_standardized_features_for_track(stored_track_obj, sp_client)
         if not stored_feature_vector:
             print(f"Could not get standardized features for stored track {current_track_id}. Skipping.")
@@ -720,7 +720,7 @@ def get_recommendations(track_id, stored_tracks_data, limit=10, sp_client=None):
         # Cosine similarity
         target_np = np.array(target_feature_vector).reshape(1, -1)
         stored_np = np.array(stored_feature_vector).reshape(1, -1)
-        
+
         similarity = cosine_similarity(target_np, stored_np)[0][0]
         similarities.append({'id': current_track_id, 'similarity': similarity})
 

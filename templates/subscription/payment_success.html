@@ -12,12 +12,12 @@
     {% endif %}
 
     <p>Thank you for your payment. Your order has been processed successfully.</p>
-    
+
     {% if order %}
         <h4>Order ID: {{ order.id }}</h4>
         <p>Status: {{ order.get_status_display }}</p>
         <p>Date Placed: {{ order.created_at|date:"F j, Y, g:i a" }}</p>
-        
+
         <h5>Order Summary:</h5>
         <table class="table">
             <thead>
@@ -43,7 +43,7 @@
     {% else %}
         <p>Order details are not available at the moment. Please check your order history.</p>
     {% endif %}
-    
+
     <a href="{% url 'order_history' %}" class="btn btn-primary">View Order History</a>
     <a href="{% url 'search' %}" class="btn btn-secondary">Continue Shopping</a>
 </div>

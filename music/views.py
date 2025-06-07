@@ -29,7 +29,7 @@ def place_order(request):
 
     # Create the order
     order = Order.objects.create(user=request.user, total_price=0) # Initialize total_price
-    
+
     total_order_price = 0
     order_items_for_template = []
 
@@ -39,7 +39,7 @@ def place_order(request):
             order=order,
             track=cart_item.track,
             quantity=cart_item.quantity,
-            price=track_price 
+            price=track_price
         )
         total_order_price += order_item.quantity * order_item.price
         order_items_for_template.append(order_item)
@@ -50,7 +50,7 @@ def place_order(request):
     # Clear the cart
     cart.items.all().delete() # Deletes all CartItems associated with the cart
     # Optionally, delete the cart itself if it's always empty after an order
-    # cart.delete() 
+    # cart.delete()
 
     messages.success(request, "Your order has been placed successfully!")
     UserActivity.objects.create(
@@ -115,7 +115,7 @@ def add_to_cart(request, track_id):
         messages.success(request, f"'{track.title}' quantity updated in your cart.")
     else:
         messages.success(request, f"'{track.title}' added to your cart.")
-    
+
     UserActivity.objects.create(
         user=request.user,
         activity_type='add_to_cart',
@@ -144,7 +144,7 @@ def search(request):
     sort = request.GET.get('sort', '')
     # Add a way to add to cart from search results, if desired.
     # For now, cart actions are separate.
-    
+
     all_results = [] # Will hold combined results
 
     if query:
@@ -167,9 +167,9 @@ def search(request):
             })
 
         # Apple Music Search
-        from .applemusic import search_apple_music 
+        from .applemusic import search_apple_music
         # Default storefront 'us', types include 'songs' and 'artists'
-        apple_music_search_output = search_apple_music(query, types=['songs']) 
+        apple_music_search_output = search_apple_music(query, types=['songs'])
         applemusic_songs = apple_music_search_output.get('songs', [])
 
         for song_data in applemusic_songs:
@@ -185,7 +185,7 @@ def search(request):
                 'popularity': None, # Not directly available from AM search in this format
                 'release_date': None, # Not directly available from AM search in this format
             })
-        
+
         # Placeholder for JioSaavn search results integration (if enabled)
         # jiosaavn_tracks = search_jiosaavn(query) # Assuming it returns a list of dicts
         # for track_data in jiosaavn_tracks:
@@ -219,7 +219,7 @@ def search(request):
         'tracks': all_results, # Use the combined list
         'sort': sort # Keep for UI, though backend effect is limited now
     }
-    
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         # AJAX response needs to handle the new structure of 'all_results'
         # Ensure artists is a list of strings for consistency if some sources return string and others list
@@ -228,7 +228,7 @@ def search(request):
             artists_display = track_item.get('artists')
             if isinstance(artists_display, list):
                 artists_display = ", ".join(artists_display)
-            
+
             ajax_tracks.append({
                 'id': track_item.get('id'),
                 'title': track_item.get('title'),
@@ -341,18 +341,18 @@ def playlist_detail(request, playlist_id):
 
     if not playlist_obj:
         return redirect('dashboard')
-    
+
     # Re-fetch with prefetch for template rendering from DB
     final_playlist_obj = Playlist.objects.prefetch_related(
-        'tracks__artists', 
-        'tracks__genres', 
+        'tracks__artists',
+        'tracks__genres',
         # 'tracks__album__artist' # Add if album/artist details of tracks are shown in playlist_detail.html
         # The template music/playlist_detail.html iterates playlist.tracks.all and shows:
         # track.title, track.artists_names, track.album, track.duration, track.image_url
         # So, 'tracks__album' could be useful if album name is directly from track.album.name
         # 'tracks__album__artist' is not directly used.
         # Let's add 'tracks__album' for album name.
-        'tracks__album' 
+        'tracks__album'
     ).get(spotify_id=playlist_id, user=request.user)
 
 

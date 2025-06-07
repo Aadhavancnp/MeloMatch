@@ -13,11 +13,11 @@
 
     <p>Your payment was cancelled or could not be processed at this time.</p>
     <p>Your order status has been marked as 'failed'. If you believe this is an error, please contact support or try placing the order again.</p>
-    
+
     {% if order %}
         <p>Order ID: {{ order.id }}</p>
     {% endif %}
-    
+
     <a href="{% url 'view_cart' %}" class="btn btn-warning">Back to Cart</a>
     <a href="{% url 'search' %}" class="btn btn-primary">Continue Shopping</a>
 </div>

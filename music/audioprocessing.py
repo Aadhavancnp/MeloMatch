@@ -44,9 +44,9 @@ def download_audio_from_youtube_url(youtube_url, output_filename_stem, base_outp
     """
     if base_output_dir is None:
         base_output_dir = os.path.join(settings.MEDIA_ROOT, 'temp_audio_downloads') # Temporary holding spot
-    
+
     os.makedirs(base_output_dir, exist_ok=True)
-    
+
     # output_path_template will include the determined extension by yt-dlp
     output_path_template = os.path.join(base_output_dir, f"{output_filename_stem}.%(ext)s")
 
@@ -71,7 +71,7 @@ def download_audio_from_youtube_url(youtube_url, output_filename_stem, base_outp
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(youtube_url, download=True)
             actual_extension = info_dict.get('ext', 'mp3') # Default to mp3 if not found
-            
+
             # yt-dlp might save with a different extension than requested in preferredcodec
             # if the original is already good or conversion fails.
             # We need to find the actual downloaded file.
@@ -79,7 +79,7 @@ def download_audio_from_youtube_url(youtube_url, output_filename_stem, base_outp
             # For simplicity, let's assume yt-dlp converts to mp3 due to postprocessor.
             # If not, this part needs to be more robust to find the actual file.
             downloaded_file_path = os.path.join(base_output_dir, f"{output_filename_stem}.{actual_extension}")
-            
+
             if not os.path.exists(downloaded_file_path):
                  # Try common audio extensions if the exact one isn't found (e.g. if preferredcodec wasn't met)
                 possible_extensions = ['mp3', 'm4a', 'webm', 'ogg', 'wav']
@@ -123,15 +123,15 @@ def extract_30_second_clip(input_audio_path, output_clip_path_stem, desired_form
         # Ensure output directory exists
         output_dir = os.path.dirname(output_clip_path_stem)
         os.makedirs(output_dir, exist_ok=True)
-        
+
         final_output_path = f"{output_clip_path_stem}.{desired_format}"
 
         audio = AudioSegment.from_file(input_audio_path)
         duration_ms = len(audio)
-        
+
         # Determine start and end points for the 30-second clip
         clip_duration_ms = 30 * 1000
-        
+
         if duration_ms <= clip_duration_ms:
             # If track is shorter than or equal to 30s, take the whole track
             start_ms = 0
@@ -147,7 +147,7 @@ def extract_30_second_clip(input_audio_path, output_clip_path_stem, desired_form
             end_ms = start_ms + clip_duration_ms
 
         extracted_clip = audio[start_ms:end_ms]
-        
+
         # Export the clip
         extracted_clip.export(final_output_path, format=desired_format)
         logger.info(f"Successfully extracted {int((end_ms - start_ms)/1000)}s clip to '{final_output_path}'")

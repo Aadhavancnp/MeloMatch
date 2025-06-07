@@ -124,7 +124,7 @@ class LocalAudioClip(models.Model):
     # Using ForeignKey for now for flexibility (e.g., multiple versions/sources if ever needed),
     # but application logic should enforce one primary local clip if that's the intent.
     track = models.ForeignKey(Track, related_name='local_clips', on_delete=models.CASCADE)
-    audio_file = models.FileField(upload_to='track_previews/') 
+    audio_file = models.FileField(upload_to='track_previews/')
     source_url = models.URLField(max_length=1024, blank=True, null=True) # Original URL if downloaded
     source_type = models.CharField(max_length=50, blank=True, null=True) # e.g., 'youtube', 'soundcloud_fallback', 'spotify_preview_dl'
     duration = models.IntegerField(help_text="Duration in seconds", blank=True, null=True) # e.g., 30 for a 30-second preview
