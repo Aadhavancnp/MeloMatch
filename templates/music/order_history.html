@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Order History{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Order History</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if orders %}
+        {% for order in orders %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    Order ID: {{ order.id }} - Placed on: {{ order.created_at|date:"F j, Y, g:i a" }} - Status: <span class="font-weight-bold">{{ order.get_status_display }}</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Total: ${{ order.total_price }}</h5>
+                    <h6>Items:</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for item in order.items.all %}
+                            <li class="list-group-item">
+                                {{ item.track.title }} ({{ item.quantity }} x ${{ item.price }})
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>You have no past orders.</p>
+        <a href="{% url 'search' %}" class="btn btn-primary">Start Shopping</a>
+    {% endif %}
+</div>
+{% endblock %}

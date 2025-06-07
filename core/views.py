@@ -8,10 +8,34 @@ from django.views.decorators.cache import cache_page
 from core.forms import ContactForm
 from core.models import FAQItem
 from music.models import Playlist, Track
-from music.spotify import get_recommendations, get_spotify_client, get_user_playlists, get_user_top_tracks, \
+# Updated import for Spotify service
+from services.spotify_service.client import get_recommendations, get_spotify_client, get_user_playlists, get_user_top_tracks, \
     get_user_recently_played, calculate_listening_time, get_favorite_genre
 from subscription.models import Subscription
 from users.models import UserActivity
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+import logging # For logging in trigger function
+
+logger = logging.getLogger(__name__)
+
+def trigger_recommendation_notification(user, message, recommendations_summary=None):
+    try:
+        channel_layer = get_channel_layer()
+        group_name = f"user_{user.id}_recommendations"
+
+        logger.info(f"Triggering recommendation notification for group {group_name}")
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "recommendation.notification", # This will call recommendation_notification method in consumer
+                "message": message,
+                "recommendations_summary": recommendations_summary or []
+            }
+        )
+        logger.info(f"Successfully sent notification to group {group_name}")
+    except Exception as e:
+        logger.error(f"Error triggering recommendation notification for user {user.id}: {str(e)}")
 
 
 def home(request):
@@ -119,4 +143,21 @@ def dashboard(request):
         'favorite_genre': favorite_genre,
         'playlist_count': len(user_playlists),
     }
+
+    # PoC: Trigger a notification when the dashboard is loaded for an authenticated user
+    if request.user.is_authenticated:
+        # Create a dummy summary for the notification
+        dummy_recs_summary = []
+        if recommended_tracks: # Use actual recommended tracks if available
+            for track in recommended_tracks[:2]: # Send summary of first 2
+                 dummy_recs_summary.append({'title': track.title, 'artist': track.artists.first().name if track.artists.exists() else 'Unknown Artist'})
+        else: # Fallback dummy data if no recommendations yet
+            dummy_recs_summary = [{'title': 'Awesome New Song'}, {'title': 'Another Great Hit'}]
+
+        trigger_recommendation_notification(
+            request.user,
+            "Fresh recommendations just for you!",
+            recommendations_summary=dummy_recs_summary
+        )
+
     return render(request, 'core/dashboard.html', context)

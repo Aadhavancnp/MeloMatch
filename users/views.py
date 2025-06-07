@@ -4,11 +4,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 
-from music.spotify import get_spotify_client
+from services.spotify_service.client import get_spotify_client # Updated import
 from .forms import SignUpForm, LoginForm, UserProfileForm, UserPreferencesForm
 from .models import UserActivity
+from ratelimit.decorators import ratelimit
 
 
+@ratelimit(key='ip', rate='10/h', block=True) # 10 signups per hour from the same IP
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST, request.FILES)
@@ -27,6 +29,7 @@ def signup(request):
     return render(request, 'users/signup.html', {'form': form})
 
 
+@ratelimit(key='ip', rate='10/m', block=True) # 10 login attempts per minute from the same IP
 def user_login(request):
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)

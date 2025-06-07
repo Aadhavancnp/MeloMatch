@@ -22,6 +22,12 @@ class CustomUser(AbstractUser):
     theme_preference = models.CharField(max_length=10, choices=THEME_CHOICES, default='system')
     last_active = models.DateTimeField(default=timezone.now)
 
+    # Spotify OAuth Token Fields
+    spotify_access_token = models.CharField(max_length=255, blank=True, null=True)
+    spotify_refresh_token = models.CharField(max_length=255, blank=True, null=True)
+    spotify_token_expiry = models.DateTimeField(blank=True, null=True)
+    spotify_scope = models.TextField(blank=True, null=True) # To store the scopes granted
+
     class Meta:
         indexes = [
             models.Index(fields=['username', 'email']),
@@ -53,7 +59,13 @@ class UserActivity(models.Model):
     )
     activity_type = models.CharField(max_length=50, db_index=True)
     description = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True) # Individual index is good
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'timestamp']), # Composite index for user-specific activity ordering
+        ]
+        ordering = ['-timestamp'] # Default ordering
 
     def __str__(self):
         return f"{self.user.username} - {self.activity_type} - {self.timestamp}"
