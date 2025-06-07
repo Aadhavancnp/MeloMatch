@@ -4,7 +4,7 @@ from django.db import models
 class FAQItem(models.Model):
     question = models.CharField(max_length=255)
     answer = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True) # Added db_index
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -16,10 +16,10 @@ class FAQItem(models.Model):
 
 class Contact(models.Model):
     name = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(db_index=True) # Added db_index
     subject = models.CharField(max_length=200)
     message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True) # Added db_index
 
     def __str__(self):
         return f"{self.subject} - {self.name}"

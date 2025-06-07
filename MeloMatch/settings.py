@@ -45,9 +45,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -67,9 +69,16 @@ SPOTIFY_SCOPE = os.environ.get('SPOTIFY_SCOPE')
 LOGIN_URL = '/users/login/'
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv('REDIS_URL', "redis://127.0.0.1:6379/1"), # DB 1 for caching
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Optional: Add connection pooling, timeouts, etc.
+            # "CONNECTION_POOL_KWARGS": {"max_connections": 50},
+            # "SOCKET_CONNECT_TIMEOUT": 5,  # seconds
+            # "SOCKET_TIMEOUT": 5,  # seconds
+        }
     }
 }
 
@@ -93,16 +102,34 @@ WSGI_APPLICATION = 'MeloMatch.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+database_url = os.getenv("DATABASE_URL")
+db_name = ''
+db_user = ''
+db_password = ''
+db_host = ''
+db_port = 5432
+
+if database_url:
+    tmpPostgres = urlparse(database_url)
+    db_name = str(tmpPostgres.path or '').lstrip('/')
+    db_user = tmpPostgres.username
+    db_password = tmpPostgres.password
+    db_host = tmpPostgres.hostname
+    if tmpPostgres.port:
+        db_port = tmpPostgres.port
+
+# If db_name is still empty, provide a dummy name for makemigrations
+if not db_name:
+    db_name = "dummy_db_for_migrations"
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
+        'NAME': db_name,
+        'USER': db_user,
+        'PASSWORD': db_password,
+        'HOST': db_host,
+        'PORT': db_port,
     }
 }
 
@@ -150,3 +177,59 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Stripe API Keys
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+
+INTERNAL_IPS = ['127.0.0.1']
+
+# Session Engine Configuration (to use Redis cache for sessions)
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# Optional: To use a specific cache alias other than 'default' for sessions
+# SESSION_CACHE_ALIAS = 'sessions'
+
+from celery.schedules import crontab # For Celery Beat scheduling
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+CELERY_BEAT_SCHEDULE = {
+    'sync-all-users-spotify-data-daily': {
+        'task': 'services.spotify_service.tasks.sync_all_users_spotify_data',
+        'schedule': 3600.0 * 24, # Run once a day (every 24 hours)
+        # Alternatively, use crontab for more specific scheduling:
+        # 'schedule': crontab(hour=3, minute=0),  # Every day at 3 AM
+    },
+}
+
+# Email Configuration (Console backend for development)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@melomatch.example.com')
+# For production, you would use a real email backend like:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = os.getenv('EMAIL_HOST')
+# EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+# EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+
+# ASGI & Channels Configuration
+ASGI_APPLICATION = 'MeloMatch.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            # Using a different Redis DB (e.g., /2) for Channels is good practice
+            # if Redis is also used for caching (e.g., on /1) and Celery (e.g., on /0)
+            "hosts": [os.getenv('REDIS_URL_CHANNELS', 'redis://127.0.0.1:6379/2')],
+        },
+    },
+}
