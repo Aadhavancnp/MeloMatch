@@ -12,4 +12,12 @@ urlpatterns = [
     path('playlist/<str:playlist_id>/delete/', views.delete_playlist, name='delete_playlist'),
     path('playlist/<str:playlist_id>/delete-track/<str:track_id>/', views.delete_track, name='delete_track'),
 
+    # Cart URLs
+    path('cart/', views.view_cart, name='view_cart'),
+    path('cart/add/<str:track_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
+
+    # Order URLs
+    path('order/place/', views.place_order, name='place_order'),
+    path('order/history/', views.order_history, name='order_history'),
 ]

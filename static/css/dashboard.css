@@ -1,134 +1,449 @@
-.dashboard-container {
-    padding-top: 2rem;
-    /*background-color: #f8f9fa;*/
-    min-height: calc(100vh - 56px);
+/* static/css/dashboard.css */
+
+:root {
+    --dashboard-bg: #f4f7f6; /* Light grayish background */
+    --card-bg: #ffffff;
+    --card-border-radius: 12px;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --accent-color: #3498db; /* A calm blue */
+    --primary-brand-color: #2575fc; /* From old welcome section */
+    --secondary-brand-color: #6a11cb; /* From old welcome section */
 }
 
-.main-content {
-    padding-right: 2rem;
+[data-bs-theme="dark"] {
+    --dashboard-bg: #1a1a1a; /* Dark background */
+    --card-bg: #2c2c2c; /* Darker card background */
+    --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    --text-primary: #ecf0f1;
+    --text-secondary: #bdc3c7;
+    --accent-color: #5dade2;
 }
 
-.sidebar {
-    padding-left: 2rem;
+body {
+    font-family: 'Inter', sans-serif; /* Assuming Inter is available via base.html or imported */
 }
 
-.welcome-section .card {
-    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-    color: white;
+.dashboard-v2-container {
+    background-color: var(--dashboard-bg);
+    color: var(--text-primary);
+}
+
+/* Hero Section */
+.hero-section .card {
     border: none;
-    border-radius: 15px;
+    border-radius: var(--card-border-radius);
+    overflow: hidden; /* Ensures the img-overlay respects border radius */
+    min-height: 300px; /* Ensure a minimum height */
 }
 
-.profile-picture {
-    width: 80px;
-    height: 80px;
+.hero-banner-img {
     object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid white;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    filter: brightness(0.5) contrast(0.9); /* Darken and slightly de-saturate for text visibility */
 }
 
-.profile-picture-placeholder {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
+.hero-section .card-img-overlay {
+    position: relative; /* To allow content to sit on top of the pseudo-element or filtered image */
+    z-index: 1;
+    background: linear-gradient(45deg, rgba(var(--secondary-brand-color-rgb, 106), var(--primary-brand-color-rgb, 37), var(--primary-brand-color-rgb, 252), 0.5), rgba(var(--secondary-brand-color-rgb, 37), var(--primary-brand-color-rgb, 117), var(--primary-brand-color-rgb, 252), 0.85));
+    /* Fallback if CSS variables for RGB are not set, this will be a bit off */
+    /* background: linear-gradient(45deg, rgba(106, 37, 252, 0.5), rgba(37, 117, 252, 0.85)); */
+}
+/* Define RGB versions of brand colors if not already available */
+:root {
+    --primary-brand-color-rgb: 37, 117, 252;
+    --secondary-brand-color-rgb: 106, 37, 252;
+}
+
+
+.hero-profile-container .profile-picture {
+    width: 70px;
+    height: 70px;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+}
+
+.hero-profile-container .profile-picture-placeholder {
+    width: 70px;
+    height: 70px;
+    background-color: rgba(255, 255, 255, 0.3);
+    font-size: 1.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    font-weight: bold;
 }
 
-.welcome-title {
-    font-size: 1.8rem;
-    font-weight: bold;
-    margin-bottom: 0.25rem;
+.hero-title {
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-.welcome-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.8;
+.hero-subtitle {
+    opacity: 0.9;
 }
 
+.hero-cta-btn {
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    transition: transform 0.2s ease-out;
+}
+.hero-cta-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* General Section Styling */
 .section-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    /*color: #333;*/
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
 }
 
-.track-card, .playlist-card {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    border: none;
+/* Horizontal Scroll Container */
+.horizontal-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 1rem; /* Space for scrollbar if it appears */
+    gap: 1rem; /* Spacing between cards */
+}
+.horizontal-scroll-container::-webkit-scrollbar {
+    height: 8px;
+}
+.horizontal-scroll-container::-webkit-scrollbar-thumb {
+    background-color: #bdc3c7;
     border-radius: 10px;
-    overflow: hidden;
+}
+[data-bs-theme="dark"] .horizontal-scroll-container::-webkit-scrollbar-thumb {
+    background-color: #555;
 }
 
-.track-card:hover, .playlist-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
 
-.track-card .card-img-top, .playlist-card .card-img-top {
-    height: 180px;
+/* Jump Back In Card */
+.jump-back-card {
+    min-width: 280px; /* Fixed width for items in horizontal scroll */
+    max-width: 280px;
+    background-color: var(--card-bg);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.jump-back-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+[data-bs-theme="dark"] .jump-back-card:hover {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+.jump-back-card .card-img-top {
+    border-top-left-radius: var(--card-border-radius);
+    border-top-right-radius: var(--card-border-radius);
+    height: 150px;
     object-fit: cover;
 }
-
-[data-bs-theme="dark"] img#playlist_icon {
-    filter: none !important;
+.jump-back-card.placeholder-card {
+    background-color: var(--dashboard-bg); /* Blend with background */
+    border: 2px dashed var(--text-secondary);
+    box-shadow: none;
+}
+.jump-back-card.placeholder-card:hover {
+    border-color: var(--accent-color);
+    transform: none; /* No lift for placeholder */
 }
 
-.card {
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+/* Discovery Card (Made For You) */
+.discovery-card {
+    background-color: var(--card-bg);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+.discovery-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+[data-bs-theme="dark"] .discovery-card:hover {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+.discovery-card .card-img-top {
+    height: 180px; /* Or use aspect-ratio if images vary */
+    object-fit: cover;
+    border-top-left-radius: var(--card-border-radius);
+    border-top-right-radius: var(--card-border-radius);
+}
+.discovery-card .card-body {
+    flex-grow: 1;
+}
+.discovery-card .card-footer {
+    padding-top: 0.5rem;
+    padding-bottom: 0.75rem;
+}
+.discovery-card .btn-outline-light { /* Assuming dark cards, light outline. Adjust if card bg changes */
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+.discovery-card .btn-outline-light:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+[data-bs-theme="dark"] .discovery-card .btn-outline-light {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+[data-bs-theme="dark"] .discovery-card .btn-outline-light:hover {
+    background-color: var(--accent-color);
+    color: var(--text-primary);
 }
 
-.card-title {
-    font-weight: bold;
-    /*color: #333;*/
+/* Placeholder for Discovery Card Image */
+.discovery-card.placeholder-content .card-img-top-placeholder {
+    height: 180px;
+    background-color: #e9ecef;
+    border-top-left-radius: var(--card-border-radius);
+    border-top-right-radius: var(--card-border-radius);
+}
+[data-bs-theme="dark"] .discovery-card.placeholder-content .card-img-top-placeholder {
+    background-color: #3a3f44;
 }
 
-.stats-section .list-group-item {
+
+/* Library Card & Insights Card */
+.library-card, .insights-card {
+    background-color: var(--card-bg);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    height: 100%; /* Make them fill the column height if desired */
+}
+
+.playlist-list-condensed .list-group-item {
     background-color: transparent;
-    border: none;
-    padding: 0.5rem 0;
+    border-left: 0;
+    border-right: 0;
+    border-top: 1px solid var(--dashboard-bg); /* Subtle separator */
+    padding: 0.75rem 0.5rem;
+    transition: background-color 0.15s ease-in-out;
+}
+.playlist-list-condensed .list-group-item:first-child {
+    border-top: 0;
+}
+.playlist-list-condensed .list-group-item:hover {
+    background-color: rgba(0,0,0,0.03);
+}
+[data-bs-theme="dark"] .playlist-list-condensed .list-group-item {
+    border-top: 1px solid #3a3f44;
+}
+[data-bs-theme="dark"] .playlist-list-condensed .list-group-item:hover {
+    background-color: rgba(255,255,255,0.05);
 }
 
-.activity-list {
-    max-height: 300px;
-    overflow-y: auto;
+
+.insight-item {
+    /* Add specific styling if needed, for now using card padding */
+}
+.insight-item i {
+    width: 20px; /* Align icons */
 }
 
-.activity-list .list-group-item {
-    border: none;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #e9ecef;
+.activity-list-condensed li {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.activity-list-condensed li .text-muted {
+    font-size: 0.8rem;
 }
 
-.activity-list .list-group-item:last-child {
-    border-bottom: none;
+/* Subscription Status Section (Simplified) */
+.subscription-status-section .card {
+    box-shadow: none;
+    border: 1px solid var(--dashboard-bg);
+}
+[data-bs-theme="dark"] .subscription-status-section .card {
+    background-color: var(--card-bg) !important; /* Override .bg-light for dark theme */
+    border: 1px solid #3a3f44;
+}
+[data-bs-theme="dark"] .subscription-status-section a {
+    color: var(--accent-color);
 }
 
-.subscription-info p {
-    margin-bottom: 0.5rem;
+
+/* Modal Styling (Optional - can inherit Bootstrap defaults) */
+#addToPlaylistModal .modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-radius: var(--card-border-radius);
+}
+#addToPlaylistModal .modal-header,
+#addToPlaylistModal .modal-footer {
+    border-color: var(--dashboard-bg);
+}
+[data-bs-theme="dark"] #addToPlaylistModal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-}
 
-.btn-success:hover {
-    background-color: #218838;
-    border-color: #218838;
-}
-
-@media (max-width: 991.98px) {
-    .main-content, .sidebar {
-        padding-right: 15px;
-        padding-left: 15px;
+/* Responsiveness */
+@media (max-width: 991.98px) { /* lg breakpoint */
+    .library-insights-section .col-lg-7,
+    .library-insights-section .col-lg-5 {
+        margin-bottom: 2rem; /* Add space when they stack */
+    }
+    .library-insights-section .col-lg-5:last-child {
+        margin-bottom: 0;
+    }
+    .hero-section .card-img-overlay {
+        padding: 1.5rem !important;
+    }
+    .hero-title {
+        font-size: 1.8rem;
+    }
+    .hero-subtitle {
+        font-size: 1rem;
     }
 }
 
+@media (max-width: 767.98px) { /* md breakpoint */
+    .section-title {
+        font-size: 1.5rem;
+    }
+    .jump-back-card {
+        min-width: 240px;
+        max-width: 240px;
+    }
+    .discovery-card .card-img-top {
+        height: 150px;
+    }
+    .hero-profile-container .profile-picture,
+    .hero-profile-container .profile-picture-placeholder {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    .hero-title {
+        font-size: 1.5rem;
+    }
+    .hero-subtitle {
+        font-size: 0.9rem;
+    }
+     .hero-cta-btn {
+        font-size: 0.9rem;
+        padding: 0.6rem 1.2rem;
+    }
+}
+
+@media (max-width: 575.98px) { /* sm breakpoint */
+    .jump-back-card {
+        min-width: 200px;
+        max-width: 200px;
+    }
+     .dashboard-v2-container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+/* Add to Playlist Button on Track Cards */
+/* (This was in the original dashboard.html for recommendations, re-add if used in new discovery cards) */
+.discovery-card .btn-add-playlist {
+    /* Style as needed, e.g. make it an icon button */
+    /* For example: */
+    /* background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; */
+}
+.discovery-card .btn-add-playlist:hover {
+    /* background: rgba(255,255,255,0.2); */
+}
+```
+
+This CSS provides:
+*   **CSS Variables:** For easier theming (including basic dark mode support via `[data-bs-theme="dark"]`).
+*   **Hero Section:** Styling for the new hero banner, including image treatment and text overlay.
+*   **Horizontal Scroll:** Basic styling for the "Jump Back In" section.
+*   **Card Styling:** Updated styles for `.discovery-card`, `.jump-back-card`, `.library-card`, `.insights-card` with consistent border-radius, shadows, and hover effects.
+*   **Placeholder Styling:** Basic visual cues for placeholder content.
+*   **List Styling:** Condensed lists for playlists and activities.
+*   **Insights Styling:** Basic structure for insight items.
+*   **Responsiveness:** Media queries to adjust layout and typography on smaller screens.
+
+**3. JavaScript (Minor Adjustments):**
+The `dashboard.html` from the previous step includes a basic JavaScript snippet for handling the "Add to Playlist" modal.
+```html
+{% block extra_js %}
+    <script>
+        let trackIdToAddToPlaylist = null;
+
+        function addToPlaylist(trackId) {
+            trackIdToAddToPlaylist = trackId;
+            document.getElementById('trackToAddId').value = trackId;
+            var addToPlaylistModal = new bootstrap.Modal(document.getElementById('addToPlaylistModal'));
+            addToPlaylistModal.show();
+        }
+
+        function confirmAddToPlaylist() {
+            const playlistSelect = document.getElementById('playlistSelect');
+            const selectedPlaylistId = playlistSelect.value;
+            const trackId = document.getElementById('trackToAddId').value;
+
+            if (!selectedPlaylistId || selectedPlaylistId === "") { // Check for empty value if you have a placeholder option
+                alert("Please select a playlist.");
+                return;
+            }
+            if (!trackId) {
+                alert("Error: Track ID not found.");
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{% url 'add_to_playlist' %}";
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}';
+
+            // ... (rest of the form submission logic) ...
+
+            document.body.appendChild(form);
+            form.submit();
+
+            var currentModal = bootstrap.Modal.getInstance(document.getElementById('addToPlaylistModal'));
+            if (currentModal) {
+                currentModal.hide();
+            }
+        }
+    </script>
+{% endblock %}
+```
+This existing JavaScript for the modal should still function with the new HTML structure, assuming the modal's HTML itself was retained (which it was in the previous `dashboard.html` overwrite) and the `addToPlaylist('{{ track.spotify_id }}')` calls are present on the new "Discovery" cards if that functionality is desired there. The new HTML structure for "Made For You" (Discovery cards) does not currently have an "Add to Playlist" button, but the modal and JS are there if one were to be added. For now, the JS is mostly for the existing modal which is fine. No new JS is strictly required by the conceptual redesign's layout changes.
+
+**4. Responsiveness (Analysis):**
+*   The new HTML structure uses Bootstrap's grid (`row`, `col-lg-7`, `col-lg-5`, `row-cols-*`) which provides a good foundation for responsiveness.
+*   The CSS includes media queries (`@media (max-width: ...`) to adjust padding, font sizes, and potentially hide/show elements or change flex directions for smaller screens.
+*   The "Jump Back In" section uses `overflow-x: auto` for horizontal scrolling, which is inherently responsive for handling many items.
+*   The "Made For You" section uses `row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4`, making the grid of discovery cards adapt to different screen widths by changing the number of columns.
+*   The "Library & Insights" section uses `col-lg-7` and `col-lg-5`, which will stack vertically on screens smaller than the `lg` breakpoint (992px). Spacing (`mb-5` on sections, `g-4` for gutters) helps maintain readability when stacked.
+*   Hero section text and image sizes are adjusted slightly in media queries.
+
+The design should be reasonably responsive. Testing in a real browser would be needed to fine-tune breakpoints and visual appeal across all devices.
+
+**Summary of Changes for this Turn:**
+*   The `templates/core/dashboard.html` was overwritten in the previous turn with the new structure.
+*   This turn focused on overwriting `static/css/dashboard.css` with styles that match the new HTML structure and conceptual redesign.
+*   Minor review of existing JavaScript for the "Add to Playlist" modal confirmed it's largely compatible if the buttons were to be re-added to new cards; no new JS was implemented.
+*   Analyzed the responsiveness based on the Bootstrap grid and custom CSS.
+
+The implementation of the new dashboard structure and base styling is complete.
+I will now submit the report.
