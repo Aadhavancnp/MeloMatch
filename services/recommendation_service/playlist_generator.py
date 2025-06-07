@@ -145,50 +145,74 @@ def generate_mood_playlist(user, mood_or_activity_key, num_tracks=20):
     target_features_for_api = {}
     for key, value in profile.items():
         if key.startswith(("target_", "min_", "max_")) and key != "seed_genres":
-            # Spotify API expects BPM for tempo, not normalized 0-1
-            # Our MOOD_ACTIVITY_PROFILES stores BPM directly for min_tempo, target_tempo, max_tempo
             target_features_for_api[key] = value
 
-    logger.info(f"Generating recommendations for {mood_or_activity_key} with seeds: artists={seed_artists_ids}, genres={seed_genres_names}, tracks={seed_tracks_ids} and features: {target_features_for_api}")
+    # Generate cache key for sp.recommendations
+    # Sort seed lists to ensure consistent key order
+    sorted_seed_artists = sorted(seed_artists_ids) if seed_artists_ids else []
+    sorted_seed_genres = sorted(seed_genres_names) if seed_genres_names else []
+    sorted_seed_tracks = sorted(seed_tracks_ids) if seed_tracks_ids else []
+    # Sort target_features_for_api by key for consistent hashing
+    sorted_target_features_str = "_".join(f"{k}:{v}" for k, v in sorted(target_features_for_api.items()))
 
-    try:
-        recommendations = sp.recommendations(
-            seed_artists=seed_artists_ids if seed_artists_ids else None,
-            seed_genres=seed_genres_names if seed_genres_names else None,
-            seed_tracks=seed_tracks_ids if seed_tracks_ids else None,
-            limit=num_tracks,
-            **target_features_for_api
-        )
-    except Exception as e:
-        logger.error(f"Error getting recommendations from Spotify: {str(e)}")
+    recommendation_cache_key_parts = [
+        "spotify_recommendations",
+        mood_or_activity_key,
+        f"artists_{'_'.join(sorted_seed_artists)}",
+        f"genres_{'_'.join(sorted_seed_genres)}",
+        f"tracks_{'_'.join(sorted_seed_tracks)}",
+        f"features_{sorted_target_features_str}",
+        f"limit_{num_tracks}"
+    ]
+    recommendation_cache_key = hashlib.md5("_".join(recommendation_cache_key_parts).encode('utf-8')).hexdigest()
+
+    recommended_track_ids_from_spotify = None
+    cached_recommendations = cache.get(recommendation_cache_key)
+
+    if cached_recommendations:
+        logger.info(f"Using cached Spotify recommendations for {mood_or_activity_key}")
+        recommended_track_ids_from_spotify = cached_recommendations
+    else:
+        logger.info(f"Fetching fresh Spotify recommendations for {mood_or_activity_key} with seeds: artists={seed_artists_ids}, genres={seed_genres_names}, tracks={seed_tracks_ids} and features: {target_features_for_api}")
+        try:
+            recommendations_response = sp.recommendations(
+                seed_artists=seed_artists_ids if seed_artists_ids else None,
+                seed_genres=seed_genres_names if seed_genres_names else None,
+                seed_tracks=seed_tracks_ids if seed_tracks_ids else None,
+                limit=num_tracks,
+                **target_features_for_api
+            )
+            if recommendations_response and recommendations_response.get('tracks'):
+                recommended_track_ids_from_spotify = [track['id'] for track in recommendations_response['tracks'] if track and track.get('id')]
+                cache.set(recommendation_cache_key, recommended_track_ids_from_spotify, timeout=3 * 3600) # Cache for 3 hours
+        except Exception as e:
+            logger.error(f"Error getting recommendations from Spotify: {str(e)}")
+            return []
+
+    if not recommended_track_ids_from_spotify:
+        logger.info(f"No track IDs obtained from Spotify recommendations for {mood_or_activity_key}")
         return []
 
-    # Process recommended tracks
+    # Process recommended tracks: Fetch full details in bulk
     generated_tracks = []
-    if recommendations and recommendations.get('tracks'):
-        for track_data in recommendations['tracks']:
-            if track_data and track_data.get('id'): # Ensure track_data and its id are not None
-                # `get_or_create_track` expects the full Spotify track object.
-                # The recommendation endpoint returns a simplified track object.
-                # We might need to fetch the full track object if `get_or_create_track` needs it,
-                # or adapt `get_or_create_track` if it can handle this simplified structure,
-                # or fetch full track details here.
-                # For now, let's assume `get_or_create_track` can handle it or we fetch full details.
+    full_track_objects_from_spotify = []
+    if recommended_track_ids_from_spotify:
+        try:
+            # Spotify API allows fetching multiple tracks by IDs, up to 50 at a time.
+            # If num_tracks > 50, this would need chunking. Assuming num_tracks <= 50 for now.
+            logger.info(f"Fetching full track details for {len(recommended_track_ids_from_spotify)} recommended track IDs.")
+            full_track_objects_from_spotify = sp.tracks(recommended_track_ids_from_spotify).get('tracks', [])
+        except Exception as e:
+            logger.error(f"Error fetching bulk track details from Spotify: {str(e)}")
+            # Fallback: could try fetching one by one, but that's what we are avoiding.
+            # Or return empty / partially filled list.
 
-                # Option 1: Fetch full track details (safer, but more API calls)
-                try:
-                    full_track_data = sp.track(track_data['id']) # API call
-                    if full_track_data:
-                        track_instance = get_or_create_track(full_track_data, sp)
-                        if track_instance:
-                            generated_tracks.append(track_instance)
-                except Exception as e:
-                    logger.error(f"Error fetching full track details for recommended track {track_data['id']}: {e}")
-
-                # Option 2: Adapt get_or_create_track or ensure it handles simplified objects (current approach of get_or_create_track)
-                # track_instance = get_or_create_track(track_data, sp)
-                # if track_instance:
-                #    generated_tracks.append(track_instance)
+    if full_track_objects_from_spotify:
+        for track_data in full_track_objects_from_spotify:
+            if track_data: # Ensure track_data is not None (can happen if an ID was invalid)
+                track_instance = get_or_create_track(track_data, sp)
+                if track_instance:
+                    generated_tracks.append(track_instance)
 
     logger.info(f"Generated {len(generated_tracks)} tracks for mood/activity: {mood_or_activity_key}")
     return generated_tracks

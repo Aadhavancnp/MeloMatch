@@ -555,15 +555,27 @@ def generate_and_display_mood_playlist(request):
 
         # For now, let's save the generated playlist to the session to pass to the display page.
         # A more robust solution might save it temporarily in DB or cache if it's large.
+        final_tracks_for_template = []
+        if generated_tracks:
+            track_ids_for_prefetch = [t.id for t in generated_tracks if t.id is not None]
+            # Querying with prefetch. Note: This assumes generated_tracks are saved instances with primary keys.
+            # The order might be lost with filter().id__in. If order is critical, alternative needed.
+            # For now, let's assume default ordering from Track model or prefetch is sufficient.
+            # A more robust way to maintain order:
+            prefetched_tracks_dict = {
+                t.id: t for t in Track.objects.filter(id__in=track_ids_for_prefetch).prefetch_related('artists', 'genres')
+            }
+            final_tracks_for_template = [prefetched_tracks_dict.get(tid) for tid in track_ids_for_prefetch if prefetched_tracks_dict.get(tid)]
+
         request.session['generated_mood_playlist'] = {
             'mood': mood_or_activity_key,
-            'track_ids': [track.spotify_id for track in generated_tracks] # Store IDs
+            'track_ids': [track.spotify_id for track in final_tracks_for_template] # Store Spotify IDs
         }
 
         context = {
             'selected_mood': mood_or_activity_key,
-            'generated_tracks': generated_tracks, # List of Track model instances
-            'user_has_spotify_scopes': can_save_to_spotify, # For "Save to Spotify" button
+            'generated_tracks': final_tracks_for_template, # Pass pre-fetched list
+            'user_has_spotify_scopes': can_save_to_spotify,
         }
         return render(request, 'music/mood_playlist_display.html', context)
 

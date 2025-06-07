@@ -1,6 +1,7 @@
 import requests
 import logging
-from django.core.cache import cache
+# from django.core.cache import cache # Will be handled by decorator
+from services.utils import cache_api_call # Import the new decorator
 
 logger = logging.getLogger(__name__)
 
@@ -114,20 +115,14 @@ def _standardize_song_data(song_data):
         'source': 'JioSaavn'
     }
 
-def search_songs(query, page=1, limit=10):
+@cache_api_call(key_prefix="jiosaavn_search_songs", timeout=900) # Cache for 15 minutes
+def search_songs(query, page=1, limit=10): # Decorator will use query, page, limit for key
     """
     Searches for songs on JioSaavn.
     """
-    cache_key = f"jiosaavn_search_songs_query_{query}_page_{page}_limit_{limit}"
-    cached_results = cache.get(cache_key)
-    if cached_results:
-        logger.info(f"Returning cached JioSaavn song search for query: {query}, page: {page}")
-        return cached_results
-
-    logger.info(f"Fetching fresh JioSaavn song search for query: {query}, page: {page}")
     endpoint = "/search/songs"
     params = {'query': query, 'page': page, 'limit': limit}
-    data = _make_request(endpoint, params)
+    data = _make_request(endpoint, params) # _make_request handles actual HTTP and basic error checks
 
     if data and 'results' in data and isinstance(data['results'], list):
         standardized_results = []
