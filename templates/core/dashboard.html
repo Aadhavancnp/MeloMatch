@@ -4,191 +4,495 @@
 {% block title %}Dashboard - MeloMatch{% endblock %}
 
 {% block extra_css %}
+    {# Link to dashboard.css if it still contains relevant custom styles not achievable with Tailwind #}
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
 
 {% block content %}
-    <div class="dashboard-container">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-lg-8 main-content">
-                    <div class="welcome-section mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    {% if user.profile_picture %}
-                                        <img src="{{ user.profile_picture.url }}"
-                                             class="profile-picture rounded-circle"
-                                             alt="{{ user.username }}'s profile picture">
-                                    {% else %}
-                                        <div class="profile-picture-placeholder">
-                                            {{ user.username|make_list|first|upper }}
-                                        </div>
-                                    {% endif %}
-                                    <div class="ms-3 pt-2">
-                                        <h2 class="welcome-title">Welcome back, {{ user.username }}!</h2>
-                                        <p class="welcome-subtitle">Ready to discover new music?</p>
-                                    </div>
-                                </div>
-                            </div>
+<div class="container mx-auto px-4 py-8"> {# Main container for dashboard content #}
+
+    <!-- Welcome Section -->
+    <section class="mb-8 p-6 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+        <div class="flex items-center">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}"
+                     class="w-20 h-20 object-cover rounded-full border-4 border-white shadow-md"
+                     alt="{{ user.username }}'s profile picture">
+            {% else %}
+                <div class="w-20 h-20 rounded-full bg-white bg-opacity-25 text-white flex items-center justify-center text-3xl font-bold shadow-md">
+                    {{ user.username|make_list|first|upper }}
+                </div>
+            {% endif %}
+            <div class="ml-6">
+                <h2 class="text-3xl font-bold">Welcome back, {{ user.username }}!</h2>
+                <p class="text-lg opacity-80">Ready to discover new music?</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recommendations Section -->
+    <section class="mb-8">
+        <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Recommended for You</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for track in recommended_tracks %}
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all hover:shadow-xl">
+                    <img src="{{ track.image_url|default:'https://via.placeholder.com/300/2c3e50/FFFFFF?Text=Track+Art' }}" class="w-full h-48 object-cover" alt="{{ track.title }}">
+                    <div class="p-4">
+                        <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">{{ track.title }}</h5>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">
+                            {{ track.artists.all|join:", " }}
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-500 mb-3 truncate">{{ track.album }}</p>
+                        <div class="flex flex-col space-y-2">
+                            <a href="{% url 'track_detail' track.spotify_id %}"
+                               class="w-full text-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                               View Details
+                            </a>
+                            <button class="w-full text-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    onclick="addToPlaylist('{{ track.spotify_id }}')">
+                                <i class="fa-solid fa-plus mr-1"></i> Add to Playlist
+                            </button>
                         </div>
                     </div>
+                </div>
+            {% empty %}
+                <p class_ ="text-gray-500 dark:text-gray-400 col-span-full">No recommendations available right now. Check back later!</p>
+            {% endfor %}
+        </div>
+    </section>
 
-                    <div class="recommendations-section mb-4">
-                        <h3 class="section-title">Recommended for You</h3>
-                        <div class="row">
-                            {% for track in recommended_tracks %}
-                                <div class="col-md-4 mb-3">
-                                    <div class="card track-card h-100">
-                                        <img src="{{ track.image_url }}" class="card-img-top" alt="{{ track.title }}">
-                                        <div class="card-body d-flex flex-column">
-                                            <h5 class="card-title">{{ track.title }}</h5>
-                                            <p class="card-text">
-                                                {{ track.artists.all|join:", " }}
-                                                <br/>
-                                                <small class="text-muted">{{ track.album }}</small>
-                                            </p>
-                                            <div class="mt-auto">
-                                                <a href="{% url 'track_detail' track.spotify_id %}"
-                                                   class="btn btn-primary btn-sm">View Details</a>
-                                                <button class="btn btn-outline-secondary btn-sm"
-                                                        onclick="addToPlaylist('{{ track.spotify_id }}')">
-                                                    <i class="fa-solid fa-plus"></i> Add to Playlist
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="playlists-section mb-4">
-                        <h3 class="section-title">Your Playlists</h3>
-                        <div class="row">
-                            {% for playlist in user_playlists %}
-                                <div class="col-md-4 mb-3">
-                                    <div class="card playlist-card h-100">
-                                        <img src="{{ playlist.image_url }}" class="card-img-top"
-                                             alt="{{ playlist.name }}">
-                                        <div class="card-body d-flex flex-column">
-                                            <h5 class="card-title">{{ playlist.name }}</h5>
-                                            <p class="card-text">{{ playlist.track_count }} tracks</p>
-                                            <a href="{% url 'playlist_detail' playlist.spotify_id %}"
-                                               class="btn btn-primary btn-sm mt-auto">View Playlist</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% empty %}
-                                <div class="col-12">
-                                    <p class="text-muted">No playlists yet. Start creating your music collections!</p>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        <a href="{% url 'create_playlist' %}" class="btn btn-success mt-3">
-                            <i class="fa-solid fa-plus"></i> Create New Playlist
+    <!-- Your Playlists Section -->
+    <section class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Your Playlists</h3>
+            <a href="{% url 'create_playlist' %}" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <i class="fa-solid fa-plus mr-1"></i> Create New
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for playlist in user_playlists %}
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all hover:shadow-xl">
+                    <img src="{{ playlist.image_url|default:'https://via.placeholder.com/300/343a40/FFFFFF?Text=Playlist+Art' }}" class="w-full h-48 object-cover" alt="{{ playlist.name }}">
+                    <div class="p-4">
+                        <h5 class="text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">{{ playlist.name }}</h5>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ playlist.track_count }} tracks</p>
+                        <a href="{% url 'playlist_detail' playlist.id %}" {# Assuming playlist.id is the DB PK for collaborative playlists #}
+                           class="w-full text-center block px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                           View Playlist
                         </a>
                     </div>
                 </div>
+            {% empty %}
+                <p class="text-gray-500 dark:text-gray-400 col-span-full">No playlists yet. Start creating your music collections!</p>
+            {% endfor %}
+        </div>
+    </section>
 
-                <div class="col-lg-4 sidebar">
-                    <div class="stats-section mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h3 class="card-title">Your Stats</h3>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span><i class="fa-solid fa-clock"></i> Listening Time</span>
-                                        <span class="badge bg-primary rounded-pill">{{ listening_time|floatformat:2 }} hours</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span><i class="fa-solid fa-music"></i> Favorite Genre</span>
-                                        <span class="badge bg-secondary rounded-pill">{{ favorite_genre|default:"Not enough data" }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span><img src="{% static 'img/playlist.svg' %}"
-                                                   style="width: 25px;height: 25px;filter: brightness(0);"
-                                                   id="playlist_icon"
-                                                   alt="Playlist"/> Playlist Count</span>
-                                        <span class="badge bg-success rounded-pill">{{ playlist_count }}</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+    <!-- Combined Stats and Activity Section -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Stats Section -->
+        <div class="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Your Stats</h3>
+            <ul class="space-y-3">
+                <li class="flex justify-between items-center text-sm text-gray-700 dark:text-gray-300">
+                    <span><i class="fa-solid fa-clock mr-2 text-blue-500"></i> Listening Time</span>
+                    <span class="font-semibold px-2 py-1 bg-blue-100 dark:bg-blue-700 text-blue-700 dark:text-blue-100 rounded-full">{{ listening_time|floatformat:2 }} hours</span>
+                </li>
+                <li class="flex justify-between items-center text-sm text-gray-700 dark:text-gray-300">
+                    <span><i class="fa-solid fa-guitar mr-2 text-purple-500"></i> Favorite Genre</span>
+                    <span class="font-semibold px-2 py-1 bg-purple-100 dark:bg-purple-700 text-purple-700 dark:text-purple-100 rounded-full">{{ favorite_genre|default:"N/A" }}</span>
+                </li>
+                <li class="flex justify-between items-center text-sm text-gray-700 dark:text-gray-300">
+                    <span><i class="fa-solid fa-list-music mr-2 text-green-500"></i> Playlist Count</span>
+                    <span class="font-semibold px-2 py-1 bg-green-100 dark:bg-green-700 text-green-700 dark:text-green-100 rounded-full">{{ playlist_count }}</span>
+                </li>
+            </ul>
+            <a href="{% url 'analytics_dashboard' %}" class="mt-4 inline-block px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                View Full Analytics
+            </a>
+        </div>
+
+        <!-- Recent Activity Section -->
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Recent Activity</h3>
+            <ul class="space-y-3 max-h-80 overflow-y-auto">
+                {% for activity in recent_activities %}
+                    <li class="p-3 rounded-md bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                        <p class="text-sm text-gray-800 dark:text-gray-200"><i class="fa-solid fa-history mr-2 text-gray-400"></i> {{ activity.description }}</p>
+                        <small class="text-xs text-gray-500 dark:text-gray-400">{{ activity.timestamp|timesince }} ago</small>
+                    </li>
+                {% empty %}
+                     <li class="text-gray-500 dark:text-gray-400">No recent activity.</li>
+                {% endfor %}
+            </ul>
+            {% if recent_activities %}
+            <a href="{% url 'user_activities' %}" class="mt-4 inline-block px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                View All Activities
+            </a>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Subscription Status Section -->
+    <section class="mb-8">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">Subscription Status</h3>
+            {% if subscription %}
+                <div class="text-sm text-gray-700 dark:text-gray-300">
+                    <p><i class="fa-solid fa-crown mr-2 text-yellow-500"></i> Current Plan:
+                        <strong class="text-gray-900 dark:text-white">{{ subscription.plan.name }}</strong>
+                    </p>
+                    <p><i class="fa-solid fa-calendar-days mr-2 text-gray-500"></i>
+                        Expires: <span class="text-gray-900 dark:text-white">{{ subscription.end_date|date:"M d, Y" }}</span>
+                    </p>
+                </div>
+            {% else %}
+                <p class="text-gray-500 dark:text-gray-400"><i class="fa-solid fa-circle-exclamation mr-2 text-red-500"></i> No active subscription.</p>
+                <a href="{% url 'subscription_plans' %}" class="mt-2 inline-block px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Subscribe Now
+                </a>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Mood/Activity Playlist Generator Section from previous design -->
+    <section class="mood-playlist-generator-section mb-5 py-8 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold text-center text-gray-800 dark:text-gray-200 mb-2">Create Playlist by Vibe</h2>
+        <p class="text-center text-gray-600 dark:text-gray-400 mb-6">Select a mood or activity to generate a personalized playlist.</p>
+        <div class="flex flex-wrap gap-3 justify-center px-4">
+            {% with moods="happy,sad,energetic,chill,workout,focus,party,romance,sleep" %}
+            {% for mood_key in moods.split|split:"," %}
+            <form action="{% url 'mood_playlist_generator' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="mood_or_activity_key" value="{{ mood_key }}">
+                <button type="submit" class="px-6 py-3 rounded-full text-sm font-medium shadow-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2
+                                            bg-purple-500 hover:bg-purple-600 text-white focus:ring-purple-400
+                                            dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-500">
+                    {# Placeholder icon, ideally map mood_key to specific icons #}
+                    <i class="fas fa-music mr-2"></i>
+                    {{ mood_key|capfirst }}
+                </button>
+            </form>
+            {% endfor %}
+            {% endwith %}
+        </div>
+    </section>
+
+    <!-- Friends Playing Section -->
+    <section id="friends-playing-section" class="mb-8">
+        <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">What Your Friends Are Listening To</h3>
+        <div id="friends-activity-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {# Friend activity cards will be inserted here by JavaScript #}
+        </div>
+        <p id="no-friends-activity" class="mt-4 text-gray-500 dark:text-gray-400 hidden">
+            Nothing to show right now. Activity from users you follow will appear here.
+        </p>
+    </section>
+    <!-- End Friends Playing Section -->
+
+</div>
+
+<!-- Add to Playlist Modal (Styling will be basic without Bootstrap JS for show/hide) -->
+<!-- For Tailwind, you'd typically use a library like Alpine.js or Headless UI for modals, or custom JS -->
+<div id="addToPlaylistModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="addToPlaylistModalLabel" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity dark:bg-gray-900 dark:bg-opacity-75" aria-hidden="true"></div>
+        <!-- Modal panel -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-700 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fa-solid fa-plus text-blue-600 dark:text-blue-300"></i>
                     </div>
-
-                    <div class="activity-section mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h3 class="card-title">Recent Activity</h3>
-                                <ul class="list-group list-group-flush activity-list">
-                                    {% for activity in recent_activities %}
-                                        <li class="list-group-item">
-                                            <i class="fa-solid fa-clock-rotate-left"></i> {{ activity.description }}
-                                            <small class="text-muted d-block">{{ activity.timestamp|timesince }}
-                                                ago</small>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                                <a href="{% url 'user_activities' %}" class="btn btn-outline-primary btn-sm mt-3">
-                                    View All Activities
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="subscription-section mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h3 class="card-title">Subscription Status</h3>
-                                {% if subscription %}
-                                    <div class="subscription-info">
-                                        <p><i class="fa-solid fa-crown"></i> Current Plan:
-                                            <strong>{{ subscription.plan.name }}</strong></p>
-                                        <p><i class="fa-solid fa-calendar-days"></i>
-                                            Expires: {{ subscription.end_date }}</p>
-                                    </div>
-                                {% else %}
-                                    <p class="text-muted"><i class="fa-solid fa-circle-exclamation"></i> No active
-                                        subscription</p>
-                                    <a href="{% url 'subscription_plans' %}" class="btn btn-primary btn-sm">Subscribe
-                                        Now</a>
-                                {% endif %}
-                            </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="addToPlaylistModalLabel">Add to Playlist</h3>
+                        <div class="mt-2">
+                            <label for="playlistSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Playlist:</label>
+                            <select id="playlistSelect" name="playlist_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                {% for playlist in user_playlists %}
+                                    <option value="{{ playlist.id }}">{{ playlist.name }}</option> {# Changed to playlist.id for DB PK #}
+                                {% empty %}
+                                    <option value="">No playlists available. Create one first!</option>
+                                {% endfor %}
+                            </select>
+                            {# <input type="hidden" id="trackToAddIdModalInput"> #} <!-- Replaced by JS variable -->
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Add to Playlist Modal -->
-    <div class="modal fade" id="addToPlaylistModal" tabindex="-1" aria-labelledby="addToPlaylistModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addToPlaylistModalLabel">Add to Playlist</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <select id="playlistSelect" class="form-select">
-                        {% for playlist in user_playlists %}
-                            <option value="{{ playlist.spotify_id }}">{{ playlist.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="confirmAddToPlaylist()">Add to Playlist
-                    </button>
-                </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmAddToPlaylistBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                        onclick="confirmAddToPlaylist()">
+                    Add to Playlist
+                </button>
+                <button type="button" id="closeAddToPlaylistModalBtn"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/dashboard.js' %}"></script>
+    {# Removed link to static/js/dashboard.js as it's deleted and modal JS is different now #}
+    <script>
+        // Add to Playlist Modal JS (adapted for Tailwind, basic show/hide)
+        let trackIdToAddToPlaylist = null;
+        const addToPlaylistModal = document.getElementById('addToPlaylistModal');
+        const playlistSelect = document.getElementById('playlistSelect');
+        const confirmBtn = document.getElementById('confirmAddToPlaylistBtn');
+        const cancelBtn = document.getElementById('closeAddToPlaylistModalBtn');
+
+        function openAddToPlaylistModal(trackSpotifyId) {
+            trackIdToAddToPlaylist = trackSpotifyId; // This is Spotify ID
+            if (addToPlaylistModal) {
+                addToPlaylistModal.classList.remove('hidden');
+            }
+        }
+
+        if (cancelBtn && addToPlaylistModal) {
+            cancelBtn.addEventListener('click', () => {
+                addToPlaylistModal.classList.add('hidden');
+            });
+        }
+
+        // Make sure this function is globally available if called by inline onclick
+        window.addToPlaylist = openAddToPlaylistModal;
+
+        function confirmAddToPlaylist() {
+            const selectedPlaylistId = playlistSelect.value; // This is DB Playlist ID
+            const trackSpotifyId = trackIdToAddToPlaylist;
+
+            if (!selectedPlaylistId) {
+                alert("Please select a playlist.");
+                return;
+            }
+            if (!trackSpotifyId) {
+                alert("Error: Track Spotify ID not found.");
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{% url 'add_to_playlist' %}";
+            const csrfTokenInput = document.querySelector('input[name=csrfmiddlewaretoken]'); // Get CSRF from existing form if any, or from base
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : '{{ csrf_token }}';
+
+
+            const hiddenFieldCsrf = document.createElement('input');
+            hiddenFieldCsrf.type = 'hidden';
+            hiddenFieldCsrf.name = 'csrfmiddlewaretoken';
+            hiddenFieldCsrf.value = csrfToken;
+            form.appendChild(hiddenFieldCsrf);
+
+            // The 'add_to_playlist' view expects 'track_id' to be the Spotify ID
+            const hiddenFieldTrackId = document.createElement('input');
+            hiddenFieldTrackId.type = 'hidden';
+            hiddenFieldTrackId.name = 'track_id';
+            hiddenFieldTrackId.value = trackSpotifyId;
+            form.appendChild(hiddenFieldTrackId);
+
+            // And 'playlist_id' to be the DB ID of the playlist (which is what playlistSelect.value now holds)
+            const hiddenFieldPlaylistId = document.createElement('input');
+            hiddenFieldPlaylistId.type = 'hidden';
+            hiddenFieldPlaylistId.name = 'playlist_id';
+            hiddenFieldPlaylistId.value = selectedPlaylistId;
+            form.appendChild(hiddenFieldPlaylistId);
+
+            document.body.appendChild(form);
+            form.submit();
+
+            if (addToPlaylistModal) {
+                addToPlaylistModal.classList.add('hidden');
+            }
+        }
+        // Ensure confirmAddToPlaylist is globally available for the button's onclick
+        window.confirmAddToPlaylist = confirmAddToPlaylist;
+
+
+    // Real-time Recommendation Notification WebSocket (copied from previous base.html)
+    {% if user.is_authenticated %}
+        // Recommendation Socket (existing)
+        const recommendationSocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const recommendationSocketURL = `${recommendationSocketProtocol}//${window.location.host}/ws/recommendations/`;
+        let recommendationSocket;
+
+        function connectRecommendationSocket() {
+            // console.log("Attempting to connect to Recommendation WebSocket...");
+            recommendationSocket = new WebSocket(recommendationSocketURL);
+            recommendationSocket.onopen = function(e) { /* console.log("Recommendation WebSocket connection established."); */ };
+            recommendationSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                // console.log("Data received from Recommendation WebSocket:", data);
+                if (data.type === 'new_recommendation') {
+                    // For now, simple alert. Could be a toast notification.
+                    let notificationMessage = data.message || "You have new recommendations!";
+                    if (data.recommendations_summary && data.recommendations_summary.length > 0) {
+                        notificationMessage += "\nSome recommendations: ";
+                        data.recommendations_summary.forEach(rec => {
+                            notificationMessage += `\n- ${rec.title} by ${rec.artist || 'Unknown Artist'}`;
+                        });
+                    }
+                    // alert(notificationMessage); // Keeping this less intrusive for now
+                    console.info("New recommendation notification received:", notificationMessage);
+                }
+            };
+            recommendationSocket.onclose = function(e) { console.warn('Recommendation WebSocket closed.', e.code, e.reason); };
+            recommendationSocket.onerror = function(err) { console.error('Recommendation WebSocket error:', err); };
+        }
+
+        // Friend Activity Socket (new)
+        const friendActivitySocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const friendActivitySocketURL = `${friendActivitySocketProtocol}//${window.location.host}/ws/friend_activity/`;
+        let friendActivitySocket;
+        const friendsActivityList = document.getElementById('friends-activity-list');
+        const noFriendsActivityMsg = document.getElementById('no-friends-activity');
+
+        function renderFriendActivityCard(activityData) {
+            const defaultProfilePic = "{% static 'media/profile_pics/default.jpg' %}"; // Django static for default
+            const defaultAlbumArt = "{% static 'img/playlist.svg' %}"; // A generic music icon
+
+            const profilePic = activityData.profile_picture_url || defaultProfilePic;
+            const albumArt = activityData.listening_status.album_artwork_url || defaultAlbumArt;
+
+            let statusText = 'listening to';
+            if (activityData.listening_status.status === 'paused') {
+                statusText = 'paused';
+            } else if (activityData.listening_status.status === 'stopped') {
+                // This case might not be sent if we just remove the card.
+                // If sent, it means they explicitly stopped sharing or session ended.
+                statusText = 'stopped listening';
+            }
+
+            return `
+                <div id="friend-activity-${activityData.broadcasting_user.id}"
+                     class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-md flex items-center space-x-3 transition-all duration-300 ease-in-out hover:shadow-lg">
+                    <img src="${profilePic}" alt="${activityData.broadcasting_user.username}" class="h-12 w-12 rounded-full object-cover">
+                    <div class="flex-grow overflow-hidden">
+                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
+                            ${activityData.broadcasting_user.username} ${activityData.listening_status.status === 'playing' ? 'is listening to:' : 'paused:'}
+                        </p>
+                        <p class="text-xs font-medium text-indigo-600 dark:text-indigo-400 truncate" title="${activityData.listening_status.track_title}">
+                            ${activityData.listening_status.track_title || 'Unknown Track'}
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate" title="${activityData.listening_status.artist_names}">
+                            ${activityData.listening_status.artist_names || 'Unknown Artist'}
+                        </p>
+                    </div>
+                    <img src="${albumArt}" alt="Album art" class="h-10 w-10 rounded-md object-cover flex-shrink-0">
+                </div>
+            `;
+        }
+
+        function updateOrRemoveFriendActivity(activityData) {
+            if (!friendsActivityList) return;
+
+            const cardId = `friend-activity-${activityData.broadcasting_user.id}`;
+            let existingCard = document.getElementById(cardId);
+
+            if (activityData.listening_status.status === 'stopped' || !activityData.listening_status.track_spotify_id) {
+                if (existingCard) {
+                    existingCard.remove();
+                }
+            } else {
+                const cardHTML = renderFriendActivityCard(activityData);
+                if (existingCard) {
+                    existingCard.outerHTML = cardHTML; // Replace existing card content
+                } else {
+                    friendsActivityList.insertAdjacentHTML('afterbegin', cardHTML); // Add new card at the top
+                }
+            }
+
+            if (friendsActivityList.children.length === 0) {
+                if(noFriendsActivityMsg) noFriendsActivityMsg.classList.remove('hidden');
+            } else {
+                if(noFriendsActivityMsg) noFriendsActivityMsg.classList.add('hidden');
+            }
+        }
+
+        function fetchInitialFriendsStatus() {
+            // This URL needs to be created in Django (music/urls.py and music/views.py)
+            const initialStatusUrl = "{% url 'api_get_initial_friends_listening_status' %}";
+            fetch(initialStatusUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.friends_statuses && data.friends_statuses.length > 0) {
+                        data.friends_statuses.forEach(activity => {
+                            // Transform data slightly to match WebSocket structure if needed
+                            const wsLikeActivityData = {
+                                broadcasting_user: {
+                                    id: activity.user_id,
+                                    username: activity.username,
+                                    profile_picture_url: activity.profile_picture_url
+                                },
+                                listening_status: activity.status_data
+                            };
+                            updateOrRemoveFriendActivity(wsLikeActivityData);
+                        });
+                    } else {
+                         if (friendsActivityList.children.length === 0 && noFriendsActivityMsg) {
+                             noFriendsActivityMsg.classList.remove('hidden');
+                         }
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching initial friends' listening status:", error);
+                    if (noFriendsActivityMsg) noFriendsActivityMsg.classList.remove('hidden'); // Show message on error too
+                });
+        }
+
+
+        function connectFriendActivitySocket() {
+            // console.log("Attempting to connect to Friend Activity WebSocket...");
+            friendActivitySocket = new WebSocket(friendActivitySocketURL);
+
+            friendActivitySocket.onopen = function(e) {
+                // console.log("Friend Activity WebSocket connection established.");
+                fetchInitialFriendsStatus(); // Load existing statuses once connected
+            };
+
+            friendActivitySocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                // console.log("Data received from Friend Activity WebSocket:", data);
+                if (data.type === 'friend_activity_update') {
+                    updateOrRemoveFriendActivity(data);
+                } else if (data.type === 'connection_established') {
+                    // console.log("Friend Activity Server confirmation: " + data.message);
+                } else {
+                    // console.log("Received unhandled message type from Friend Activity server:", data.type);
+                }
+            };
+
+            friendActivitySocket.onclose = function(e) {
+                console.warn('Friend Activity WebSocket closed.', e.code, e.reason);
+            };
+            friendActivitySocket.onerror = function(err) {
+                console.error('Friend Activity WebSocket error:', err);
+                 if (noFriendsActivityMsg) { // Show message on error too if list is empty
+                    if (friendsActivityList && friendsActivityList.children.length === 0) {
+                        noFriendsActivityMsg.classList.remove('hidden');
+                        noFriendsActivityMsg.textContent = "Could not load friend activity updates.";
+                    }
+                 }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            connectRecommendationSocket(); // Existing
+            connectFriendActivitySocket(); // New
+        });
+    {% endif %}
+    </script>
 {% endblock %}
 

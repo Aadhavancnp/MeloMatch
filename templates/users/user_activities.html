@@ -4,45 +4,66 @@
 {% block title %}Your Activity History - MeloMatch{% endblock %}
 
 {% block extra_css %}
+    {# Minimal custom CSS might be needed for the timeline line if pure Tailwind is too complex #}
     <link rel="stylesheet" href="{% static 'css/user_activities.css' %}">
 {% endblock %}
 
 {% block content %}
-    <div class="activities-container">
-        <div class="container">
-            <h1 class="page-title">Your Activity History</h1>
-            <div class="activity-timeline">
-                {% for activity in activities %}
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            {% if activity.activity_type == 'listen' %}
-                                <i class="fa-solid fa-headphones"></i>
-                            {% elif activity.activity_type == 'search' %}
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            {% elif activity.activity_type == 'view_artist' %}
-                                <img src="{% static 'img/artist.svg' %}"
-                                     alt="Artist"/>
-                            {% elif activity.activity_type == 'add_to_playlist' or activity.activity_type == 'create_playlist' or activity.activity_type == 'view_playlist' %}
-                                <img src="{% static 'img/playlist.svg' %}"
-                                     alt="Playlist"/>
-                            {% else %}
-                                <i class="fa-solid fa-music"></i>
-                            {% endif %}
-                        </div>
-                        <div class="activity-content">
-                            <h3 class="activity-title">{{ activity.activity_type|title }}</h3>
-                            <p class="activity-description">{{ activity.description }}</p>
-                            <span class="activity-time">{{ activity.timestamp|timesince }} ago</span>
-                        </div>
+<div class="min-h-[calc(100vh-8rem)] bg-gray-100 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold text-center text-gray-900 dark:text-white mb-10">
+            Your Activity History
+        </h1>
+
+        <div class="relative space-y-8">
+            <!-- The timeline line (Attempt with Tailwind, might need CSS for perfect centering/height) -->
+            <!-- This is tricky with pure Tailwind. A common approach is a ::before pseudo-element on this container,
+                 which would remain in user_activities.css. For now, let's omit the visual line if it complicates HTML too much,
+                 and focus on item styling. The original CSS had a more robust line. -->
+
+            {% for activity in activities %}
+                <div class="flex items-start space-x-4">
+                    <!-- Icon -->
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-500 dark:bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md">
+                        {% if activity.activity_type == 'listen' %}
+                            <i class="fa-solid fa-headphones"></i>
+                        {% elif activity.activity_type == 'search' %}
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        {% elif activity.activity_type == 'view_artist' %}
+                             <i class="fa-solid fa-user"></i> {# Using FontAwesome icon for consistency #}
+                        {% elif activity.activity_type == 'add_to_playlist' or activity.activity_type == 'create_playlist' or activity.activity_type == 'view_playlist' %}
+                             <i class="fa-solid fa-list-music"></i> {# Using FontAwesome icon #}
+                        {% elif activity.activity_type == 'follow' or activity.activity_type == 'unfollow' %}
+                             <i class="fa-solid fa-user-plus"></i>
+                        {% elif activity.activity_type == 'place_order' %}
+                             <i class="fa-solid fa-credit-card"></i>
+                        {% elif activity.activity_type == 'add_to_cart' or activity.activity_type == 'remove_from_cart' %}
+                            <i class="fa-solid fa-cart-shopping"></i>
+                        {% else %}
+                            <i class="fa-solid fa-bolt"></i> {# Generic activity icon #}
+                        {% endif %}
                     </div>
-                {% empty %}
-                    <div class="no-activity">
-                        <i class="fa-solid fa-music no-activity-icon"></i>
-                        <p>No activities recorded yet. Start exploring music to see your activity here!</p>
+
+                    <!-- Content -->
+                    <div class="flex-grow bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-1">
+                                {{ activity.activity_type|title|replace:"_"," " }}
+                            </h3>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ activity.timestamp|timesince }} ago</span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">{{ activity.description }}</p>
                     </div>
-                {% endfor %}
-            </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-12">
+                    <i class="fa-solid fa-folder-open text-6xl text-gray-400 dark:text-gray-500 mb-4"></i>
+                    <p class="text-xl text-gray-600 dark:text-gray-400">No activities recorded yet.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-300">Start exploring music to see your activity here!</p>
+                </div>
+            {% endfor %}
         </div>
     </div>
+</div>
 {% endblock %}
 

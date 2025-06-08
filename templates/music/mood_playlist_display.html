@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your {{ selected_mood|capfirst|default:"Generated" }} Playlist - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    {# Add any specific CSS for this page if needed, e.g., for very custom elements not covered by Tailwind #}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+        <div class="p-6 sm:p-8">
+            <nav aria-label="breadcrumb" class="mb-6">
+                <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                    <li><a href="{% url 'dashboard' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Dashboard</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li class="font-medium text-gray-700 dark:text-gray-200" aria-current="page">{{ selected_mood|capfirst|default:"Generated" }} Playlist</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                Your "{{ selected_mood|capfirst|default:"Vibe" }}" Playlist
+            </h1>
+
+            {% if messages %}
+                <div class="mb-4 space-y-2">
+                {% for message in messages %}
+                    <div class="p-4 rounded-md
+                        {% if message.tags == 'success' %} bg-green-100 border border-green-400 text-green-700 dark:bg-green-900 dark:text-green-200 dark:border-green-700
+                        {% elif message.tags == 'warning' %} bg-yellow-100 border border-yellow-400 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 dark:border-yellow-700
+                        {% elif message.tags == 'error' %} bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:text-red-200 dark:border-red-700
+                        {% else %} bg-blue-100 border border-blue-400 text-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700 {% endif %}"
+                        role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if generated_tracks %}
+                <p class="text-md text-gray-600 dark:text-gray-300 mb-6">
+                    Here {% if generated_tracks|length == 1 %}is 1 track{% else %}are {{ generated_tracks|length }} tracks{% endif %} generated based on your selection.
+                </p>
+                <ul class="space-y-4">
+                    {% for track in generated_tracks %}
+                        <li class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
+                            <img src="{{ track.image_url|default:'https://via.placeholder.com/80/4A5568/FFFFFF?Text=Art' }}"
+                                 alt="Album art for {{ track.title }}"
+                                 class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md shadow-sm flex-shrink-0">
+                            <div class="ml-4 flex-grow min-w-0"> {# min-w-0 for truncate to work in flex child #}
+                                <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white truncate" title="{{ track.title }}">{{ track.title }}</h2>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 truncate" title="{{ track.artists_names|join:", " }}">
+                                    {{ track.artists_names|join:", " }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 truncate" title="{{ track.album }}">{{ track.album }}</p>
+                            </div>
+                            {% if track.preview_url %}
+                                <audio controls src="{{ track.preview_url }}" preload="none" class="ml-4 h-10 w-full max-w-xs sm:max-w-sm flex-shrink"></audio>
+                            {% else %}
+                                <span class="ml-4 text-xs text-gray-400 dark:text-gray-500 italic">No preview</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {# This "Save to Spotify" section assumes a view named 'save_generated_playlist_to_spotify' exists #}
+                {# and that session contains 'generated_mood_playlist' with 'track_ids' and 'mood' #}
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+                    <h4 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3">Save this Playlist to Spotify</h4>
+                    {% if user_has_spotify_scopes %}
+                        <form action="{% url 'save_generated_playlist_to_spotify' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="playlist_name" value="My {{ selected_mood|capfirst|default:'Vibe' }} Mix - MeloMatch">
+                            <input type="hidden" name="mood_key" value="{{ selected_mood|default:'unknown' }}">
+                            <button type="submit"
+                                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 transition-transform hover:scale-105">
+                                <i class="fab fa-spotify mr-2"></i> Save to Spotify
+                            </button>
+                        </form>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">This will create a new playlist in your Spotify account.</p>
+                    {% else %}
+                        <p class="text-yellow-600 dark:text-yellow-400 text-sm mb-2">
+                            To save playlists to Spotify, MeloMatch needs additional permissions.
+                            You might need to re-authorize with Spotify and grant playlist modification scopes.
+                        </p>
+                        {# This link should ideally point to the Spotify re-auth URL if available #}
+                        <a href="{% url 'spotify_login' %}" {# Assuming 'spotify_login' starts the auth flow #}
+                           class="inline-flex items-center px-4 py-2 border border-indigo-500 dark:border-indigo-400 rounded-md shadow-sm text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-white dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                           Re-authorize Spotify
+                        </a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="text-center py-10">
+                    <i class="fa-solid fa-face-sad-tear text-6xl text-gray-400 dark:text-gray-500 mb-4"></i>
+                    <p class="text-xl text-gray-600 dark:text-gray-400">No tracks were generated for this mood/activity.</p>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-300">Please try again or select a different mood.</p>
+                    <a href="{% url 'dashboard' %}"
+                       class="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                        Back to Dashboard
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

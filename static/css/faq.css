@@ -1,24 +1,16 @@
-.faq-container {
-    padding: 60px 0;
-}
+/* static/css/faq.css */
 
-.accordion-button:not(.collapsed) {
-    background-color: #e7f1ff;
-    color: #0c63e4;
-}
+/* All styles previously here are now handled by Tailwind utility classes
+   applied directly in the templates/core/faq_list.html template,
+   or are related to Bootstrap's accordion which is being replaced.
 
-.accordion-button:focus {
-    box-shadow: none;
-    border-color: rgba(0, 0, 0, .125);
-}
+   - .faq-container (padding): Replaced by Tailwind py-*, px-*.
+   - .accordion-button styles: Bootstrap accordion is replaced by HTML <details>/<summary> or custom Tailwind disclosure.
+   - .input-group-text: Search bar will be restyled with Tailwind.
+   - Media queries: Handled by Tailwind's responsive prefixes.
+*/
 
-.input-group-text {
-    /*background-color: #f8f9fa;*/
-}
-
-@media (max-width: 768px) {
-    .faq-container {
-        padding: 40px 0;
-    }
-}
+/* This file can be kept for any future, highly specific custom styles for this page,
+   such as very custom disclosure styling not achievable with Tailwind directly.
+   For now, it's effectively empty. */
 

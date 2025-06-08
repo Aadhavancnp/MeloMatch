@@ -1,58 +1,19 @@
-.track-info-card {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
-}
+/* static/css/track_detail.css */
 
-.track-info-card:hover {
-    transform: translateY(-5px);
-}
+/* Most styles previously here are now handled by Tailwind utility classes
+   applied directly in the templates/music/track_detail.html template.
 
-.artist-link {
-    color: #007bff;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
+   - .track-info-card hover effects: Replaced by Tailwind hover utilities.
+   - .artist-link styling: Replaced by Tailwind text color and hover utilities.
+   - .progress and .progress-bar: Bootstrap progress bar styling removed.
+     A simplified visual representation will be done with Tailwind in the HTML.
+   - .similar-track-card hover effects: Replaced by Tailwind hover utilities.
+   - .card-title: Styling handled by Tailwind text utilities.
+   - Media queries for .similar-track-card: Handled by Tailwind's responsive prefixes.
+*/
 
-.artist-link:hover {
-    color: #0056b3;
-    text-decoration: underline;
-}
-
-.progress {
-    height: 10px;
-    border-radius: 5px;
-}
-
-.similar-track-card {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
-
-.similar-track-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.card-title {
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-}
-
-@media (max-width: 767.98px) {
-    .similar-track-card .row {
-        flex-direction: column;
-    }
-
-    .similar-track-card .col-4 {
-        width: 100%;
-    }
-
-    .similar-track-card .col-8 {
-        width: 100%;
-    }
-
-    .similar-track-card img {
-        height: 200px;
-        object-fit: cover;
-    }
-}
+/* This file can be kept for any future, highly specific custom styles
+   for the track detail page that cannot be easily achieved with Tailwind utilities.
+   For now, it can be left empty or with minimal specific styles if any are identified during migration.
+*/
 

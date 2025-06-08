@@ -4,64 +4,69 @@
 {% block title %}About Us - MeloMatch{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/about.css' %}">
+    <link rel="stylesheet" href="{% static 'css/about.css' %}"> {# Kept, even if empty #}
 {% endblock %}
 
 {% block content %}
-    <div class="about-container">
-        <div class="container">
-            <h1 class="text-center mb-5">About MeloMatch</h1>
+<div class="bg-gray-100 dark:bg-gray-900 py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl tracking-tight">
+                About MeloMatch
+            </h1>
+            <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">
+                Discovering music, personalized for you.
+            </p>
+        </div>
 
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-body">
-                            <h2 class="card-title">Our Story</h2>
-                            <p class="card-text">
-                                MeloMatch is revolutionizing the way people discover and enjoy music through
-                                the power of artificial intelligence. Our platform combines cutting-edge
-                                technology with a passion for music to create a unique listening experience
-                                for every user.
-                            </p>
-                        </div>
-                    </div>
+        <div class="space-y-10">
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl">
+                <div class="p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">Our Story</h2>
+                    <p class="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                        MeloMatch is revolutionizing the way people discover and enjoy music through
+                        the power of artificial intelligence. Our platform combines cutting-edge
+                        technology with a passion for music to create a unique listening experience
+                        for every user.
+                    </p>
+                </div>
+            </div>
 
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-body">
-                            <h2 class="card-title">Our Mission</h2>
-                            <p class="card-text">
-                                We believe that everyone deserves to discover music that moves them.
-                                Our mission is to connect listeners with the perfect songs, artists,
-                                and genres through personalized recommendations and a vast library of content.
-                            </p>
-                        </div>
-                    </div>
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl">
+                <div class="p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">Our Mission</h2>
+                    <p class="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                        We believe that everyone deserves to discover music that moves them.
+                        Our mission is to connect listeners with the perfect songs, artists,
+                        and genres through personalized recommendations and a vast library of content.
+                    </p>
+                </div>
+            </div>
 
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-body">
-                            <h2 class="card-title">The Technology</h2>
-                            <p class="card-text">
-                                Our AI-powered recommendation engine analyzes various aspects of music,
-                                including rhythm, harmony, instrumentation, and lyrical themes, to understand
-                                what makes each song unique. This technology, combined with your listening
-                                history and preferences, creates a personalized music discovery experience.
-                            </p>
-                        </div>
-                    </div>
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl">
+                <div class="p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">The Technology</h2>
+                    <p class="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                        Our AI-powered recommendation engine analyzes various aspects of music,
+                        including rhythm, harmony, instrumentation, and lyrical themes, to understand
+                        what makes each song unique. This technology, combined with your listening
+                        history and preferences, creates a personalized music discovery experience.
+                    </p>
+                </div>
+            </div>
 
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h2 class="card-title">Join Our Community</h2>
-                            <p class="card-text">
-                                Whether you're a casual listener or a dedicated audiophile, MeloMatch has
-                                something for everyone. Join our growing community of music lovers and
-                                start discovering your next favorite song today.
-                            </p>
-                        </div>
-                    </div>
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl">
+                <div class="p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">Join Our Community</h2>
+                    <p class="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                        Whether you're a casual listener or a dedicated audiophile, MeloMatch has
+                        something for everyone. Join our growing community of music lovers and
+                        start discovering your next favorite song today.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}
 

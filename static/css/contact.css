@@ -1,20 +1,14 @@
-.contact-container {
-    padding: 20px 0;
-}
+/* static/css/contact.css */
 
-.card {
-    border: none;
-    border-radius: 15px;
-}
+/* All styles previously here are now handled by Tailwind utility classes
+   applied directly in the templates/core/contact_us.html template.
 
-.form-control:focus {
-    box-shadow: none;
-    border-color: var(--bs-primary);
-}
+   - .contact-container (padding): Replaced by Tailwind py-*, px-*.
+   - .card (border, radius): Replaced by Tailwind utilities.
+   - .form-control:focus : Styling handled by Tailwind focus: utilities on form elements.
+   - Media queries: Handled by Tailwind's responsive prefixes.
+*/
 
-@media (max-width: 768px) {
-    .contact-container {
-        padding: 40px 0;
-    }
-}
+/* This file can be kept for any future, highly specific custom styles for this page,
+   but for now, it's effectively empty. */
 

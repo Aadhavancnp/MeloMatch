@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* You can add custom base styles or components here if needed */
+/* For example:
+body {
+    @apply font-sans text-gray-900; // Example if you have a 'sans' font defined in your tailwind.config.js
+}
+*/
