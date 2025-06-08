@@ -1,0 +1,32 @@
+/* Styles for the Analytics Dashboard */
+
+/* Example: Move styles from template here if desired */
+/*
+.chart-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    height: 400px;
+}
+
+.insights-container {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-header {
+    margin-bottom: 40px;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+*/
+body {
+    background-color: #e9ecef; /* Light gray background for the whole page */
+}

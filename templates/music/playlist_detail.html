@@ -20,10 +20,28 @@
                     <h1 class="display-4 mb-3">{{ playlist.name }}</h1>
                     <p class="lead mb-3">{{ playlist.description }}</p>
                     <p class="mb-4"><i class="fa-solid fa-music me-2"></i>
-                        <small id="track-count">{{ playlist.track_count }}</small> tracks</p>
-                    {% if user.is_authenticated and user == playlist.user %}
-                        <div class="btn-group">
-                            <button id="editButton" class="btn btn-outline-light">Edit Playlist</button>
+                        <small id="track-count">{{ playlist.track_count }}</small> tracks
+                    </p>
+                    <div class="mb-3">
+                        <strong>Owner:</strong> {{ playlist.owner.username|default:"System" }}
+                    </div>
+                    {% if collaborators_list %}
+                    <div class="mb-3">
+                        <strong>Collaborators:</strong>
+                        {% for collaborator in collaborators_list %}
+                            <span class="badge bg-secondary">{{ collaborator.username }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if can_edit_playlist %}
+                        <div class="btn-group mb-2">
+                            <button id="editButton" class="btn btn-outline-light">Edit Details</button>
+                            {# Add invite collaborator button here if desired #}
+                        </div>
+                    {% endif %}
+                    {% if user.is_authenticated and user == playlist.owner %}
+                         <div class="btn-group">
                             <button id="deleteButton" class="btn btn-outline-danger">Delete Playlist</button>
                         </div>
                     {% endif %}
@@ -33,51 +51,60 @@
     </div>
 
     <div class="container py-5">
+        {# Keep existing track search if it adds via standard POST - WebSocket will broadcast the update #}
+        {# For this example, we assume the existing search/add track functionality remains and works via POST. #}
+        {# The JS will handle updates coming from WebSocket, regardless of how they were initiated. #}
         <div class="row mb-4">
             <div class="col-md-6 offset-md-3">
-                <div class="input-group">
-                    <span class="input-group-text bg-primary text-white"><i
-                            class="fa-solid fa-magnifying-glass"></i></span>
-                    <input type="text" id="track-search" class="form-control" placeholder="Search tracks...">
-                </div>
+                 <h3 class="text-center mb-3">Tracks</h3>
+                {# Example: Add track form - if not using existing search modal for adding #}
+                {# This is simplified. A real add track would likely involve a search modal #}
+                {% if can_edit_playlist %}
+                <form id="add-track-form-ws-manual" class="input-group mb-3" style="display:none;"> {# Hidden for now, focus on remove #}
+                    <input type="text" id="manual-track-id-input" class="form-control" placeholder="Enter DB Track ID to add">
+                    <button class="btn btn-outline-success" type="submit">Add via WS</button>
+                </form>
+                {% endif %}
             </div>
         </div>
 
-        <div class="row" id="track-list">
-            {% for track in playlist.tracks.all %}
-                {% if track.image_url %}
-                    <div class="col-md-6 col-lg-4 mb-4 track-item">
-                        <div class="card h-100 bg-body-tertiary track-card">
-                            <img src="{{ track.image_url }}" class="card-img-top" alt="{{ track.album }}">
-                            <div class="card-body">
-                                <h2 class="card-title h5">{{ track.title }}</h2>
-                                <p class="card-text">{{ track.artists.all|join:", " }}</p>
-                                <p class="card-text"><small class="text-body-secondary">{{ track.album }}</small></p>
-                            </div>
-                            <div class="card-footer bg-transparent border-0">
-                                {% if track.preview_url %}
-                                    <audio controls class="w-100">
-                                        <source src="{{ track.preview_url }}" type="audio/mpeg">
-                                        Your browser does not support the audio element.
-                                    </audio>
-                                {% else %}
-                                    <p class="text-body-secondary">No preview available</p>
-                                {% endif %}
-                                {% if user.is_authenticated and user == playlist.user %}
-                                    <div class="mt-2 delete-track-button"
-                                         style="display: none;">
-                                        <button class="btn btn-danger w-100 delete-track"
-                                                data-track-id="{{ track.spotify_id }}">
-                                            <i class="fa-solid fa-trash-can"></i>&nbsp;Delete
-                                        </button>
-                                    </div>
-                                {% endif %}
-                            </div>
+        <div class="row" id="track-list-container"> {# Changed ID for clarity #}
+            {% for track in tracks %} {# Use `tracks` from context, already prefetched #}
+                <div class="col-md-6 col-lg-4 mb-4 track-item" id="track-item-{{ track.id }}">
+                    <div class="card h-100 bg-body-tertiary track-card">
+                        {% if track.image_url %}
+                        <img src="{{ track.image_url }}" class="card-img-top" alt="{{ track.album.name|default:track.album }}">
+                        {% else %}
+                        <img src="{% static 'images/default_album_art.png' %}" class="card-img-top" alt="Default Album Art">
+                        {% endif %}
+                        <div class="card-body">
+                            <h2 class="card-title h5">{{ track.title }}</h2>
+                            <p class="card-text">{{ track.artists_names|join:", " }}</p>
+                            <p class="card-text"><small class="text-body-secondary">{{ track.album.name|default:track.album }}</small></p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            {% if track.preview_url %}
+                                <audio controls class="w-100 mb-2">
+                                    <source src="{{ track.preview_url }}" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            {% else %}
+                                <p class="text-body-secondary text-center mb-2">No preview available</p>
+                            {% endif %}
+                            {% if can_edit_playlist %}
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-danger w-100 remove-track-ws-btn"
+                                            data-track-id="{{ track.id }}"
+                                            data-playlist-id="{{ playlist.id }}">
+                                        <i class="fa-solid fa-trash-can"></i>&nbsp;Remove
+                                    </button>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
-                {% endif %}
+                </div>
             {% empty %}
-                <div class="col-12">
+                <div class="col-12" id="empty-playlist-message">
                     <p class="text-center">This playlist is empty. Add some tracks to get started!</p>
                 </div>
             {% endfor %}
@@ -87,7 +114,7 @@
     <!-- Delete Playlist Confirmation Modal -->
     <div class="modal fade" id="deletePlaylistModal" tabindex="-1" aria-labelledby="deletePlaylistModalLabel"
          aria-hidden="true">
-        {{ playlist.spotify_id|json_script:"playlist-id" }}
+        {{ playlist.id|json_script:"playlist-db-id" }} {# Use DB ID for delete modal #}
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -107,6 +134,220 @@
 {% endblock %}
 
 {% block extra_js %}
+    {# Keep existing playlist_detail.js if it handles non-websocket edit/delete playlist modals/forms #}
     <script src="{% static 'js/playlist_detail.js' %}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const playlistId = JSON.parse(document.getElementById('playlist-db-id').textContent);
+            const trackListContainer = document.getElementById('track-list-container');
+            const emptyPlaylistMessage = document.getElementById('empty-playlist-message');
+            const currentUserUsername = "{{ request.user.username }}"; // For display purposes
+
+            // --- WebSocket Connection ---
+            let playlistSocket = null;
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/playlist/${playlistId}/collaborate/`;
+
+            function connectWebSocket() {
+                playlistSocket = new WebSocket(wsUrl);
+
+                playlistSocket.onopen = function (e) {
+                    console.log("Playlist WebSocket connection established.");
+                    // You could send a "user_joined" message if needed, or consumer handles on connect
+                };
+
+                playlistSocket.onmessage = function (e) {
+                    const data = JSON.parse(e.data);
+                    console.log("Data received from WebSocket:", data);
+
+                    if (data.type === 'error') {
+                        showNotification(`Error: ${data.message}`, 'danger');
+                        return;
+                    }
+
+                    if (data.type === 'playlist.initial_state') {
+                        console.log("Received initial state:", data.tracks);
+                        renderFullTracklist(data.tracks);
+                        updateTrackCount(data.tracks.length);
+                    } else if (data.type === 'playlist.update') { // Message from group_send, re-encapsulated
+                        handlePlaylistUpdate(data.data); // data.data contains the original event from consumer
+                    }
+                };
+
+                playlistSocket.onclose = function (e) {
+                    console.error('Playlist WebSocket closed unexpectedly. Code:', e.code, 'Reason:', e.reason);
+                    // Optional: attempt to reconnect after a delay
+                    // setTimeout(connectWebSocket, 5000); // Reconnect after 5 seconds
+                };
+
+                playlistSocket.onerror = function (err) {
+                    console.error('Playlist WebSocket error:', err);
+                    showNotification('WebSocket connection error. Real-time updates may be unavailable.', 'danger');
+                };
+            }
+
+            function handlePlaylistUpdate(eventData) {
+                const action = eventData.action; // 'track_added' or 'track_removed'
+                const trackData = eventData.track; // Full track object for 'track_added'
+                const trackIdToRemove = eventData.track_id; // DB ID for 'track_removed'
+                const userWhoActed = eventData.user_who_acted;
+
+                if (action === 'track_added' && trackData) {
+                    addTrackToDOM(trackData);
+                    showNotification(`${userWhoActed} added "${trackData.title}"`, 'info');
+                    if (emptyPlaylistMessage) emptyPlaylistMessage.style.display = 'none';
+                } else if (action === 'track_removed' && trackIdToRemove) {
+                    removeTrackFromDOM(trackIdToRemove);
+                    // For notification, we might need track title. If not available, generic message.
+                    showNotification(`${userWhoActed} removed a track.`, 'info');
+                }
+                updateTrackCount(trackListContainer.querySelectorAll('.track-item').length);
+            }
+
+            function renderFullTracklist(tracks) {
+                trackListContainer.innerHTML = ''; // Clear existing
+                if (tracks && tracks.length > 0) {
+                    tracks.forEach(track => addTrackToDOM(track));
+                    if (emptyPlaylistMessage) emptyPlaylistMessage.style.display = 'none';
+                } else {
+                    if (emptyPlaylistMessage) emptyPlaylistMessage.style.display = 'block';
+                }
+                updateTrackCount(tracks.length);
+            }
+
+            function addTrackToDOM(track) {
+                if (!track || document.getElementById(`track-item-${track.id}`)) return; // Already exists or no data
+
+                const trackHTML = renderTrackHTML(track);
+                trackListContainer.insertAdjacentHTML('beforeend', trackHTML);
+                // Re-attach event listener if needed, or use event delegation for remove buttons
+                // This example assumes event delegation is set up or will be for new .remove-track-ws-btn
+            }
+
+            function removeTrackFromDOM(trackId) {
+                const trackElement = document.getElementById(`track-item-${trackId}`);
+                if (trackElement) {
+                    trackElement.remove();
+                }
+                 if (trackListContainer.children.length === 0 && emptyPlaylistMessage) {
+                    emptyPlaylistMessage.style.display = 'block';
+                }
+            }
+
+            function renderTrackHTML(track) {
+                // This function should mirror the Django template structure for a track item
+                // It needs `can_edit_playlist` context if remove button is conditional inside here.
+                // For simplicity, let's assume `can_edit_playlist` is globally available or checked by consumer.
+                // The remove button will be added if the current user has edit rights.
+                const canEdit = {{ can_edit_playlist|yesno:"true,false" }};
+                let removeButtonHTML = '';
+                if (canEdit) {
+                    removeButtonHTML = `
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-danger w-100 remove-track-ws-btn"
+                                    data-track-id="${track.id}"
+                                    data-playlist-id="${playlistId}">
+                                <i class="fa-solid fa-trash-can"></i>&nbsp;Remove
+                            </button>
+                        </div>`;
+                }
+
+                const imageUrl = track.image_url || "{% static 'images/default_album_art.png' %}";
+                const artistsNames = track.artists_names ? track.artists_names.join(", ") : "Unknown Artist";
+                const albumName = track.album || "Unknown Album";
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4 track-item" id="track-item-${track.id}">
+                        <div class="card h-100 bg-body-tertiary track-card">
+                            <img src="${imageUrl}" class="card-img-top" alt="${albumName}">
+                            <div class="card-body">
+                                <h2 class="card-title h5">${track.title}</h2>
+                                <p class="card-text">${artistsNames}</p>
+                                <p class="card-text"><small class="text-body-secondary">${albumName}</small></p>
+                            </div>
+                            <div class="card-footer bg-transparent border-0">
+                                ${track.preview_url ? `
+                                    <audio controls class="w-100 mb-2">
+                                        <source src="${track.preview_url}" type="audio/mpeg">
+                                        Your browser does not support the audio element.
+                                    </audio>` : '<p class="text-body-secondary text-center mb-2">No preview available</p>'}
+                                ${removeButtonHTML}
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            // --- Event Listeners for Sending Messages ---
+            trackListContainer.addEventListener('click', function(event) {
+                if (event.target.classList.contains('remove-track-ws-btn') || event.target.closest('.remove-track-ws-btn')) {
+                    const button = event.target.closest('.remove-track-ws-btn');
+                    const trackId = button.dataset.trackId;
+                    if (playlistSocket && playlistSocket.readyState === WebSocket.OPEN) {
+                        playlistSocket.send(JSON.stringify({
+                            action: 'remove_track',
+                            track_id: trackId
+                        }));
+                        console.log("Sent remove_track for track ID:", trackId);
+                    } else {
+                        showNotification('WebSocket not connected. Cannot remove track.', 'warning');
+                    }
+                }
+            });
+
+            // Simplified "Add Track via WebSocket" (Manual DB ID entry - for testing)
+            // A real implementation would use a search modal.
+            const manualAddForm = document.getElementById('add-track-form-ws-manual');
+            if (manualAddForm) {
+                manualAddForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    const trackIdInput = document.getElementById('manual-track-id-input');
+                    const trackId = trackIdInput.value.trim();
+                    if (trackId && playlistSocket && playlistSocket.readyState === WebSocket.OPEN) {
+                         playlistSocket.send(JSON.stringify({
+                            action: 'add_track',
+                            track_id: trackId
+                        }));
+                        trackIdInput.value = ''; // Clear input
+                    } else if (!trackId) {
+                         showNotification('Please enter a Track DB ID.', 'warning');
+                    } else {
+                        showNotification('WebSocket not connected. Cannot add track.', 'warning');
+                    }
+                });
+            }
+
+            function showNotification(message, type = 'info') { // type can be 'info', 'success', 'warning', 'danger'
+                // Simple alert for now, replace with a nicer toast/notification system if available
+                console.log(`Notification (${type}): ${message}`);
+                const notificationArea = document.getElementById('notification-area'); // Requires an element with this ID
+                if (notificationArea) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                    alertDiv.role = 'alert';
+                    alertDiv.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                    notificationArea.appendChild(alertDiv);
+                    setTimeout(() => alertDiv.remove(), 5000);
+                } else {
+                    alert(message);
+                }
+            }
+
+            function updateTrackCount(count) {
+                const trackCountElement = document.getElementById('track-count');
+                if (trackCountElement) {
+                    trackCountElement.textContent = count;
+                }
+            }
+
+            // --- Initial Connection ---
+            // Only connect if playlist_id is present (it should be if this template is rendered)
+            if (playlistId) {
+                connectWebSocket();
+            }
+        });
+    </script>
+    {# Add a placeholder for notifications #}
+    <div id="notification-area" style="position: fixed; top: 1rem; right: 1rem; z-index: 1050;"></div>
 {% endblock %}
 

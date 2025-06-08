@@ -25,7 +25,12 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('subscription/', include('subscription.urls')),
     path('music/', include('music.urls')),
+    path('api/analytics/', include('services.analytics_service.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    import debug_toolbar
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

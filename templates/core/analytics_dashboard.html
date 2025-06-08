@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Music Analytics - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    {# Add any specific CSS for this page if needed #}
+    <link rel="stylesheet" href="{% static 'css/analytics_dashboard.css' %}">
+    <style>
+        .chart-container {
+            background-color: #fff; /* Light background for charts */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            height: 400px; /* Default height, can be overridden */
+        }
+        .insights-container {
+            background-color: #f8f9fa; /* Light grey for text insights */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .dashboard-header {
+            margin-bottom: 40px;
+        }
+        /* Make canvas responsive */
+        canvas {
+            max-width: 100%;
+            height: auto !important; /* Override Chart.js inline style if needed for responsiveness */
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="dashboard-header text-center">
+        <h1 class="display-5">Your Music Analytics</h1>
+        <p class="lead text-muted">Discover insights into your listening habits.</p>
+    </div>
+
+    <!-- API Endpoint URLs (passed from view) -->
+    {{ listening_trend_api_url|json_script:"listening_trend_api_url" }}
+    {{ mood_dist_api_url|json_script:"mood_dist_api_url" }}
+    {{ genre_dist_api_url|json_script:"genre_dist_api_url" }}
+    {{ discovery_insights_api_url|json_script:"discovery_insights_api_url" }}
+
+    <div class="row">
+        <!-- Listening Time Trend -->
+        <div class="col-lg-12 mb-4">
+            <div class="chart-container">
+                <h4 class="text-center mb-3">Listening Activity Trend (Last 30 Days)</h4>
+                <p class="text-center text-muted small">(Based on number of liked songs per day)</p>
+                <canvas id="listeningTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Mood Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="chart-container" style="height: 450px;"> {/* Give pie chart a bit more height */}
+                <h4 class="text-center mb-3">Your Mood Distribution</h4>
+                 <p class="text-center text-muted small">(Based on liked songs' audio features)</p>
+                <canvas id="moodChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Genre Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="chart-container" style="height: 450px;">
+                <h4 class="text-center mb-3">Your Top Genres</h4>
+                 <p class="text-center text-muted small">(Based on liked songs)</p>
+                <canvas id="genreChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Music Discovery Insights -->
+        <div class="col-lg-12 mb-4">
+            <div class="insights-container">
+                <h4 class="text-center mb-3">Music Discovery Insights (Last 30 Days)</h4>
+                <div id="discoveryInsightsContent" class="text-center">
+                    <p>Loading discovery insights...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    {# Chart.js will be added to base.html for wider availability, or can be added here if only for this page #}
+    {# <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> #}
+    <script src="{% static 'js/analytics_charts.js' %}"></script>
+{% endblock %}

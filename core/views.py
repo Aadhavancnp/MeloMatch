@@ -8,10 +8,36 @@ from django.views.decorators.cache import cache_page
 from core.forms import ContactForm
 from core.models import FAQItem
 from music.models import Playlist, Track
-from music.spotify import get_recommendations, get_spotify_client, get_user_playlists, get_user_top_tracks, \
+# Updated import for Spotify service
+from services.spotify_service.client import get_spotify_client, get_user_playlists, get_user_top_tracks, \
     get_user_recently_played, calculate_listening_time, get_favorite_genre
+    # get_recommendations removed from here
+from services.recommendation_service.recommender import get_hybrid_recommendations # Added
 from subscription.models import Subscription
 from users.models import UserActivity
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+import logging # For logging in trigger function
+
+logger = logging.getLogger(__name__)
+
+def trigger_recommendation_notification(user, message, recommendations_summary=None):
+    try:
+        channel_layer = get_channel_layer()
+        group_name = f"user_{user.id}_recommendations"
+
+        logger.info(f"Triggering recommendation notification for group {group_name}")
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "recommendation.notification", # This will call recommendation_notification method in consumer
+                "message": message,
+                "recommendations_summary": recommendations_summary or []
+            }
+        )
+        logger.info(f"Successfully sent notification to group {group_name}")
+    except Exception as e:
+        logger.error(f"Error triggering recommendation notification for user {user.id}: {str(e)}")
 
 
 def home(request):
@@ -74,24 +100,42 @@ def dashboard(request):
 
     recently_played = list(unique_tracks.values())
 
-    # Get recommendations
-    recommendation_ids = get_recommendations(recently_played[0]['id'], top_tracks + recently_played)
-    if not recommendation_ids:
-        recommendation_ids = get_recommendations(most_repeat['id'], top_tracks + recently_played)
+    # Get recommendations using the new hybrid recommender
+    # The hybrid recommender needs a seed_track_id.
+    # We can use the most recently played track or the most repeated track as a seed.
+    seed_track_for_hybrid_recs = None
+    if recently_played:
+        seed_track_for_hybrid_recs = recently_played[0]['id'] # Use most recent
+    elif top_tracks: # Fallback to a top track if no recently played
+        seed_track_for_hybrid_recs = top_tracks[0]['id']
 
-    recommendation_ids = list({track['id']: track for track in recommendation_ids}.values())
+    recommended_tracks = [] # Initialize
+    if seed_track_for_hybrid_recs:
+        # get_hybrid_recommendations returns a list of Track objects
+        recommendation_context = f"dashboard_general_seed_{seed_track_for_hybrid_recs}"
+        recommended_tracks = get_hybrid_recommendations(
+            request.user,
+            seed_track_id=seed_track_for_hybrid_recs,
+            num_recommendations=10,
+            context=recommendation_context
+        )
+
+    # If recommended_tracks are already Track model instances, no need for further DB query for them.
+    # The ThreadPoolExecutor part for recommended_tracks_future can be removed or adapted if
+    # get_hybrid_recommendations is already efficient enough or if it's called directly.
+    # For now, let's assume get_hybrid_recommendations returns fully formed Track objects.
 
     # Execute remaining independent operations in parallel
     with ThreadPoolExecutor(max_workers=4) as executor:
         # Start all tasks
-        track_ids = [track['id'] for track in recommendation_ids]
-        recommended_tracks_future = executor.submit(
-            lambda: list(Track.objects.filter(spotify_id__in=track_ids)
-                         .select_related('genres')
-                         .prefetch_related('artists'))
-        )
-        listening_time_future = executor.submit(calculate_listening_time, sp, recently_played)
-        favorite_genre_future = executor.submit(get_favorite_genre, sp, top_tracks)
+        # track_ids = [track.spotify_id for track in recommended_tracks] # If recommended_tracks are Track objects
+        # recommended_tracks_future = executor.submit( # This might be redundant if recommended_tracks are already fetched
+        #     lambda: list(Track.objects.filter(spotify_id__in=track_ids)
+        #                  .select_related('genres')
+        #                  .prefetch_related('artists'))
+        # )
+        listening_time_future = executor.submit(calculate_listening_time, sp, recently_played, user_id_for_cache=request.user.id) # Pass user_id for cache key
+        favorite_genre_future = executor.submit(get_favorite_genre, sp, top_tracks, user_id_for_cache=request.user.id) # Pass user_id for cache key
         recent_activities_future = executor.submit(
             lambda: UserActivity.objects.filter(user=user).order_by('-timestamp')[:5]
         )
@@ -99,11 +143,12 @@ def dashboard(request):
             lambda: Subscription.objects.filter(user=user).first()
         )
         user_playlists_future = executor.submit(
-            lambda: Playlist.objects.filter(user=user).prefetch_related('tracks')
+            # Ensure prefetching is effective for template needs
+            lambda: Playlist.objects.filter(user=user).prefetch_related('tracks__artists', 'tracks__genres')
         )
 
         # Get results
-        recommended_tracks = recommended_tracks_future.result()
+        # recommended_tracks are already fetched above if seed_track_for_hybrid_recs was valid
         listening_time = listening_time_future.result()
         favorite_genre = favorite_genre_future.result()
         recent_activities = recent_activities_future.result()
@@ -119,4 +164,38 @@ def dashboard(request):
         'favorite_genre': favorite_genre,
         'playlist_count': len(user_playlists),
     }
+
+    # PoC: Trigger a notification when the dashboard is loaded for an authenticated user
+    if request.user.is_authenticated:
+        # Create a dummy summary for the notification
+        dummy_recs_summary = []
+        if recommended_tracks: # Use actual recommended tracks if available
+            for track in recommended_tracks[:2]: # Send summary of first 2
+                 dummy_recs_summary.append({'title': track.title, 'artist': track.artists.first().name if track.artists.exists() else 'Unknown Artist'})
+        else: # Fallback dummy data if no recommendations yet
+            dummy_recs_summary = [{'title': 'Awesome New Song'}, {'title': 'Another Great Hit'}]
+
+        trigger_recommendation_notification(
+            request.user,
+            "Fresh recommendations just for you!",
+            recommendations_summary=dummy_recs_summary
+        )
+
     return render(request, 'core/dashboard.html', context)
+
+
+from django.urls import reverse
+
+@login_required(login_url="/users/login/")
+def analytics_dashboard(request):
+    """
+    View to render the analytics dashboard page.
+    JavaScript on the client-side will fetch data from API endpoints.
+    """
+    context = {
+        'listening_trend_api_url': reverse('analytics_api:listening_time_trend'),
+        'mood_dist_api_url': reverse('analytics_api:mood_distribution'),
+        'genre_dist_api_url': reverse('analytics_api:genre_distribution'),
+        'discovery_insights_api_url': reverse('analytics_api:discovery_insights'),
+    }
+    return render(request, 'core/analytics_dashboard.html', context)

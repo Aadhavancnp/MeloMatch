@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your {{ selected_mood|capfirst }} Playlist - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    {# Optional: Add specific CSS for this page if needed #}
+    <style>
+        .track-item {
+            border-bottom: 1px solid #eee;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        .track-item:last-child {
+            border-bottom: none;
+        }
+        .track-album-art {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+        .save-to-spotify-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        [data-bs-theme="dark"] .track-item {
+            border-bottom: 1px solid #333;
+        }
+        [data-bs-theme="dark"] .save-to-spotify-section {
+            background-color: #2c3034;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ selected_mood|capfirst }} Playlist</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4">Your "{{ selected_mood|capfirst }}" Playlist</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if generated_tracks %}
+        <p class="text-muted">Here are {{ generated_tracks|length }} tracks generated based on your selection.</p>
+        <ul class="list-unstyled">
+            {% for track in generated_tracks %}
+                <li class="track-item d-flex align-items-center">
+                    <img src="{{ track.image_url|default:'https://via.placeholder.com/60/2c3e50/FFFFFF?Text=Art' }}" alt="Album art for {{ track.title }}" class="track-album-art">
+                    <div class="flex-grow-1">
+                        <h5 class="mb-0">{{ track.title }}</h5>
+                        <p class="mb-0 text-muted">
+                            {% for artist in track.artists.all %}
+                                {{ artist.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                Unknown Artist
+                            {% endfor %}
+                        </p>
+                        <small class="text-muted">{{ track.album }}</small>
+                    </div>
+                    {% if track.preview_url %}
+                        <audio controls src="{{ track.preview_url }}" preload="none" style="max-width: 200px;"></audio>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="save-to-spotify-section text-center">
+            <h4>Save this Playlist</h4>
+            {% if user_has_spotify_scopes %}
+                {# This form would POST to a new view that handles playlist creation on Spotify #}
+                <form action="{% url 'save_generated_playlist_to_spotify' %}" method="post"> {# Placeholder URL #}
+                    {% csrf_token %}
+                    {# The track_ids are stored in session: request.session['generated_mood_playlist'] #}
+                    <input type="hidden" name="playlist_name" value="My {{ selected_mood|capfirst }} Mix">
+                    <input type="hidden" name="mood_key" value="{{ selected_mood }}">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fab fa-spotify me-2"></i> Save to Spotify
+                    </button>
+                </form>
+                <small class="form-text text-muted mt-2">This will create a new playlist in your Spotify account.</small>
+            {% else %}
+                <p class="text-warning">
+                    To save playlists to Spotify, MeloMatch needs additional permissions.
+                    You might need to re-authorize with Spotify and grant playlist modification scopes.
+                </p>
+                <a href="#" class="btn btn-outline-info">Re-authorize Spotify (Placeholder)</a>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <p>No tracks were generated for this mood/activity. Please try again or select a different mood.</p>
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+    {% endif %}
+</div>
+{% endblock %}

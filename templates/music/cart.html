@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Your Cart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Shopping Cart</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if cart_items %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Track</th>
+                    <th>Album</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                    <tr>
+                        <td>{{ item.track.title }}</td>
+                        <td>{{ item.track.album }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.track.price|default:"1.29" }}</td> {# Assuming a price attribute or default #}
+                        <td>
+                            <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger btn-sm">Remove</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="text-right">
+            <h4>Total: ${{ total_price }}</h4>
+            <a href="#" class="btn btn-success">Proceed to Checkout (Not Implemented)</a>
+        </div>
+    {% else %}
+        <p>Your cart is empty.</p>
+        <a href="{% url 'search' %}" class="btn btn-primary">Browse Music</a>
+    {% endif %}
+</div>
+{% endblock %}

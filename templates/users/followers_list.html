@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Followers of {{ target_user.username }} - MeloMatch{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'user_profile_view' username=target_user.username %}">@{{ target_user.username }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Followers</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4">Followers of {{ target_user.username }} ({{ users_list|length }})</h1>
+
+    {% if users_list %}
+        <div class="list-group">
+            {% for user_obj in users_list %}
+                <a href="{% url 'user_profile_view' username=user_obj.username %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <img src="{{ user_obj.profile_picture.url }}" alt="{{ user_obj.username }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div>
+                        <h5 class="mb-1">{{ user_obj.username }}</h5>
+                        <small class="text-muted">{{ user_obj.full_name|default_if_none:"" }}</small>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">@{{ target_user.username }} has no followers yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
