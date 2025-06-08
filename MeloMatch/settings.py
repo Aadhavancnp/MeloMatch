@@ -38,7 +38,19 @@ INSTALLED_APPS = [
     'music.apps.MusicConfig',
     'subscription.apps.SubscriptionConfig',
     'users.apps.UsersConfig',
+
+    # Service Apps (ensure they have AppConfig)
+    'services.recommendation_service.apps.RecommendationServiceConfig',
+    # Add other service app configs here as they are created/verified, e.g.:
+    # 'services.notification_service.apps.NotificationServiceConfig',
+    # 'services.analytics_service.apps.AnalyticsServiceConfig',
+
+    # Third-party apps
     'bootstrap_datepicker_plus',
+    'django_celery_beat',       # For Celery Beat (scheduled tasks)
+    'django_celery_results',    # Optional: For storing Celery task results in DB
+
+    # Django core apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -59,10 +71,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'MeloMatch.urls'
 
-SPOTIFY_CLIENT_ID = os.environ.get('SPOTIFY_CLIENT_ID')
-SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET')
-SPOTIFY_REDIRECT_URI = os.environ.get('SPOTIFY_REDIRECT_URI')
-SPOTIFY_SCOPE = os.environ.get('SPOTIFY_SCOPE')
+# Provide dummy fallbacks if not set in env, for testing purposes ONLY
+SPOTIFY_CLIENT_ID = os.environ.get('SPOTIFY_CLIENT_ID', 'YOUR_DUMMY_CLIENT_ID')
+SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', 'YOUR_DUMMY_CLIENT_SECRET')
+SPOTIFY_REDIRECT_URI = os.environ.get('SPOTIFY_REDIRECT_URI', 'http://localhost:8000/callback') # Redirect URI might not be used by client_credentials
+SPOTIFY_SCOPE = os.environ.get('SPOTIFY_SCOPE', 'user-library-read playlist-read-private user-top-read user-read-recently-played') # Scope not used by client_credentials
 
 LOGIN_URL = '/users/login/'
 
@@ -93,16 +106,24 @@ WSGI_APPLICATION = 'MeloMatch.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+# tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+#
+# DATABASES = {
+# 'default': {
+# 'ENGINE': 'django.db.backends.postgresql',
+# 'NAME': tmpPostgres.path.replace('/', ''), # This line had the error
+# 'USER': tmpPostgres.username,
+# 'PASSWORD': tmpPostgres.password,
+# 'HOST': tmpPostgres.hostname,
+# 'PORT': 5432,
+# }
+# }
 
+# SQLite Configuration (reverting to this for local dev/testing)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -150,3 +171,38 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery Configuration
+# Using Redis as broker and result backend
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC' # Recommended to use UTC for Celery
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler' # If using django_celery_beat models for schedule storage
+
+# Celery Beat Schedule (Example, adjust as needed)
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'generate-batch-recommendations-weekly': {
+        'task': 'services.recommendation_service.tasks.generate_batch_user_recommendations',
+        'schedule': crontab(hour=2, minute=0, day_of_week='sun'), # e.g., Every Sunday at 2 AM
+        # 'args': (16, 16) # Example arguments for the task
+    },
+    # Add other periodic tasks here if any were previously scheduled
+    # For example, Spotify sync tasks:
+    # 'sync-all-users-spotify-data-daily': {
+    #     'task': 'services.spotify_service.tasks.sync_all_users_spotify_data',
+    #     'schedule': crontab(hour=3, minute=0), # Daily at 3 AM
+    # },
+}
+
+# Ensure django_celery_beat is in INSTALLED_APPS if using DatabaseScheduler
+# And run migrations for django_celery_beat if so.
+# For simplicity, if not using dynamic schedules from DB, one might not need DatabaseScheduler.
+# However, it's a common setup. If a simpler in-code schedule is enough,
+# CELERY_BEAT_SCHEDULER might not be strictly needed if Celery worker is run with -B.
+# But for production, django-celery-beat is robust.
+# The prompt for Celery setup previously included django-celery-beat.
