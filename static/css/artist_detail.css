@@ -1,94 +1,52 @@
-.artist-header {
-    background-size: cover;
-    background-position: center;
-    position: relative;
-}
+/* static/css/artist_detail.css */
 
-.artist-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-}
+/* Styles that can be kept (or adapted) as they are more custom: */
 
-.artist-header .container {
-    position: relative;
-    z-index: 1;
-}
+/* .artist-header specific background handling if Tailwind bg image utilities are not sufficient for the ::before overlay.
+   However, the overlay can be achieved with an extra div and Tailwind opacity/positioning.
+   So, removing .artist-header and .artist-header::before, .artist-header .container.
+*/
 
-.artist-image {
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease-in-out;
-}
-
-.artist-image:hover {
-    transform: scale(1.05);
-}
-
+/* Popularity meter styling - can be mostly Tailwind, but custom CSS might be kept for simplicity of the fill transition */
 .popularity-meter {
-    width: 150px;
-    height: 10px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 5px;
-    overflow: hidden;
+    /* width: 150px; */ /* Can be set by Tailwind w- utility */
+    /* height: 10px; */ /* Can be set by Tailwind h- utility */
+    /* background-color: rgba(255, 255, 255, 0.2); */ /* Tailwind bg-white/20 or similar */
+    /* border-radius: 5px; */ /* Tailwind rounded-md or rounded-lg */
+    overflow: hidden; /* Keep this if not using clip utilities */
 }
 
 .popularity-fill {
-    height: 100%;
-    background-color: #1DB954;
-    transition: width 1s ease-in-out;
+    height: 100%; /* Keep */
+    /* background-color: #1DB954; */ /* Tailwind bg-green-500 or similar */
+    transition: width 1s ease-in-out; /* Keep for smooth animation if JS sets width */
 }
 
-.section-title {
+/* Custom underline for section titles */
+.section-title-custom-underline { /* Renamed to be more specific if kept */
     position: relative;
-    padding-bottom: 10px;
-    margin-bottom: 30px;
+    /* padding-bottom: 10px; */ /* Tailwind pb-2 or pb-3 */
+    /* margin-bottom: 30px; */ /* Tailwind mb-6 or mb-8 */
 }
 
-.section-title::after {
+.section-title-custom-underline::after {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 50px;
-    height: 3px;
-    background-color: #1DB954;
+    width: 50px; /* Or use Tailwind w- utility on a border element if preferred */
+    height: 3px; /* Or use Tailwind h- utility on a border element */
+    background-color: #1DB954; /* Example: theme('colors.green.500') if processed by Tailwind */
 }
 
-.track-card, .album-card {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
 
-.track-card:hover, .album-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.card-img-top {
-    height: 200px;
-    object-fit: cover;
-}
-
-.btn-success {
-    background-color: #1DB954;
-    border-color: #1DB954;
-}
-
-.btn-success:hover {
-    background-color: #1ed760;
-    border-color: #1ed760;
-}
-
-.btn-outline-success {
-    color: #1DB954;
-    border-color: #1DB954;
-}
-
-.btn-outline-success:hover {
-    background-color: #1DB954;
-    color: white;
-}
+/* Removed styles that will be handled by Tailwind utilities:
+   - .artist-header (layout, bg-size, bg-position)
+   - .artist-header::before (overlay - can be a div with Tailwind opacity)
+   - .artist-header .container (z-index can be handled by Tailwind)
+   - .artist-image (shadows, transitions, hover effects)
+   - .track-card, .album-card (transitions, hover effects, shadows)
+   - .card-img-top (height, object-fit)
+   - .btn-success, .btn-outline-success and their hovers (Tailwind button classes)
+*/
 

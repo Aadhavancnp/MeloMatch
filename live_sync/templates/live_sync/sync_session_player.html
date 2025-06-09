@@ -1,0 +1,551 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sync Session{% if session_data %} - {{ session_data.track_title }}{% endif %} | MeloMatch{% endblock %}
+
+{% block extra_css %}
+    {# Add any specific CSS for this page if needed #}
+    <style>
+        /* Simple loading spinner for buttons */
+        .button-loading::after {
+            content: '';
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            margin-left: 0.5rem;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: button-spin 0.75s linear infinite;
+        }
+        @keyframes button-spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Custom scrollbar for listeners list if it gets long */
+        .listeners-list::-webkit-scrollbar { width: 5px; }
+        .listeners-list::-webkit-scrollbar-track { background: transparent; }
+        .listeners-list::-webkit-scrollbar-thumb { background-color: rgba(128,128,128,0.5); border-radius: 10px; }
+        .dark .listeners-list::-webkit-scrollbar-thumb { background-color: rgba(100,100,100,0.7); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div id="session-container" class="bg-white dark:bg-gray-800 shadow-2xl rounded-xl overflow-hidden">
+
+        <!-- Header: Session Info / Join Form -->
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h1 id="session-title" class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-2">
+                {% if session_data %}{{ session_data.track_title|default:"Sync Session" }}{% else %}Join or View Session{% endif %}
+            </h1>
+            <p id="session-artist" class="text-center text-gray-600 dark:text-gray-400 mb-4">
+                {% if session_data %}{{ session_data.artist_names|default:"Unknown Artist" }}{% endif %}
+            </p>
+
+            {% if not session_id_from_url %}
+            <form id="join-session-form" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input type="text" id="session-id-input" placeholder="Enter Session ID to Join or View"
+                       class="flex-grow appearance-none block w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md py-2.5 px-3 leading-tight focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                <button type="submit" id="join-session-btn"
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                    Join / View
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- Main Content: Player, Controls, Status -->
+        <div id="session-content" class="p-6 {% if not session_data %}hidden{% endif %}"> {# Hidden if no session data initially #}
+            <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start">
+                <div class="flex-shrink-0 w-full md:w-1/3">
+                    <img id="album-artwork" src="{{ session_data.album_artwork_url|default:'https://via.placeholder.com/300/4A5568/FFFFFF?Text=No+Art' }}"
+                         alt="Album Artwork" class="w-full rounded-lg shadow-md aspect-square object-cover">
+                </div>
+                <div class="flex-grow w-full md:w-2/3 space-y-4">
+                    <audio id="syncAudioPlayer" controls class="w-full h-12" src=""></audio>
+
+                    <div id="session-id-display" class="text-sm text-gray-600 dark:text-gray-400">
+                        Shareable Session ID: <strong id="session-id-text" class="font-mono bg-gray-100 dark:bg-gray-700 p-1 rounded">{{ session_data.session_id|default:"N/A" }}</strong>
+                        <button id="copy-session-id-btn" title="Copy ID" class="ml-2 px-2 py-1 text-xs border rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+
+                    <div id="host-controls" class="{% if user_role != 'host' %}hidden{% endif %} p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md text-blue-700 dark:text-blue-300 text-sm">
+                        <p><i class="fa-solid fa-crown mr-1"></i> You are hosting. Playback controls this session for all listeners.</p>
+                    </div>
+
+                    <div id="listener-info" class="{% if user_role != 'listener' %}hidden{% endif %} p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md text-green-700 dark:text-green-300 text-sm">
+                        <p><i class="fa-solid fa-headphones mr-1"></i> You are listening to <strong id="host-username-display">{{ session_data.host_username|default:"the host" }}</strong>.</p>
+                        <p>Playback is controlled by the host.</p>
+                    </div>
+
+                    <div id="status-messages" class="text-xs text-gray-500 dark:text-gray-400 min-h-[1.5em]"></div>
+
+                    <div class="flex flex-col sm:flex-row gap-3 mt-4">
+                         <button id="leave-session-btn"
+                                class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border border-red-500 text-sm font-medium rounded-md shadow-sm text-red-600 dark:text-red-400 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            {% if user_role == 'host' %}End Session for All{% else %}Leave Session{% endif %}
+                        </button>
+                         {# Placeholder for future features like chat or reactions #}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listeners List (Optional - can be expanded) -->
+            <div id="listeners-section" class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 {% if not session_data %}hidden{% endif %}">
+                <h4 class="text-md font-semibold text-gray-700 dark:text-gray-200 mb-2">Listeners (<span id="listeners-count">1</span>):</h4>
+                <div id="listeners-list" class="max-h-32 overflow-y-auto space-y-1 text-xs listeners-list">
+                    <p class="text-gray-500 dark:text-gray-400 italic">Host is here. Waiting for others...</p>
+                    {# Listener items will be added by JS #}
+                </div>
+            </div>
+
+            <!-- Live Chat Section -->
+            <div id="chat-section" class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 {% if not session_data %}hidden{% endif %}">
+                <h4 class="text-md font-semibold text-gray-700 dark:text-gray-200 mb-2">Live Chat</h4>
+                <div id="chat-messages" class="h-64 overflow-y-auto border border-gray-300 dark:border-gray-600 p-3 rounded-md mb-3 bg-gray-50 dark:bg-gray-700/50 space-y-2 scroll-smooth">
+                    <!-- Chat messages will be injected here -->
+                    <p class="text-xs text-gray-400 dark:text-gray-500 italic text-center py-2">Welcome to the chat!</p>
+                </div>
+                <form id="chat-form" class="flex items-center gap-2">
+                    <input type="text" id="chat-message-input"
+                           class="flex-grow appearance-none block w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg py-2 px-3 leading-tight focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="Type your message...">
+                    <button type="submit" id="chat-message-send"
+                            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                        Send
+                    </button>
+                </form>
+            </div>
+            <!-- End Live Chat Section -->
+        </div>
+    </div>
+
+    {# Hidden elements for JS to get initial data from Django context if available #}
+    <script id="session-data-script" type="application/json">
+        {{ session_data_json|default:'null' }}
+    </script>
+    <script id="user-data-script" type="application/json">
+        {{ user_data_json|default:'null' }}
+    </script>
+    <script id="initial-session-id" type="application/json">
+        {{ session_id_from_url|default:'null' }}
+    </script>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const audioPlayer = document.getElementById('syncAudioPlayer');
+    const sessionTitleEl = document.getElementById('session-title');
+    const sessionArtistEl = document.getElementById('session-artist');
+    const albumArtworkEl = document.getElementById('album-artwork');
+    const sessionIdTextEl = document.getElementById('session-id-text');
+    const copySessionIdBtn = document.getElementById('copy-session-id-btn');
+
+    const hostControlsDiv = document.getElementById('host-controls');
+    const listenerInfoDiv = document.getElementById('listener-info');
+    const hostUsernameDisplay = document.getElementById('host-username-display'); // In listener info
+
+    const joinSessionForm = document.getElementById('join-session-form');
+    const sessionIdInput = document.getElementById('session-id-input');
+    const joinSessionBtn = document.getElementById('join-session-btn'); // Also view button
+
+    const leaveSessionBtn = document.getElementById('leave-session-btn');
+    const statusMessagesEl = document.getElementById('status-messages');
+    const sessionContentDiv = document.getElementById('session-content');
+
+    const listenersListEl = document.getElementById('listeners-list');
+    const listenersCountEl = document.getElementById('listeners-count');
+
+    // URLs (these could also be passed via json_script if preferred)
+    const startSessionUrl = "{% url 'live_sync_api:start_session' %}"; // Not used on this page directly, but good to be aware of
+    const syncPlayerBaseUrl = "{% url 'live_sync_api:sync_player' %}";
+
+
+    let currentSessionId = JSON.parse(document.getElementById('initial-session-id').textContent);
+    let sessionData = JSON.parse(document.getElementById('session-data-script').textContent);
+    const currentUserData = JSON.parse(document.getElementById('user-data-script').textContent);
+    let userRole = "{{ user_role }}"; // 'host', 'listener', 'viewer'
+
+    let pollIntervalId = null;
+    const POLLING_INTERVAL_MS = 3000; // Poll every 3 seconds for listeners
+    const HOST_UPDATE_THROTTLE_MS = 1500; // Host updates time no more than every 1.5s
+    let lastHostUpdateTime = 0;
+
+    function updateUIBasedOnRoleAndData() {
+        if (sessionData && sessionData.session_id) {
+            sessionContentDiv.classList.remove('hidden');
+            if(joinSessionForm) joinSessionForm.classList.add('hidden'); // Hide join form if session loaded via URL
+
+            sessionTitleEl.textContent = sessionData.track_title || "Sync Session";
+            sessionArtistEl.textContent = sessionData.artist_names || "Unknown Artist";
+            albumArtworkEl.src = sessionData.album_artwork_url || "{% static 'img/playlist.svg' %}";
+            sessionIdTextEl.textContent = sessionData.session_id;
+
+            // Set audio player source - only if it's different to prevent reload
+            const newAudioSrc = `/music/track/${sessionData.track_spotify_id}/preview/`; // Assuming an endpoint for this
+                                                                                        // Or use sessionData.preview_url if directly available
+            // For PoC, we'll assume the host's player has the correct src already,
+            // and listeners will get it via status updates.
+            // If track can change mid-session, this needs more robust handling.
+            // This part is tricky without a direct preview URL in sessionData.
+            // Let's assume for now track doesn't change mid-session. Player src is set by host / first load.
+            // audioPlayer.src = track_preview_url_from_session_data_or_fetch;
+
+            if (userRole === 'host') {
+                hostControlsDiv.classList.remove('hidden');
+                listenerInfoDiv.classList.add('hidden');
+                audioPlayer.muted = false; // Host can hear
+                leaveSessionBtn.textContent = "End Session for All";
+            } else if (userRole === 'listener') {
+                hostControlsDiv.classList.add('hidden');
+                listenerInfoDiv.classList.remove('hidden');
+                if(hostUsernameDisplay && sessionData.host_username) hostUsernameDisplay.textContent = sessionData.host_username;
+                audioPlayer.muted = false; // Listener should also hear, but might be controlled by host state initially
+                leaveSessionBtn.textContent = "Leave Session";
+                startPollingSessionStatus();
+            } else { // viewer
+                hostControlsDiv.classList.add('hidden');
+                listenerInfoDiv.classList.add('hidden');
+                audioPlayer.muted = true; // Viewer shouldn't control or hear until joined
+                leaveSessionBtn.textContent = "Leave Session"; // Or hide it
+                if(joinSessionForm) joinSessionForm.classList.remove('hidden'); // Show join form if just viewing
+            }
+        } else {
+            sessionContentDiv.classList.add('hidden');
+            if(joinSessionForm) joinSessionForm.classList.remove('hidden');
+            sessionTitleEl.textContent = "Join or View Sync Session";
+            sessionArtistEl.textContent = "Enter a Session ID below.";
+        }
+        // Update listeners list (implementation below)
+        // updateListenersListDisplay(sessionData ? sessionData.listeners : []); // Listeners not in sessionData yet
+    }
+
+    function showStatusMessage(message, isError = false) {
+        statusMessagesEl.textContent = message;
+        statusMessagesEl.className = isError ? 'text-xs text-red-500 dark:text-red-400' : 'text-xs text-green-500 dark:text-green-400';
+        setTimeout(() => statusMessagesEl.textContent = '', 5000);
+    }
+
+    // --- API Call Functions ---
+    async function callApi(url, method = 'POST', body = null) {
+        const headers = { 'X-CSRFToken': '{{ csrf_token }}' };
+        if (body) {
+            headers['Content-Type'] = 'application/json';
+        }
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: headers,
+                body: body ? JSON.stringify(body) : null
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
+                throw new Error(errorData.error || `Request failed with status ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`API call to ${url} failed:`, error);
+            showStatusMessage(error.message || 'An API error occurred.', true);
+            throw error;
+        }
+    }
+
+    // --- Host Logic ---
+    if (userRole === 'host') {
+        audioPlayer.addEventListener('play', () => {
+            updateHostStatusAPI('playing', Math.floor(audioPlayer.currentTime * 1000));
+        });
+        audioPlayer.addEventListener('pause', () => {
+            updateHostStatusAPI('paused', Math.floor(audioPlayer.currentTime * 1000));
+        });
+        audioPlayer.addEventListener('timeupdate', () => {
+            const now = Date.now();
+            if (now - lastHostUpdateTime > HOST_UPDATE_THROTTLE_MS) {
+                updateHostStatusAPI(audioPlayer.paused ? 'paused' : 'playing', Math.floor(audioPlayer.currentTime * 1000));
+                lastHostUpdateTime = now;
+            }
+        });
+        // Consider 'seeking' and 'seeked' events too for more immediate updates.
+        audioPlayer.addEventListener('seeked', () => {
+             updateHostStatusAPI(audioPlayer.paused ? 'paused' : 'playing', Math.floor(audioPlayer.currentTime * 1000));
+        });
+    }
+
+    async function updateHostStatusAPI(playbackStatus, currentTimeMs) {
+        if (userRole !== 'host' || !currentSessionId) return;
+        const url = `/api/v1/sync/session/${currentSessionId}/update_host_status/`;
+        try {
+            await callApi(url, 'POST', {
+                playback_status: playbackStatus,
+                current_position_ms: currentTimeMs
+            });
+            // console.log("Host status updated via API.");
+        } catch (error) {
+            // Error already logged by callApi
+        }
+    }
+
+    // --- Listener Logic ---
+    function startPollingSessionStatus() {
+        if (pollIntervalId) clearInterval(pollIntervalId); // Clear existing if any
+        if (userRole === 'listener' && currentSessionId) {
+            pollIntervalId = setInterval(async () => {
+                const url = `/api/v1/sync/session/${currentSessionId}/status/`;
+                try {
+                    const newStatus = await callApi(url, 'GET');
+                    if (newStatus) {
+                        sessionData = newStatus; // Update global sessionData
+                        syncPlayerState(newStatus);
+                        // updateListenersListDisplay(await sync_session_manager.get_session_listeners(currentSessionId)); // This is Python
+                        // We need another API endpoint to get listeners or include in status
+                    } else {
+                        showStatusMessage("Session ended or unavailable.", true);
+                        stopPollingSessionStatus();
+                        // Transition UI to a "session ended" state
+                    }
+                } catch (error) {
+                    // Error logged by callApi
+                    stopPollingSessionStatus();
+                }
+            }, POLLING_INTERVAL_MS);
+        }
+    }
+
+    function stopPollingSessionStatus() {
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+            pollIntervalId = null;
+        }
+    }
+
+    function syncPlayerState(hostStatus) {
+        if (!audioPlayer || userRole !== 'listener') return;
+
+        // Update track if different (requires preview_url in hostStatus or a way to fetch it)
+        // For now, assume track doesn't change or src is set initially.
+        // if (audioPlayer.currentSrc.indexOf(hostStatus.track_spotify_id) === -1) {
+        //     audioPlayer.src = hostStatus.preview_url_or_similar; // Needs preview URL
+        // }
+
+        const estimatedHostTimeMs = parseInt(hostStatus.current_position_ms, 10) + (Date.now() - (parseFloat(hostStatus.last_host_update_timestamp) * 1000));
+        const localTimeMs = audioPlayer.currentTime * 1000;
+        const timeDiffMs = Math.abs(estimatedHostTimeMs - localTimeMs);
+
+        if (hostStatus.playback_status === 'playing') {
+            if (audioPlayer.paused) audioPlayer.play().catch(e => console.warn("Play interrupted:", e));
+        } else if (hostStatus.playback_status === 'paused') {
+            if (!audioPlayer.paused) audioPlayer.pause();
+        }
+
+        // Only seek if significantly out of sync (e.g., > 2 seconds) to avoid jitter
+        if (timeDiffMs > 2000) {
+            audioPlayer.currentTime = estimatedHostTimeMs / 1000;
+        }
+    }
+
+    // --- Common Session Actions ---
+    if (joinSessionForm) {
+        joinSessionForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const sessIdToJoin = sessionIdInput.value.trim();
+            if (sessIdToJoin) {
+                // Redirect to the player page with this session_id to load its data
+                window.location.href = `${syncPlayerBaseUrl}?session_id=${sessIdToJoin}`;
+            } else {
+                showStatusMessage("Please enter a Session ID.", true);
+            }
+        });
+    }
+
+    async function joinCurrentSession() { // Called if session_id in URL and user is 'viewer'
+        if (!currentSessionId) return;
+        const url = `/api/v1/sync/session/${currentSessionId}/join/`;
+        try {
+            const joinData = await callApi(url, 'POST');
+            showStatusMessage(joinData.message || "Joined session!");
+            userRole = 'listener'; // Update role
+            sessionData = await callApi(`/api/v1/sync/session/${currentSessionId}/status/`, 'GET'); // Fetch initial state
+            updateUIBasedOnRoleAndData(); // This will start polling for listener
+        } catch (error) {
+            // Error logged by callApi, message shown
+        }
+    }
+
+    if (leaveSessionBtn && currentSessionId) { // Only add listener if there's a session loaded
+        leaveSessionBtn.addEventListener('click', async () => {
+            const url = `/api/v1/sync/session/${currentSessionId}/leave/`;
+            try {
+                const leaveData = await callApi(url, 'POST');
+                showStatusMessage(leaveData.message || "Left session.");
+                stopPollingSessionStatus();
+                // Redirect to dashboard or clear UI
+                window.location.href = "{% url 'dashboard' %}";
+            } catch (error) {
+                // Error logged by callApi
+            }
+        });
+    }
+
+    if (copySessionIdBtn && sessionIdTextEl) {
+        copySessionIdBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(sessionIdTextEl.textContent)
+                .then(() => showStatusMessage("Session ID copied!"))
+                .catch(err => showStatusMessage("Failed to copy ID.", true));
+        });
+    }
+
+    // --- Initial Setup ---
+    if (currentSessionId && sessionData) { // Session loaded via URL and data fetched by Django view
+        if (userRole === 'viewer') {
+            joinCurrentSession().then(() => { // Attempt to join as listener
+                if (userRole === 'listener') initializeChat(); // Initialize chat after successfully joining
+            });
+        } else if (userRole === 'listener') {
+            startPollingSessionStatus();
+            initializeChat(); // Already a listener, initialize chat
+        } else if (userRole === 'host') {
+             initializeChat(); // Host also uses chat
+        }
+        updateUIBasedOnRoleAndData();
+    } else if (currentSessionId && !sessionData) {
+        showStatusMessage(`Session ${currentSessionId} not found or has expired.`, true);
+        sessionContentDiv.classList.add('hidden');
+        if(joinSessionForm) joinSessionForm.classList.remove('hidden');
+    } else {
+        updateUIBasedOnRoleAndData();
+    }
+
+    // --- Chat WebSocket Logic ---
+    const chatMessagesEl = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const chatMessageInput = document.getElementById('chat-message-input');
+    let chatSocket = null;
+    let chatRoomId = null;
+
+    function initializeChat() {
+        if (!currentSessionId) {
+            console.warn("Chat cannot be initialized without a session ID.");
+            document.getElementById('chat-section').classList.add('hidden'); // Hide chat if no session
+            return;
+        }
+        document.getElementById('chat-section').classList.remove('hidden');
+
+        chatRoomId = `sync_session_${currentSessionId}`; // Prefix to distinguish from other potential chat room types
+        const chatSocketUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/chat/${chatRoomId}/`;
+
+        chatSocket = new WebSocket(chatSocketUrl);
+
+        chatSocket.onopen = function(e) {
+            console.log(`Chat WebSocket connection established for room ${chatRoomId}.`);
+            fetchChatHistory();
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'new_chat_message' && data.data) {
+                renderChatMessage(data.data, false); // false for isPrepending
+                scrollToChatBottomIfNeeded();
+            } else if (data.error) {
+                showStatusMessage(`Chat error: ${data.error}`, true);
+            }
+        };
+
+        chatSocket.onclose = function(e) {
+            console.warn(`Chat WebSocket closed for room ${chatRoomId}. Code: ${e.code}, Reason: ${e.reason}`);
+            // Optionally attempt to reconnect or notify user
+        };
+
+        chatSocket.onerror = function(err) {
+            console.error('Chat WebSocket error:', err);
+            showStatusMessage('Chat connection error.', true);
+        };
+    }
+
+    async function fetchChatHistory() {
+        if (!chatRoomId) return;
+        // API endpoint for chat history needs to be created: e.g., /chat/api/v1/history/<room_id>/
+        const historyUrl = `/api/v1/chat/history/${chatRoomId}/?limit=50`; // Adjust limit as needed
+        try {
+            const data = await callApi(historyUrl, 'GET');
+            if (data.results && data.results.length > 0) {
+                chatMessagesEl.innerHTML = ''; // Clear "Welcome" or old messages
+                data.results.forEach(msg => renderChatMessage(msg, true)); // Prepend history
+                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight; // Scroll to bottom
+            } else {
+                 chatMessagesEl.innerHTML = '<p class="text-xs text-gray-400 dark:text-gray-500 italic text-center py-2">No messages yet. Say hello!</p>';
+            }
+        } catch (error) {
+            console.error("Failed to fetch chat history:", error);
+            chatMessagesEl.innerHTML = '<p class="text-xs text-red-500 dark:text-red-400 italic text-center py-2">Could not load chat history.</p>';
+        }
+    }
+
+    function renderChatMessage(msgData, isPrepending = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('chat-message-item', 'p-2', 'rounded-lg', 'max-w-[85%]', 'sm:max-w-[75%]', 'break-words');
+
+        const senderIsCurrentUser = msgData.user_id === currentUserData.id;
+
+        if (senderIsCurrentUser) {
+            messageDiv.classList.add('bg-indigo-500', 'dark:bg-indigo-600', 'text-white', 'ml-auto', 'rounded-br-none');
+        } else {
+            messageDiv.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white', 'mr-auto', 'rounded-bl-none');
+        }
+
+        const profilePicUrl = msgData.profile_picture_url || "{% static 'media/profile_pics/default.jpg' %}";
+        const formattedTimestamp = new Date(msgData.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        messageDiv.innerHTML = `
+            <div class="flex items-start gap-2.5">
+                ${!senderIsCurrentUser ? `<img class="w-8 h-8 rounded-full object-cover" src="${profilePicUrl}" alt="${msgData.username || 'User'}">` : ''}
+                <div class="flex flex-col w-full">
+                    <div class="flex items-center space-x-2 ${senderIsCurrentUser ? 'justify-end' : 'justify-start'}">
+                        ${!senderIsCurrentUser ? `<span class="text-xs font-semibold ${senderIsCurrentUser ? 'text-indigo-200' : 'text-gray-700 dark:text-gray-300'}">${msgData.username || 'User'}</span>` : ''}
+                        <span class="text-xxs ${senderIsCurrentUser ? 'text-indigo-200 opacity-80' : 'text-gray-400 dark:text-gray-500'}">${formattedTimestamp}</span>
+                    </div>
+                    <p class="text-sm py-1">${msgData.message_text.replace(/\n/g, "<br>")}</p>
+                </div>
+                ${senderIsCurrentUser ? `<img class="w-8 h-8 rounded-full object-cover" src="${profilePicUrl}" alt="${msgData.username || 'User'}">` : ''}
+            </div>
+        `;
+
+        if (isPrepending) {
+            chatMessagesEl.insertBefore(messageDiv, chatMessagesEl.firstChild);
+        } else {
+            chatMessagesEl.appendChild(messageDiv);
+        }
+    }
+
+    function scrollToChatBottomIfNeeded() {
+        // Only auto-scroll if user is already near the bottom
+        if (chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl.clientHeight < 100) {
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
+    }
+
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const messageText = chatMessageInput.value.trim();
+            if (messageText && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({ message: messageText }));
+                chatMessageInput.value = '';
+            } else if (!messageText) {
+                // Optionally show a small validation message
+            } else {
+                showStatusMessage("Chat not connected. Cannot send message.", true);
+            }
+        });
+    }
+
+    // Call initial setup
+    // updateUIBasedOnRoleAndData(); // Already called in previous block
+    // Chat initialization is now conditional within the initial setup logic for sessionData
+});
+</script>
+{% endblock %}

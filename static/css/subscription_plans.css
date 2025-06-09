@@ -1,49 +1,16 @@
-.plan-card {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    border: none;
-    border-radius: 15px;
-    overflow: hidden;
-}
+/* static/css/subscription_plans.css */
 
-.plan-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
+/* All styles previously here are now handled by Tailwind utility classes
+   applied directly in the templates/subscription/plans.html template.
 
-.plan-card .card-header {
-    padding: 20px;
-    text-align: center;
-    font-weight: bold;
-}
+   - .plan-card (transitions, hover effects, border, radius, overflow): Replaced by Tailwind utilities.
+   - .plan-card .card-header, .card-body, .list-group-item: Styling handled by Tailwind.
+   - .plan-card .btn: Styling handled by Tailwind.
+   - .current-plan (border, shadow): Handled by conditional Tailwind classes.
+   - .display-4: Handled by Tailwind text utilities.
+   - Media queries: Handled by Tailwind's responsive prefixes.
+*/
 
-.plan-card .card-body {
-    padding: 30px;
-}
-
-.plan-card .list-group-item {
-    border: none;
-    padding: 10px 0;
-}
-
-.plan-card .btn {
-    padding: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.current-plan {
-    border: 2px solid #007bff;
-    box-shadow: 0 0 15px rgba(0, 123, 255, 0.3);
-}
-
-.display-4 {
-    font-weight: bold;
-}
-
-@media (max-width: 767.98px) {
-    .plan-card {
-        margin-bottom: 30px;
-    }
-}
+/* This file can be kept for any future, highly specific custom styles for this page,
+   but for now, it's effectively empty. */
 

@@ -1,40 +1,22 @@
-.profile-container {
-    padding-top: 2rem;
-    max-width: 1000px;
-    margin: 0 auto;
-}
+/* static/css/profile.css */
 
-.profile-image-container {
-    /*background-color: #f8f9fa;*/
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+/* Most styles from the previous version are now handled by Tailwind utility classes
+   applied directly in the templates/users/profile.html template.
 
-.profile-image {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 5px solid #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+   - .profile-container: Replaced by Tailwind's max-w-*, mx-auto, py-*, px-*.
+   - .profile-image-container: Replaced by Tailwind's bg-*, shadow-*, rounded-*, p-*.
+   - .profile-image: Replaced by Tailwind's w-*, h-*, rounded-full, border-*, shadow-*, object-cover.
+   - .card: Replaced by Tailwind's bg-*, shadow-*, rounded-*.
+   - .card-title: Specific heading styles now use Tailwind text utilities (text-*, font-*, mb-*, border-b, etc.).
+   - Media queries for .profile-image: Handled by Tailwind's responsive prefixes (sm:w-*, sm:h-*).
+*/
 
-.card {
-    border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+/* Add any remaining custom styles here if absolutely necessary,
+   i.e., styles that cannot be easily achieved with Tailwind utilities
+   or are for highly specific component states not covered. */
 
-.card-title {
-    color: var(--bs-primary);
-    border-bottom: 2px solid var(--bs-primary);
-    padding-bottom: 0.5rem;
-}
-
-@media (max-width: 768px) {
-    .profile-image {
-        width: 150px;
-        height: 150px;
-    }
-}
+/* For example, if there was a very unique border style or a complex background pattern
+   that Tailwind's JIT engine couldn't generate from class names alone.
+   Currently, it seems all previous styles are well-covered by the Tailwind migration.
+*/
 

@@ -1,0 +1,27 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "**MeloMatch** is a Django-based web application that provides a personalized music streaming experience. It integrates with Spotify's API to offer music recommendations, playlist creation, and listening statistics.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind_output.css --watch",
+    "build:css:prod": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind_output.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aadhavancnp/MeloMatch.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Aadhavancnp/MeloMatch/issues"
+  },
+  "homepage": "https://github.com/Aadhavancnp/MeloMatch#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.0.0"
+  }
+}

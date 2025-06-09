@@ -1,110 +1,40 @@
-.activities-container {
-    padding: 3rem 0;
-    background-color: #f8f9fa;
-    min-height: calc(100vh - 56px);
-}
+/* static/css/user_activities.css */
 
-.page-title {
-    text-align: center;
-    margin-bottom: 2rem;
-    color: #333;
-    font-weight: bold;
-}
+/* Most styles are now handled by Tailwind utility classes in the HTML.
+   - .activities-container: Replaced by Tailwind bg-*, py-*, px-*, min-h-*.
+   - .page-title: Replaced by Tailwind text-*, font-*, text-center, mb-*.
+   - .activity-item display and alignment: Handled by Tailwind flex and space-x-*.
+   - .activity-icon styling (size, bg, color, border-radius, flex centering): Handled by Tailwind.
+   - .activity-content (card styling): Handled by Tailwind bg-*, p-*, rounded-*, shadow-*.
+   - Text styling (.activity-title, .activity-description, .activity-time): Handled by Tailwind text utilities.
+   - .no-activity styling: Handled by Tailwind text-center, py-*, text-*, etc.
+*/
 
-.activity-timeline {
-    position: relative;
-    padding: 2rem 0;
-}
-
-.activity-timeline::before {
+/* The custom timeline line (.activity-timeline::before) is the most complex part to replicate purely with Tailwind
+   without adding extra HTML elements. If the visual line is critical and the pure Tailwind HTML structure
+   (simple vertical stacking of items) is not sufficient, the CSS for the line could be kept.
+   For this migration, we are relying on the spaced-out flex items to represent the timeline flow.
+   If the line was crucial, the following CSS (or similar) might be kept:
+*/
+/*
+.activity-timeline-container::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 0;
+    left: calc(1.5rem - 1px); // Adjust based on icon size (w-12 -> 3rem, half is 1.5rem) and desired line position
     width: 2px;
-    height: 100%;
-    background-color: #e9ecef;
+    background-color: #e5e7eb; // theme('colors.gray.200');
 }
-
-.activity-item {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    position: relative;
+.dark .activity-timeline-container::before {
+    background-color: #374151; // theme('colors.gray.700');
 }
+*/
+/* Note: The HTML structure would need a parent container (e.g., with class .activity-timeline-container)
+   around the loop of activity items for this ::before to work as a central line.
+   The current Tailwind HTML structure in user_activities.html uses `space-y-8` on the parent,
+   which gives vertical spacing but no central line.
+*/
 
-.activity-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: var(--bs-primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    margin-right: 1rem;
-    flex-shrink: 0;
-    z-index: 1;
-}
-
-.activity-content {
-    background-color: white;
-    border-radius: 10px;
-    padding: 1rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    flex-grow: 1;
-}
-
-.activity-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-    color: #333;
-}
-
-.activity-description {
-    margin-bottom: 0.5rem;
-    color: #555;
-}
-
-.activity-time {
-    font-size: 0.9rem;
-    color: #888;
-}
-
-.no-activity {
-    text-align: center;
-    padding: 3rem 0;
-    color: #888;
-}
-
-.no-activity-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    color: #6a11cb;
-}
-
-@media (max-width: 768px) {
-    .activity-timeline::before {
-        left: 25px;
-    }
-
-    .activity-item {
-        flex-direction: column;
-        align-items: flex-start;
-        padding-left: 50px;
-    }
-
-    .activity-icon {
-        position: absolute;
-        left: 0;
-        top: 0;
-    }
-
-    .activity-content {
-        width: 100%;
-    }
-}
+/* Keep this file minimal or empty if all styling is achieved via Tailwind utilities. */
 

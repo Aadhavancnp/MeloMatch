@@ -4,53 +4,82 @@
 {% block title %}Subscription Plans - MeloMatch{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/subscription_plans.css' %}">
+    <link rel="stylesheet" href="{% static 'css/subscription_plans.css' %}"> {# Kept, even if empty #}
 {% endblock %}
 
 {% block content %}
-    <div class="container py-5">
-        <h1 class="display-4 mb-5 text-center">Choose Your Subscription Plan</h1>
-        <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
+<div class="bg-gray-100 dark:bg-gray-900 py-12 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl">
+                Choose Your Subscription Plan
+            </h1>
+            <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">
+                Unlock more features and enhance your music experience.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
             {% for plan in plans %}
-                <div class="col">
-                    <div class="card h-100 plan-card {% if user_subscription.plan == plan %}current-plan{% endif %}">
-                        <div class="card-header bg-{% if plan.name == 'Free' %}light{% elif plan.name == 'Pro' %}info{% else %}warning{% endif %} text-{% if plan.name == 'Free' %}dark{% else %}white{% endif %}">
-                            <h2 class="card-title h4 mb-0">{{ plan.name }}</h2>
+                <div class="flex flex-col rounded-2xl shadow-2xl overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105
+                            {% if user_subscription.plan == plan %} border-4 border-indigo-500 dark:border-indigo-400 ring-4 ring-indigo-500/50 dark:ring-indigo-400/50
+                            {% else %} border border-gray-200 dark:border-gray-700 {% endif %}">
+
+                    {# Conditional header styling based on plan name - can be customized further in tailwind.config.js #}
+                    <div class="p-6 text-center
+                        {% if plan.name == 'Free' %} bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white
+                        {% elif plan.name == 'Pro' %} bg-blue-500 text-white
+                        {% elif plan.name == 'Premium' %} bg-purple-600 text-white
+                        {% else %} bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 {% endif %}">
+                        <h2 class="text-2xl font-bold">{{ plan.name }}</h2>
+                    </div>
+
+                    <div class="px-6 py-8 bg-white dark:bg-gray-800 flex-grow flex flex-col">
+                        <div class="text-center mb-6">
+                            <span class="text-5xl font-extrabold text-gray-900 dark:text-white">${{ plan.price|floatformat:"0" }}</span>
+                            <span class="text-base font-medium text-gray-500 dark:text-gray-400">/month</span>
                         </div>
-                        <div class="card-body d-flex flex-column">
-                            <h3 class="card-subtitle mb-4 text-center">
-                                <span class="display-4">${{ plan.price }}</span>
-                                <small class="text-muted">/month</small>
-                            </h3>
-                            <p class="card-text text-center mb-4">{{ plan.description }}</p>
-                            <ul class="list-group list-group-flush mb-4">
-                                {% for feature in plan.features_list %}
-                                    <li class="list-group-item">
-                                        <i class="fa-solid fa-circle-check text-success me-2"></i>
-                                        {{ feature }}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                            <div class="mt-auto">
-                                {% if user_subscription.plan == plan %}
-                                    <button class="btn btn-primary w-100" disabled>
-                                        <i class="fa-solid fa-check me-2"></i>Current Plan
-                                    </button>
-                                {% else %}
-                                    <a href="{% url 'subscribe' plan.id %}" class="btn btn-outline-primary w-100">
-                                        {% if plan.name == 'Free' %}
-                                            Switch to Free
-                                        {% else %}
-                                            Subscribe Now
-                                        {% endif %}
-                                    </a>
-                                {% endif %}
-                            </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 text-center mb-6 h-12">{{ plan.description|default:"Core features included." }}</p>
+
+                        <ul class="space-y-3 mb-8 flex-grow">
+                            {% for feature in plan.features_list %}
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <i class="fa-solid fa-circle-check text-green-500 dark:text-green-400 mt-1"></i>
+                                    </div>
+                                    <p class="ml-3 text-sm text-gray-700 dark:text-gray-300">{{ feature }}</p>
+                                </li>
+                            {% empty %}
+                                <li class="text-sm text-gray-500 dark:text-gray-400">No specific features listed.</li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="mt-auto">
+                            {% if user_subscription.plan == plan %}
+                                <button class="w-full px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gray-500 dark:bg-gray-600 cursor-not-allowed" disabled>
+                                    <i class="fa-solid fa-check mr-2"></i>Current Plan
+                                </button>
+                            {% else %}
+                                <a href="{% url 'subscribe' plan.id %}"
+                                   class="block w-full text-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white
+                                          {% if plan.name == 'Free' %} bg-gray-600 hover:bg-gray-700 focus:ring-gray-500
+                                          {% else %} bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 {% endif %}
+                                          dark:focus:ring-offset-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2">
+                                    {% if plan.name == 'Free' %}
+                                        Switch to Free
+                                    {% else %}
+                                        Subscribe Now
+                                    {% endif %}
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
+            {% empty %}
+            <p class="col-span-full text-center text-gray-500 dark:text-gray-400">No subscription plans available at the moment.</p>
             {% endfor %}
         </div>
     </div>
+</div>
 {% endblock %}
 

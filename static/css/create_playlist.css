@@ -1,140 +1,71 @@
-.create-playlist-container {
-    padding: 4rem 0;
-    min-height: calc(100vh - 56px);
-}
+/* static/css/create_playlist.css */
 
-.create-playlist-card {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: none;
-    overflow: hidden;
-    position: relative;
-}
+/* Styles that are highly custom and might be kept or adapted: */
 
-.card-title {
-    color: var(--bs-primary);
-    font-weight: bold;
-}
-
-.form-label {
-    font-weight: 600;
-    color: #333;
-}
-
-.input-group-text {
-    background-color: var(--bs-primary);
-    color: white;
-    border: none;
-}
-
-.form-control {
-    border: 2px solid #e0e0e0;
-    border-radius: 0 5px 5px 0;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.create-btn {
-    background-color: var(--bs-primary);
-    border: none;
-    transition: all 0.3s ease;
-}
-
-.create-btn:hover {
-    background-color: #0a58ca;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.cover-image-container {
-    display: flex;
-    gap: 1rem;
-}
-
-.cover-image-preview {
-    width: 150px;
-    height: 150px;
-    border: 2px dashed var(--bs-primary);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: var(--bs-primary);
-    font-size: 2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background-size: cover;
-    background-position: center;
-}
-
-.cover-image-preview:hover {
-    border-color: #0a58ca;
-}
-
-.cover-image-preview i {
-    margin-bottom: 0.5rem;
-}
-
-.cover-image-preview span {
-    font-size: 1rem;
-}
-
-.cover-image-input {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.cover-image-input input[type="file"] {
-    display: none;
-}
-
-.create-playlist-card::before,
-.create-playlist-card::after {
+/* Decorative animated pseudo-elements for the main card.
+   These use CSS variables (--bs-primary) which would need to be replaced
+   with Tailwind theme colors or hardcoded values if Tailwind isn't processing this CSS file.
+   For simplicity, let's assume they are kept and --bs-primary is defined or replaced.
+   If Tailwind JIT is used and this file is part of PostCSS processing, theme() can be used.
+*/
+.create-playlist-card-custom-bg::before, /* Renamed to avoid conflict if .create-playlist-card is used by Tailwind */
+.create-playlist-card-custom-bg::after {
     content: '';
     position: absolute;
     width: 200px;
     height: 200px;
-    background: var(--bs-primary);
-    opacity: 0.1;
+    /* background: var(--bs-primary); */ /* Example: replace with a Tailwind color or keep if var is globally defined */
+    background: theme('colors.indigo.500', #6366f1); /* Using Tailwind theme function if processed, else fallback */
+    opacity: 0.1; /* Or use Tailwind opacity utility on the pseudo-element if possible (not directly) */
     border-radius: 50%;
+    z-index: 0; /* Ensure it's behind content */
 }
 
-.create-playlist-card::before {
+.create-playlist-card-custom-bg::before {
     top: -100px;
     left: -100px;
-}
-
-.create-playlist-card::after {
-    bottom: -100px;
-    right: -100px;
-}
-
-@keyframes float {
-    0% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-    100% {
-        transform: translateY(0px);
-    }
-}
-
-.create-playlist-card::before {
     animation: float 6s ease-in-out infinite;
 }
 
-.create-playlist-card::after {
-    animation: float 5s ease-in-out infinite;
+.create-playlist-card-custom-bg::after {
+    bottom: -100px;
+    right: -100px;
+    animation: float 5s ease-in-out infinite 0.5s; /* Added delay for variation */
 }
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); } /* Increased float distance */
+    100% { transform: translateY(0px); }
+}
+
+/* Styling for the file preview, if Tailwind utilities are not sufficient for the dashed border
+   and icon/text centering. The HTML will use Tailwind for most of this.
+   The specific 'border: 2px dashed var(--bs-primary)' might be kept.
+*/
+.cover-image-preview-custom {
+    /* border: 2px dashed theme('colors.indigo.500', #6366f1); */ /* Example if processed by Tailwind */
+    /* The HTML will use Tailwind for dimensions, flex, items-center, justify-center, rounded, cursor, bg-cover, bg-center. */
+    /* Transition can also be Tailwind. */
+}
+/* .cover-image-preview-custom:hover {
+    border-color: theme('colors.indigo.700', #4338ca);
+} */
+
+
+/* Removed styles that will be handled by Tailwind utilities:
+   - .create-playlist-container (layout, background, padding, min-height)
+   - .create-playlist-card (basic bg, border-radius, shadow, position relative - if needed for pseudo-elements)
+   - .card-title (text color, font weight)
+   - .form-label (font weight, text color)
+   - .input-group-text (bg color, text color, border - input groups will be restructured with Tailwind)
+   - .form-control (border, radius, transition, focus styles - Tailwind form classes will handle)
+   - .create-btn (bg color, border, transition, hover effects - Tailwind button classes)
+   - .cover-image-container (flex, gap - Tailwind flex utilities)
+   - .cover-image-preview (most of its layout/appearance - Tailwind, keeping custom class for specific border/icon)
+   - .cover-image-input (flex behavior - Tailwind)
+   - .cover-image-input input[type="file"] (display: none - can be sr-only or custom for Tailwind)
+*/
+
+/* The main card will have `relative overflow-hidden` from Tailwind for the pseudo-elements to be contained. */
 

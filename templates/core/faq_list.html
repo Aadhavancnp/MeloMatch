@@ -4,49 +4,83 @@
 {% block title %}FAQ - MeloMatch{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/faq.css' %}">
+    <link rel="stylesheet" href="{% static 'css/faq.css' %}"> {# Kept, even if empty #}
 {% endblock %}
 
 {% block content %}
-    <div class="faq-container">
-        <div class="container">
-            <h1 class="text-center mb-5">Frequently Asked Questions</h1>
+<div class="bg-gray-100 dark:bg-gray-900 py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl tracking-tight">
+                Frequently Asked Questions
+            </h1>
+        </div>
 
-            <div class="row justify-content-center mb-4">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
-                        <input type="text" id="faqSearch" class="form-control" placeholder="Search FAQs...">
-                    </div>
+        <div class="mb-8 max-w-xl mx-auto">
+            <div class="relative flex items-stretch flex-grow focus-within:z-10">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400 dark:text-gray-500"></i>
                 </div>
-            </div>
-
-            <div id="faqList" class="accordion">
-                {% for faq in faqs %}
-                    <div class="accordion-item faq-item">
-                        <h2 class="accordion-header" id="heading{{ faq.id }}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#faq{{ faq.id }}" aria-expanded="false"
-                                    aria-controls="faq{{ faq.id }}">
-                                {{ faq.question }}
-                            </button>
-                        </h2>
-                        <div id="faq{{ faq.id }}" class="accordion-collapse collapse"
-                             aria-labelledby="heading{{ faq.id }}">
-                            <div class="accordion-body">
-                                {{ faq.answer|linebreaks }}
-                            </div>
-                        </div>
-                    </div>
-                {% empty %}
-                    <p class="text-center">No FAQs available at the moment.</p>
-                {% endfor %}
+                <input type="text" id="faqSearch"
+                       class="appearance-none block w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg py-3 pl-10 pr-3 leading-tight focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                       placeholder="Search FAQs...">
             </div>
         </div>
+
+        <div id="faqList" class="space-y-4">
+            {% for faq_item in faqs %} {# Renamed loop variable to avoid conflict if 'faq' is used elsewhere #}
+                <details class="faq-entry group bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+                    <summary class="faq-question-summary flex items-center justify-between p-4 sm:p-5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ faq_item.question }}</h2>
+                        <span class="ml-4 h-5 w-5 text-gray-500 dark:text-gray-400 group-open:rotate-180 transform transition-transform duration-200">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </span>
+                    </summary>
+                    <div class="faq-answer-content px-4 pb-5 sm:px-5 sm:pb-6 border-t border-gray-200 dark:border-gray-700">
+                        <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 mt-3">
+                        {{ faq_item.answer|linebreaks }}
+                        </div>
+                    </div>
+                </details>
+            {% empty %}
+                <div class="text-center py-10 bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+                    <i class="fa-solid fa-comments-question text-5xl text-gray-400 dark:text-gray-500 mb-4"></i>
+                    <p class="text-xl text-gray-600 dark:text-gray-400">No FAQs available at the moment.</p>
+                </div>
+            {% endfor %}
+        </div>
     </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/faq.js' %}"></script>
+    {# Update the JS selectors if they were too specific to Bootstrap accordion structure #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('faqSearch');
+            const faqListContainer = document.getElementById('faqList'); // Get the container of all FAQs
+            const allFaqEntries = faqListContainer.querySelectorAll('.faq-entry'); // Target the <details> tag
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const searchTerm = this.value.toLowerCase().trim();
+
+                    allFaqEntries.forEach(entry => {
+                        const questionElement = entry.querySelector('summary'); // Question is in summary
+                        const answerElement = entry.querySelector('.faq-answer-content div'); // Answer is in the div within details
+
+                        const questionText = questionElement ? questionElement.textContent.toLowerCase() : '';
+                        const answerText = answerElement ? answerElement.textContent.toLowerCase() : '';
+
+                        if (questionText.includes(searchTerm) || answerText.includes(searchTerm)) {
+                            entry.style.display = 'block';
+                        } else {
+                            entry.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 {% endblock %}
 

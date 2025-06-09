@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Shopping Cart - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    {# Add any specific CSS for this page if needed #}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-8 text-center">
+        Your Shopping Cart
+    </h1>
+
+    {% if cart_items %}
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+            <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for item in cart_items %}
+                <div class="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+                    <img src="{{ item.track.image_url|default:'https://via.placeholder.com/100/4A5568/FFFFFF?Text=Art' }}"
+                         alt="{{ item.track.title }}"
+                         class="w-24 h-24 sm:w-28 sm:h-28 rounded-md object-cover shadow-sm flex-shrink-0">
+
+                    <div class="flex-grow min-w-0"> {# min-w-0 for truncate #}
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white truncate" title="{{ item.track.title }}">
+                            {{ item.track.title }}
+                        </h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 truncate" title="{{ item.track.artists_names|join:", " }}">
+                            {{ item.track.artists_names|join:", " }}
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-500">Album: {{ item.track.album|truncatechars:30 }}</p>
+                        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                            Quantity: {{ item.quantity }}
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col sm:items-end items-start sm:ml-auto flex-shrink-0 space-y-2">
+                        {# Assuming a fixed price for now, as CartItem model doesn't store price #}
+                        {% with item_price=1.29 %} {# Placeholder price per track #}
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                            ${{ item_price|floatformat:2 }}
+                        </p>
+                        {% endwith %}
+                        <form action="{% url 'remove_from_cart' item.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 hover:underline focus:outline-none">
+                                <i class="fa-solid fa-trash-can mr-1"></i>Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="p-6 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <p class="text-lg font-semibold text-gray-900 dark:text-white">Total Price:</p>
+                    <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">${{ total_price|floatformat:2 }}</p>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 space-y-3 sm:space-y-0">
+                    <a href="{% url 'home' %}" {# Or a more specific "continue shopping" page #}
+                       class="w-full sm:w-auto text-center px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Continue Shopping
+                    </a>
+                    {% if total_price > 0 %}
+                    <form action="{% url 'place_order' %}" method="post" class="w-full sm:w-auto">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="w-full text-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                            Proceed to Checkout
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-12 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+            <i class="fa-solid fa-cart-arrow-down text-6xl text-gray-300 dark:text-gray-600 mb-6"></i>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-3">Your Cart is Empty</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Looks like you haven't added any music to your cart yet.</p>
+            <a href="{% url 'search' %}"
+               class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                Start Shopping
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

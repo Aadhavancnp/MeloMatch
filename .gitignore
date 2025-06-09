@@ -12,3 +12,4 @@ migrations/
 media/**/*
 !media/profile_pics/
 !media/profile_pics/default.jpg
+node_modules/
