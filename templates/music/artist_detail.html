@@ -4,86 +4,104 @@
 {% block title %}{{ artist.name }} - MeloMatch{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/artist_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/artist_detail.css' %}"> {# For popularity meter, custom underlines #}
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid artist-header" style="background-image: url('{{ artist.images.0.url }}');">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-md-4 mb-4 mb-md-0">
+    <!-- Artist Header -->
+    <div class="relative bg-gray-700">
+        {% if artist.images.0.url %}
+        <div class="absolute inset-0">
+            <img src="{{ artist.images.0.url }}" alt="Header background for {{ artist.name }}" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black opacity-60"></div> {# Overlay #}
+        </div>
+        {% endif %}
+        <div class="relative max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8 text-center">
+            <div class="flex flex-col items-center md:flex-row md:items-center md:text-left">
+                <div class="flex-shrink-0 mb-6 md:mb-0 md:mr-8">
                     {% if artist.images.0.url %}
                         <img src="{{ artist.images.0.url }}" alt="{{ artist.name }}"
-                             class="img-fluid rounded-circle artist-image">
+                             class="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white dark:border-gray-300 shadow-xl object-cover transition-transform duration-300 hover:scale-105">
                     {% else %}
-                        <img src="/media/profile_pics/default.jpg" class="profile-image" alt="Default Profile Picture">
+                        <div class="w-40 h-40 md:w-48 md:h-48 rounded-full bg-gray-500 text-white flex items-center justify-center text-5xl font-bold border-4 border-white dark:border-gray-300 shadow-xl">?</div>
                     {% endif %}
                 </div>
-                <div class="col-md-8 text-white">
-                    <h1 class="display-4 mb-3">{{ artist.name }}</h1>
-                    <p class="lead mb-3">Genres: {{ artist.genres|join:", " }}</p>
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="popularity-meter me-3" data-popularity="{{ artist.popularity }}">
-                            <div class="popularity-fill" style="width: 0"></div>
+                <div class="text-white">
+                    <h1 class="text-4xl md:text-5xl font-extrabold mb-2 tracking-tight">{{ artist.name }}</h1>
+                    <p class="text-lg md:text-xl text-gray-300 mb-3">Genres: {{ artist.genres|join:", " }}</p>
+                    <div class="flex items-center justify-center md:justify-start mb-4">
+                        <div class="popularity-meter w-36 h-2.5 bg-white bg-opacity-20 rounded-full overflow-hidden mr-3" data-popularity="{{ artist.popularity }}">
+                            <div class="popularity-fill h-full bg-green-500" style="width: 0%"></div> {# JS will update width #}
                         </div>
-                        <span>Popularity: {{ artist.popularity }}/100</span>
+                        <span class="text-sm text-gray-300">Popularity: {{ artist.popularity }}/100</span>
                     </div>
-                    <a href="{{ artist.external_urls.spotify }}" target="_blank" class="btn btn-success btn-lg">
-                        <i class="fab fa-spotify me-2"></i>Open in Spotify
+                    <a href="{{ artist.external_urls.spotify }}" target="_blank"
+                       class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800">
+                        <i class="fab fa-spotify mr-2"></i>Open in Spotify
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container py-5">
-        <h2 class="section-title mb-4">Top Tracks</h2>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {% for track in top_tracks %}
-                <div class="col">
-                    <div class="card h-100 track-card">
-                        <img src="{{ track.album.images.0.url }}" class="card-img-top" alt="{{ track.name }}">
-                        <div class="card-body">
-                            <h3 class="card-title h5">{{ track.name }}</h3>
-                            <p class="card-text">{{ track.album.name }}</p>
-                        </div>
-                        <div class="card-footer bg-transparent border-0">
-                            <a href="{{ track.external_urls.spotify }}" target="_blank"
-                               class="btn btn-outline-success btn-sm">
-                                <i class="fab fa-spotify me-2"></i>Listen on Spotify
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-
-        <h2 class="section-title mt-5 mb-4">Albums</h2>
-        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
-            {% for album in albums %}
-                <div class="col">
-                    <div class="card h-100 album-card">
-                        {% if album.images %}
-                            <img src="{{ album.images.0.url }}" class="card-img-top" alt="{{ album.name }}">
+    <!-- Main Content Area -->
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Top Tracks Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-gray-900 dark:text-white mb-6 section-title-custom-underline">Top Tracks</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {% for track in top_tracks %}
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
+                        {% if track.album.images.0.url %}
+                        <img src="{{ track.album.images.0.url }}" class="w-full h-40 object-cover" alt="{{ track.name }}">
+                        {% else %}
+                        <div class="w-full h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400">No Image</div>
                         {% endif %}
-                        <div class="card-body">
-                            <h3 class="card-title h5">{{ album.name }}</h3>
-                            <p class="card-text">Released: {{ album.release_date }}</p>
-                        </div>
-                        <div class="card-footer bg-transparent border-0">
-                            <a href="{{ album.external_urls.spotify }}" target="_blank"
-                               class="btn btn-outline-success btn-sm">
-                                <i class="fab fa-spotify me-2"></i>Listen on Spotify
+                        <div class="p-4">
+                            <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-1 truncate" title="{{ track.name }}">{{ track.name|truncatechars:30 }}</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 truncate" title="{{ track.album.name }}">{{ track.album.name|truncatechars:25 }}</p>
+                            <a href="{{ track.external_urls.spotify }}" target="_blank"
+                               class="inline-block w-full text-center px-3 py-2 border border-green-500 dark:border-green-400 rounded-md shadow-sm text-xs font-medium text-green-700 dark:text-green-300 bg-white dark:bg-gray-700 hover:bg-green-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500">
+                                <i class="fab fa-spotify mr-1"></i> Listen
                             </a>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
+                {% empty %}
+                    <p class="text-gray-500 dark:text-gray-400 col-span-full">No top tracks available.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Albums Section -->
+        <section>
+            <h2 class="text-3xl font-semibold text-gray-900 dark:text-white mb-6 section-title-custom-underline">Albums</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {% for album in albums %}
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
+                        {% if album.images.0.url %}
+                            <img src="{{ album.images.0.url }}" class="w-full h-40 object-cover" alt="{{ album.name }}">
+                        {% else %}
+                             <div class="w-full h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400">No Image</div>
+                        {% endif %}
+                        <div class="p-4">
+                            <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-1 truncate" title="{{ album.name }}">{{ album.name|truncatechars:30 }}</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">Released: {{ album.release_date }}</p>
+                             <a href="{{ album.external_urls.spotify }}" target="_blank"
+                               class="inline-block w-full text-center px-3 py-2 border border-green-500 dark:border-green-400 rounded-md shadow-sm text-xs font-medium text-green-700 dark:text-green-300 bg-white dark:bg-gray-700 hover:bg-green-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500">
+                                <i class="fab fa-spotify mr-1"></i> View Album
+                            </a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-500 dark:text-gray-400 col-span-full">No albums available.</p>
+                {% endfor %}
+            </div>
+        </section>
     </div>
 {% endblock %}
 
 {% block extra_js %}
+    {# artist_detail.js is kept for the popularity meter animation #}
     <script src="{% static 'js/artist_detail.js' %}"></script>
 {% endblock %}
 

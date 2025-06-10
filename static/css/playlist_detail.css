@@ -1,70 +1,34 @@
-.playlist-header {
-    background-size: cover;
-    background-position: center;
-    position: relative;
-}
+/* static/css/playlist_detail.css */
 
-.playlist-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-}
+/* Most styles from the previous version are now handled by Tailwind utility classes
+   applied directly in the restored templates/music/playlist_detail.html template.
 
-.playlist-header .container {
-    position: relative;
-    z-index: 1;
-}
+   - .playlist-header and its ::before overlay: Handled by Tailwind bg, opacity, positioning.
+   - .playlist-image:hover: Tailwind hover utilities.
+   - .track-card:hover: Tailwind hover utilities.
+   - .card-img-top: Tailwind w-full, h-*, object-cover.
+   - .btn-outline-light:hover, .btn-outline-danger:hover : Tailwind hover utilities for buttons.
+   - #track-search, .input-group-text custom radius: The search bar might have been redesigned
+     with Tailwind's standard input/button group styling. If specific radii are still needed for a
+     custom search component, those specific styles could be kept, but likely it's part of the new form styling.
+     The restored template has a simple input field for adding tracks by ID, not a complex search bar.
+   - .track-item animation: The restored template's JS doesn't explicitly use a 'track-item' class for animation.
+     If fade-in is desired for new tracks added via WebSocket, it would be handled by JS adding/removing Tailwind
+     opacity/transition classes.
+*/
 
-.playlist-image {
-    transition: transform 0.3s ease-in-out;
-}
+/* This file can be kept for any future, highly specific custom styles for the playlist detail page
+   that cannot be easily achieved with Tailwind utilities. For now, it's mostly comments.
+*/
 
-.playlist-image:hover {
-    transform: scale(1.05);
+/* Example: If a very specific track item entrance animation was defined and still desired. */
+/*
+@keyframes fadeInItem {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-
-.track-card {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+.new-track-fade-in {
+    animation: fadeInItem 0.5s ease-in-out;
 }
-
-.track-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.card-img-top {
-    height: 200px;
-    object-fit: cover;
-}
-
-.btn-outline-light:hover, .btn-outline-danger:hover {
-    transform: translateY(-2px);
-}
-
-#track-search {
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
-}
-
-.input-group-text {
-    border-top-left-radius: 20px;
-    border-bottom-left-radius: 20px;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.track-item {
-    animation: fadeIn 0.5s ease-in-out;
-}
+*/
 

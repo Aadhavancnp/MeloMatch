@@ -10,113 +10,223 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/icons/favicon-32x32.png' %}">
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/icons/favicon-16x16.png' %}">
     <link rel="manifest" href="{% static 'img/icons/site.webmanifest' %}">
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {# <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}"> #} <!-- Bootstrap CSS removed -->
+    <link rel="stylesheet" href="{% static 'css/tailwind_output.css' %}"> <!-- Tailwind CSS added -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"> <!-- Keep custom global styles for now -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
           integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
     {% block extra_css %}{% endblock %}
-    <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script> {# Keep jQuery for now, other JS might use it #}
 </head>
-<body class="d-flex flex-column h-100">
-<header>
-    <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fa-solid fa-music me-2"></i>MeloMatch
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+<body class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100"> {# Tailwind body classes #}
+
+<header class="bg-gray-800 shadow-md fixed w-full z-10">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Logo / Site Name -->
+            <div class="flex-shrink-0">
+                <a class="text-white text-xl font-bold hover:text-gray-300" href="{% url 'home' %}">
+                    <i class="fa-solid fa-music mr-2"></i>MeloMatch
+                </a>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:block">
+                <ul class="ml-10 flex items-baseline space-x-4">
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a href="{% url 'dashboard' %}"
-                               class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'search' %}"
-                               class="nav-link {% if request.resolver_match.url_name == 'search' %}active{% endif %}">Search</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'subscription_plans' %}"
-                               class="nav-link {% if request.resolver_match.url_name == 'subscription_plans' %}active{% endif %}">Subscription
-                                Plans</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'profile' %}"
-                               class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Profile</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'settings' %}"
-                               class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">Settings</a>
-                        </li>
+                        <li><a href="{% url 'dashboard' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-900 text-white{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'search' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'search' %}bg-gray-900 text-white{% endif %}">Search</a></li>
+                        <li><a href="{% url 'subscription_plans' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'subscription_plans' %}bg-gray-900 text-white{% endif %}">Plans</a></li>
+                        <li><a href="{% url 'profile' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'profile' %}bg-gray-900 text-white{% endif %}">Profile</a></li>
+                        <li><a href="{% url 'settings' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'settings' %}bg-gray-900 text-white{% endif %}">Settings</a></li>
                         {% if user.is_staff %}
-                            <li class="nav-item">
-                                <a href="{% url 'admin:index' %}"
-                                   class="nav-link  {% if request.resolver_match.url_name == 'admin' %}active{% endif %}">Admin</a>
-                            </li>
+                        <li><a href="{% url 'admin:index' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'admin' %}bg-gray-900 text-white{% endif %}">Admin</a></li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a href="{% url 'logout' %}" class="nav-link">Logout</a>
+                        <li>
+                            <form action="{% url 'logout' %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Logout</button>
+                            </form>
                         </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a href="{% url 'home' %}"
-                               class="nav-link  {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'about' %}"
-                               class="nav-link  {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'contact' %}"
-                               class="nav-link  {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'faq' %}"
-                               class="nav-link  {% if request.resolver_match.url_name == 'faq' %}active{% endif %}">FAQ</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'login' %}"
-                               class="nav-link  {% if request.resolver_match.url_name == 'login' %}active{% endif %}">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'signup' %}"
-                               class="nav-link  {% if request.resolver_match.url_name == 'signup' %}active{% endif %}">Sign
-                                Up</a>
-                        </li>
+                        <li><a href="{% url 'home' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'home' %}bg-gray-900 text-white{% endif %}">Home</a></li>
+                        <li><a href="{% url 'about' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'about' %}bg-gray-900 text-white{% endif %}">About</a></li>
+                        <li><a href="{% url 'contact' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'contact' %}bg-gray-900 text-white{% endif %}">Contact</a></li>
+                        <li><a href="{% url 'faq' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'faq' %}bg-gray-900 text-white{% endif %}">FAQ</a></li>
+                        <li><a href="{% url 'login' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'login' %}bg-gray-900 text-white{% endif %}">Login</a></li>
+                        <li><a href="{% url 'signup' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'signup' %}bg-gray-900 text-white{% endif %}">Sign Up</a></li>
                     {% endif %}
                 </ul>
             </div>
+
+            <!-- Mobile Menu Button -->
+            <div class="-mr-2 flex md:hidden">
+                <button type="button" id="nav-toggle" class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
+                    <span class="sr-only">Open main menu</span>
+                    <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu, show/hide based on menu state. -->
+        <div class="md:hidden hidden" id="mobile-menu">
+            <ul class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                 {% if user.is_authenticated %}
+                    <li><a href="{% url 'dashboard' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-900 text-white{% endif %}">Dashboard</a></li>
+                    <li><a href="{% url 'search' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'search' %}bg-gray-900 text-white{% endif %}">Search</a></li>
+                    <li><a href="{% url 'subscription_plans' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'subscription_plans' %}bg-gray-900 text-white{% endif %}">Plans</a></li>
+                    <li><a href="{% url 'profile' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'profile' %}bg-gray-900 text-white{% endif %}">Profile</a></li>
+                    <li><a href="{% url 'settings' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'settings' %}bg-gray-900 text-white{% endif %}">Settings</a></li>
+                    {% if user.is_staff %}
+                    <li><a href="{% url 'admin:index' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'admin' %}bg-gray-900 text-white{% endif %}">Admin</a></li>
+                    {% endif %}
+                    <li>
+                        <form action="{% url 'logout' %}" method="post" class="block">
+                            {% csrf_token %}
+                            <button type="submit" class="text-gray-300 hover:bg-gray-700 hover:text-white w-full text-left px-3 py-2 rounded-md text-base font-medium">Logout</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li><a href="{% url 'home' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'home' %}bg-gray-900 text-white{% endif %}">Home</a></li>
+                    <li><a href="{% url 'about' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'about' %}bg-gray-900 text-white{% endif %}">About</a></li>
+                    <li><a href="{% url 'contact' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'contact' %}bg-gray-900 text-white{% endif %}">Contact</a></li>
+                    <li><a href="{% url 'faq' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'faq' %}bg-gray-900 text-white{% endif %}">FAQ</a></li>
+                    <li><a href="{% url 'login' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'login' %}bg-gray-900 text-white{% endif %}">Login</a></li>
+                    <li><a href="{% url 'signup' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'signup' %}bg-gray-900 text-white{% endif %}">Sign Up</a></li>
+                {% endif %}
+            </ul>
         </div>
     </nav>
 </header>
-<main class="flex-shrink-0">
-    <div class="container mt-5 py-4">
+
+{# Add padding top to main content to account for fixed navbar height (h-16 -> 4rem -> 64px) #}
+<main class="flex-grow pt-16">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {# Message display area - converted to Tailwind #}
         {% if messages %}
+            <div class="mb-4 space-y-2">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                {# Adjust alert colors based on message.tags - this is a simplified mapping #}
+                <div class="p-4 rounded-md
+                    {% if message.tags == 'success' %} bg-green-100 border-green-400 text-green-700
+                    {% elif message.tags == 'warning' %} bg-yellow-100 border-yellow-400 text-yellow-700
+                    {% elif message.tags == 'error' %} bg-red-100 border-red-400 text-red-700
+                    {% else %} bg-blue-100 border-blue-400 text-blue-700 {% endif %}"
+                    role="alert">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                             <!-- Heroicon name: solid/information-circle (or other icons based on tag) -->
+                            <svg class="h-5 w-5 {% if message.tags == 'success' %} text-green-400 {% elif message.tags == 'warning' %} text-yellow-400 {% elif message.tags == 'error' %} text-red-400 {% else %} text-blue-400 {% endif %}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3 flex-1 md:flex md:justify-between">
+                            <p class="text-sm">{{ message }}</p>
+                            {# Basic dismiss button, needs JS to hide parent. For now, visual only or rely on auto-hide if implemented #}
+                            {# <button type="button" class="ml-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex h-8 w-8"> ... </button> #}
+                        </div>
+                    </div>
                 </div>
             {% endfor %}
+            </div>
         {% endif %}
         {% block content %}
         {% endblock %}
     </div>
 </main>
-<footer class="footer mt-auto py-3 bg-dark text-white">
-    <div class="container text-center">
-        <span>&copy; 2025 MeloMatch. All rights reserved.</span>
+
+<footer class="bg-gray-700 text-white text-center p-4 mt-auto">
+    <div class="max-w-7xl mx-auto">
+        <span>&copy; {% now "Y" %} MeloMatch. All rights reserved.</span> {# Updated year to be dynamic #}
     </div>
 </footer>
-<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+{# <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script> #} <!-- Bootstrap JS removed -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% block extra_js %}
 {% endblock %}
 <script type="text/javascript">
+    // Basic JS for mobile menu toggle (example)
+    const navToggle = document.getElementById('nav-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (navToggle && mobileMenu) {
+        navToggle.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+            // Toggle SVG icons if using two SVGs for open/close
+            const icons = navToggle.querySelectorAll('svg');
+            icons.forEach(icon => icon.classList.toggle('hidden'));
+        });
+    }
+
+    // Theme switcher JS (remains unchanged as it's vanilla JS)
+    function setTheme(theme) {
+        const themes = ['light', 'dark', 'system'];
+        if (theme === "system") {
+            const userPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            theme = userPrefersDark ? "dark" : "light";
+        }
+        document.documentElement.setAttribute('data-bs-theme', theme); // This might need to change if Bootstrap theme attribute is no longer used.
+                                                                     // For Tailwind, dark mode is usually controlled by a 'dark' class on <html>
+        // For Tailwind dark mode:
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('theme', theme); // Keep storing user preference
+
+        // Existing fetch to save theme preference to backend
+        fetch('{% url "change_theme" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `theme=${theme}`
+        });
+    }
+
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === "system") {
+        const userPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(userPrefersDark ? "dark" : "light");
+    } else if (storedTheme) {
+        setTheme(storedTheme);
+    } else if (typeof userProfileThemePreference !== 'undefined' && userProfileThemePreference) { // Check if this var is set by Django
+         setTheme('{{ user.userprofile.theme_preference|default:"light" }}'); // Use user's preference from DB, default to light
+    } else {
+        // Fallback if no preference in DB and no localStorage (e.g. first visit)
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('dark');
+        } else {
+            setTheme('light');
+        }
+    }
+
+    // Assuming theme select dropdown might still exist elsewhere, or this can be removed if not.
+    const themeSelect = document.getElementById('theme');
+    if (themeSelect) {
+        // Set dropdown to reflect current theme
+        let currentTheme = localStorage.getItem('theme') || 'system';
+        if (document.documentElement.classList.contains('dark')) {
+            currentTheme = 'dark';
+        } else if (document.documentElement.getAttribute('data-bs-theme') === 'light') { // Check old attribute too
+             currentTheme = 'light';
+        }
+        // themeSelect.value = currentTheme; // This line can cause error if themeSelect doesn't exist
+
+        themeSelect.addEventListener('change', (e) => {
+            setTheme(e.target.value);
+        });
+    }
+</script>
+</body>
+</html>
     function setTheme(theme) {
         const themes = ['light', 'dark', 'system'];
         if (theme === "system") {

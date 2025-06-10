@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 
-from music.spotify import get_spotify_client
+from services.spotify_service.client import get_spotify_client # Updated import path
 from .forms import SignUpForm, LoginForm, UserProfileForm, UserPreferencesForm
 from .models import UserActivity
 

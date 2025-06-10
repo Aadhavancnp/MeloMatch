@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ target_user.username }} is Following - MeloMatch{% endblock %}
+
+{% block extra_css %}
+    {# Add any specific CSS for this page if needed #}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6 text-sm" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
+            <li><a href="{% url 'home' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Home</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'profile' username=target_user.username %}" class="hover:text-indigo-600 dark:hover:text-indigo-400">{{ target_user.username }}</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="font-medium text-gray-700 dark:text-gray-200" aria-current="page">Following</li>
+        </ol>
+    </nav>
+
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+        <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                {{ target_user.username }} is Following
+            </h1>
+        </div>
+
+        {% if users_list %} {# users_list is passed from the view context #}
+            <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for user_item in users_list %}
+                <li class="p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            {% if user_item.profile_picture %}
+                                <img class="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover shadow-sm border-2 border-white dark:border-gray-600"
+                                     src="{{ user_item.profile_picture.url }}" alt="{{ user_item.username }}">
+                            {% else %}
+                                <div class="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-indigo-500 dark:bg-indigo-600 text-white flex items-center justify-center text-xl sm:text-2xl font-semibold border-2 border-white dark:border-gray-600 shadow-sm">
+                                    {{ user_item.username|make_list|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <a href="{% url 'profile' username=user_item.username %}" class="block">
+                                <p class="text-sm sm:text-base font-medium text-indigo-600 dark:text-indigo-400 truncate hover:underline" title="{{ user_item.username }}">
+                                    {{ user_item.username }}
+                                </p>
+                                {% if user_item.get_full_name %}
+                                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate" title="{{ user_item.get_full_name }}">
+                                    {{ user_item.get_full_name }}
+                                </p>
+                                {% endif %}
+                            </a>
+                        </div>
+
+                        {# Optional: Unfollow button if request.user is viewing their own following list #}
+                        {% if request.user.is_authenticated and request.user == target_user %}
+                            <form method="post" action="{% url 'unfollow_user' user_item.username %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800">
+                                    Unfollow
+                                </button>
+                            </form>
+                        {% elif request.user.is_authenticated and request.user != user_item %}
+                             {# If request.user is viewing someone else's list, show follow/unfollow for *them* #}
+                             {# This requires checking if request.user is following user_item #}
+                             {# This logic would need to be passed from the view or handled by a template tag #}
+                             {# For simplicity, this button is omitted here unless it's the target_user's own list #}
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="p-6 sm:p-8 text-center">
+                <i class="fa-solid fa-user-group-slash text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <p class="text-lg text-gray-700 dark:text-gray-300">
+                    {{ target_user.username }} is not following anyone yet.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

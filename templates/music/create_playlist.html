@@ -4,66 +4,73 @@
 {% block title %}Create New Playlist - MeloMatch{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/create_playlist.css' %}">
+    <link rel="stylesheet" href="{% static 'css/create_playlist.css' %}"> {# For custom pseudo-elements and animations #}
 {% endblock %}
 
 {% block content %}
-    <div class="create-playlist-container bg-primary text-white">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card create-playlist-card">
-                        <div class="card-body">
-                            <h1 class="card-title text-center mb-4">Create Your New Playlist</h1>
-                            <form method="post" action="{% url 'create_playlist' %}" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <div class="mb-4">
-                                    <label for="playlist-name" class="form-label">Playlist Name</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fa-solid fa-music"></i></span>
-                                        <input type="text" class="form-control" id="playlist-name" name="name" required
-                                               placeholder="Enter playlist name">
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <label for="playlist-description" class="form-label">Description (optional)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fa-solid fa-pencil"></i></span>
-                                        <textarea class="form-control" id="playlist-description" name="description"
-                                                  rows="3" placeholder="Describe your playlist"></textarea>
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <label for="cover-image" class="form-label">Cover Image</label>
-                                    <div class="cover-image-container">
-                                        <div class="cover-image-preview" id="cover-image-preview">
-                                            <i class="fa-solid fa-image"></i>
-                                            <span>Preview</span>
-                                        </div>
-                                        <div class="cover-image-input">
-                                            <input type="file" class="form-control" id="cover-image" name="cover_image"
-                                                   accept="image/*">
-                                            <label for="cover-image" class="btn btn-outline-primary w-100">
-                                                <i class="fa-solid fa-upload me-2"></i>Upload Image
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary btn-lg create-btn">
-                                        <i class="fa-solid fa-circle-plus me-2"></i>Create Playlist
-                                    </button>
-                                </div>
-                            </form>
+<div class="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-600 via-indigo-500 to-blue-500 dark:from-purple-700 dark:via-indigo-600 dark:to-blue-600">
+    <div class="max-w-2xl w-full space-y-8">
+        <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-xl p-8 sm:p-10 relative create-playlist-card-custom-bg overflow-hidden"> {# Added custom class for pseudo-elements #}
+            <div class="relative z-10"> {# Content above pseudo-elements #}
+                <h1 class="text-3xl font-extrabold text-center mb-8 text-gray-900 dark:text-white">Create Your New Playlist</h1>
+
+                <form method="post" action="{% url 'create_playlist' %}" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+
+                    <div>
+                        <label for="playlist-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Playlist Name</label>
+                        <div class="flex rounded-md shadow-sm">
+                            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sm:text-sm">
+                                <i class="fa-solid fa-music"></i>
+                            </span>
+                            <input type="text" name="name" id="playlist-name" required placeholder="My Awesome Mix"
+                                   class="flex-1 block w-full min-w-0 rounded-none rounded-r-md px-3 py-2.5 border-gray-300 dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         </div>
                     </div>
-                </div>
+
+                    <div>
+                        <label for="playlist-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
+                        <div class="flex rounded-md shadow-sm">
+                             <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sm:text-sm">
+                                <i class="fa-solid fa-pencil"></i>
+                            </span>
+                            <textarea name="description" id="playlist-description" rows="3" placeholder="A few words about this playlist..."
+                                      class="flex-1 block w-full min-w-0 rounded-none rounded-r-md px-3 py-2.5 border-gray-300 dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="cover-image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Image</label>
+                        <div class="mt-1 flex flex-col sm:flex-row items-center gap-4">
+                            <div id="cover-image-preview" class="cover-image-preview-custom flex-shrink-0 w-36 h-36 sm:w-40 sm:h-40 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:border-indigo-500 dark:hover:border-indigo-400 cursor-pointer bg-cover bg-center bg-gray-50 dark:bg-gray-700">
+                                <i class="fa-solid fa-image text-3xl"></i>
+                                <span class="mt-1 text-xs">Click to Upload</span>
+                            </div>
+                            <div class="flex-grow w-full">
+                                <input type="file" class="hidden" id="cover-image" name="cover_image" accept="image/*">
+                                <label for="cover-image"
+                                       class="cursor-pointer w-full inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                                    <i class="fa-solid fa-upload mr-2"></i>Choose Image
+                                </label>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF up to 2MB.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit"
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-transform hover:scale-105 active:scale-95">
+                            <i class="fa-solid fa-circle-plus mr-2"></i>Create Playlist
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
+    {# create_playlist.js is kept for the cover image preview functionality #}
     <script src="{% static 'js/create_playlist.js' %}"></script>
 {% endblock %}
 

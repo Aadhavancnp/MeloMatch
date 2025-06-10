@@ -25,6 +25,10 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('subscription/', include('subscription.urls')),
     path('music/', include('music.urls')),
+    # API URLs
+    # path('api/analytics/', include('services.analytics_service.urls')), # This was lost in reset, can be re-added later if needed
+    path('api/v1/sync/', include('live_sync.urls')),
+    path('api/v1/chat/', include('chat.urls')), # Added chat API URLs
 ]
 
 if settings.DEBUG:

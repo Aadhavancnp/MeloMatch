@@ -1,112 +1,339 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ playlist.name }} - MeloMatch{% endblock %}
+{% block title %}{{ playlist.name }} - Playlist Details | MeloMatch{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/playlist_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/playlist_detail.css' %}"> {# For any remaining custom styles #}
 {% endblock %}
 
-
 {% block content %}
-    <div class="container-fluid playlist-header" style="background-image: url('{{ playlist.image_url }}');">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-md-4 mb-4 mb-md-0">
-                    <img src="{{ playlist.image_url }}" class="img-fluid rounded shadow playlist-image"
-                         alt="{{ playlist.name }}">
-                </div>
-                <div class="col-md-8 text-white">
-                    <h1 class="display-4 mb-3">{{ playlist.name }}</h1>
-                    <p class="lead mb-3">{{ playlist.description }}</p>
-                    <p class="mb-4"><i class="fa-solid fa-music me-2"></i>
-                        <small id="track-count">{{ playlist.track_count }}</small> tracks</p>
-                    {% if user.is_authenticated and user == playlist.user %}
-                        <div class="btn-group">
-                            <button id="editButton" class="btn btn-outline-light">Edit Playlist</button>
-                            <button id="deleteButton" class="btn btn-outline-danger">Delete Playlist</button>
-                        </div>
-                    {% endif %}
-                </div>
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- Playlist Header -->
+    <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 mb-8 p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+        <img src="{{ playlist.image_url|default:'https://via.placeholder.com/150/718096/FFFFFF?Text=Playlist' }}"
+             alt="Playlist cover for {{ playlist.name }}"
+             class="w-40 h-40 md:w-48 md:h-48 rounded-lg shadow-md object-cover flex-shrink-0">
+        <div class="flex-grow text-center md:text-left">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">{{ playlist.name }}</h1>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ playlist.description|default:"No description available." }}</p>
+            <div class="text-xs text-gray-500 dark:text-gray-500 mb-3">
+                <span>Owned by: <strong class="text-gray-700 dark:text-gray-300">{{ playlist.owner.username|default:"System" }}</strong></span> |
+                <span id="track-count-display">{{ tracks|length }}</span> tracks
+            </div>
+            {% if playlist.collaborators.all %}
+            <div class="mb-3">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Collaborators:</span>
+                {% for collaborator in playlist.collaborators.all %}
+                    <span class="inline-block bg-gray-200 dark:bg-gray-700 rounded-full px-2 py-0.5 text-xs font-semibold text-gray-700 dark:text-gray-200 mr-1">{{ collaborator.username }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                {% if can_edit_playlist %}
+                    {# TODO: Add "Edit Details" button/modal functionality #}
+                    <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+                        Edit Details
+                    </button>
+                    {# TODO: Add "Invite Collaborators" button/modal functionality #}
+                     <button class="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-offset-gray-800">
+                        Invite Collaborators
+                    </button>
+                {% endif %}
+                {% if request.user == playlist.owner %}
+                    <button id="deletePlaylistBtn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800">
+                        Delete Playlist
+                    </button>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="container py-5">
-        <div class="row mb-4">
-            <div class="col-md-6 offset-md-3">
-                <div class="input-group">
-                    <span class="input-group-text bg-primary text-white"><i
-                            class="fa-solid fa-magnifying-glass"></i></span>
-                    <input type="text" id="track-search" class="form-control" placeholder="Search tracks...">
+    <!-- Add Track Section (Simplified for PoC - a real version would have a search modal) -->
+    {% if can_edit_playlist %}
+    <div class="mb-8 p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Add New Track (Enter DB Track ID)</h2>
+        <form id="add-track-form" class="flex items-center gap-2">
+            <input type="text" id="add-track-id-input" placeholder="Enter Track DB ID"
+                   class="flex-grow appearance-none block w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 leading-tight focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800">
+                Add Track
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Track List -->
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Tracks</h2>
+    <div id="track-list-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for track in tracks %} {# tracks passed from view context #}
+            <div class="track-item bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col" id="track-item-{{ track.id }}">
+                <img src="{{ track.image_url|default:'https://via.placeholder.com/300/4A5568/FFFFFF?Text=No+Art' }}" class="w-full h-40 object-cover" alt="Artwork for {{ track.title }}">
+                <div class="p-4 flex flex-col flex-grow">
+                    <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-1 truncate" title="{{ track.title }}">{{ track.title|truncatechars:40 }}</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 truncate" title="{{ track.artists_names|join:", " }}">{{ track.artists_names|join:", "|truncatechars:30 }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500 mb-3 truncate" title="{{ track.album }}">{{ track.album|truncatechars:25 }}</p>
+
+                    {% if track.preview_url %}
+                    <audio controls src="{{ track.preview_url }}" class="w-full h-10 mb-2" preload="none"></audio>
+                    {% else %}
+                    <p class="text-xs text-center text-gray-400 dark:text-gray-500 mb-2 h-10 flex items-center justify-center">No preview</p>
+                    {% endif %}
+
+                    <div class="mt-auto">
+                        {% if can_edit_playlist %}
+                        <button class="remove-track-ws-btn w-full px-3 py-1.5 border border-red-500 dark:border-red-400 rounded-md shadow-sm text-xs font-medium text-red-700 dark:text-red-300 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500"
+                                data-track-id="{{ track.id }}">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
+        {% empty %}
+            <p id="empty-playlist-message" class="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">This playlist is empty.</p>
+        {% endfor %}
+    </div>
+</div>
 
-        <div class="row" id="track-list">
-            {% for track in playlist.tracks.all %}
-                {% if track.image_url %}
-                    <div class="col-md-6 col-lg-4 mb-4 track-item">
-                        <div class="card h-100 bg-body-tertiary track-card">
-                            <img src="{{ track.image_url }}" class="card-img-top" alt="{{ track.album }}">
-                            <div class="card-body">
-                                <h2 class="card-title h5">{{ track.title }}</h2>
-                                <p class="card-text">{{ track.artists.all|join:", " }}</p>
-                                <p class="card-text"><small class="text-body-secondary">{{ track.album }}</small></p>
-                            </div>
-                            <div class="card-footer bg-transparent border-0">
-                                {% if track.preview_url %}
-                                    <audio controls class="w-100">
-                                        <source src="{{ track.preview_url }}" type="audio/mpeg">
-                                        Your browser does not support the audio element.
-                                    </audio>
-                                {% else %}
-                                    <p class="text-body-secondary">No preview available</p>
-                                {% endif %}
-                                {% if user.is_authenticated and user == playlist.user %}
-                                    <div class="mt-2 delete-track-button"
-                                         style="display: none;">
-                                        <button class="btn btn-danger w-100 delete-track"
-                                                data-track-id="{{ track.spotify_id }}">
-                                            <i class="fa-solid fa-trash-can"></i>&nbsp;Delete
-                                        </button>
-                                    </div>
-                                {% endif %}
-                            </div>
+<!-- Delete Playlist Confirmation Modal (Tailwind Styled) -->
+<div id="deletePlaylistModal" class="fixed inset-0 z-[100] overflow-y-auto hidden" aria-labelledby="deletePlaylistModalLabel" role="dialog" aria-modal="true">
+    {{ playlist.id|json_script:"playlist-db-id" }} {# Used by JS #}
+    <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity dark:bg-gray-900 dark:bg-opacity-75" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-700 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fa-solid fa-triangle-exclamation text-red-600 dark:text-red-300"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="deletePlaylistModalLabel">Delete Playlist</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-300">Are you sure you want to delete "{{ playlist.name }}"? This action cannot be undone.</p>
                         </div>
                     </div>
-                {% endif %}
-            {% empty %}
-                <div class="col-12">
-                    <p class="text-center">This playlist is empty. Add some tracks to get started!</p>
                 </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Delete Playlist Confirmation Modal -->
-    <div class="modal fade" id="deletePlaylistModal" tabindex="-1" aria-labelledby="deletePlaylistModalLabel"
-         aria-hidden="true">
-        {{ playlist.spotify_id|json_script:"playlist-id" }}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deletePlaylistModalLabel">Confirm Deletion</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to delete this playlist? This action cannot be undone.
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeletePlaylist">Delete</button>
-                </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmDeletePlaylistBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800 sm:ml-3 sm:w-auto sm:text-sm">
+                    Delete
+                </button>
+                <button type="button" id="cancelDeletePlaylistBtn"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
+</div>
+
+<div id="notification-area" class="fixed top-5 right-5 z-[150] space-y-2"></div>
+
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/playlist_detail.js' %}"></script>
-{% endblock %}
+    {# playlist_detail.js was for old Bootstrap modal handling, removing it if all JS is inline now #}
+    {# <script src="{% static 'js/playlist_detail.js' %}"></script>  #}
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const playlistId = JSON.parse(document.getElementById('playlist-db-id').textContent);
+        const trackListContainer = document.getElementById('track-list-container');
+        const emptyPlaylistMessage = document.getElementById('empty-playlist-message');
+        const trackCountDisplay = document.getElementById('track-count-display');
+        const currentUserUsername = "{{ request.user.username }}";
+        const canEditPlaylist = {{ can_edit_playlist|yesno:"true,false" }};
+
+        // --- WebSocket Connection ---
+        let playlistSocket = null;
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/playlist/${playlistId}/collaborate/`;
+
+        function connectWebSocket() {
+            playlistSocket = new WebSocket(wsUrl);
+            playlistSocket.onopen = (e) => console.log("Playlist WebSocket connection established.");
+            playlistSocket.onmessage = handleWebSocketMessage;
+            playlistSocket.onclose = (e) => console.error('Playlist WebSocket closed unexpectedly.', e);
+            playlistSocket.onerror = (err) => {
+                console.error('Playlist WebSocket error:', err);
+                showNotification('WebSocket connection error. Real-time updates unavailable.', 'danger');
+            };
+        }
+
+        function handleWebSocketMessage(e) {
+            const data = JSON.parse(e.data);
+            console.log("WS Data received:", data);
+
+            if (data.type === 'error') {
+                showNotification(`Error: ${data.message}`, 'danger');
+            } else if (data.type === 'playlist.initial_state') {
+                renderFullTracklist(data.tracks || []);
+            } else if (data.type === 'playlist.update' && data.data) { // data.data contains original event
+                const eventData = data.data;
+                if (eventData.action === 'track_added' && eventData.track) {
+                    addTrackToDOM(eventData.track);
+                    showNotification(`${eventData.user_who_acted || 'Someone'} added "${eventData.track.title}"`, 'info');
+                } else if (eventData.action === 'track_removed' && eventData.track_id) {
+                    removeTrackFromDOM(eventData.track_id);
+                    showNotification(`${eventData.user_who_acted || 'Someone'} removed a track.`, 'info');
+                }
+            }
+            updateTrackCount();
+        }
+
+        function renderFullTracklist(tracks) {
+            trackListContainer.innerHTML = ''; // Clear existing
+            if (tracks && tracks.length > 0) {
+                tracks.forEach(track => addTrackToDOM(track));
+                if(emptyPlaylistMessage) emptyPlaylistMessage.style.display = 'none';
+            } else {
+                if(emptyPlaylistMessage) emptyPlaylistMessage.style.display = 'block';
+            }
+        }
+
+        function addTrackToDOM(track) {
+            if (!track || document.getElementById(`track-item-${track.id}`)) return;
+            const trackHTML = renderTrackHTML(track);
+            trackListContainer.insertAdjacentHTML('beforeend', trackHTML);
+            if(emptyPlaylistMessage) emptyPlaylistMessage.style.display = 'none';
+        }
+
+        function removeTrackFromDOM(trackDbId) {
+            const trackElement = document.getElementById(`track-item-${trackDbId}`);
+            if (trackElement) trackElement.remove();
+            if (trackListContainer.children.length === 0 && emptyPlaylistMessage) {
+                 emptyPlaylistMessage.style.display = 'block';
+            }
+        }
+
+        function renderTrackHTML(track) {
+            let removeButtonHTML = '';
+            if (canEditPlaylist) {
+                removeButtonHTML = `
+                    <button class="remove-track-ws-btn w-full px-3 py-1.5 border border-red-500 dark:border-red-400 rounded-md shadow-sm text-xs font-medium text-red-700 dark:text-red-300 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            data-track-id="${track.id}">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                    </button>`;
+            }
+            const imageUrl = track.image_url || "{% static 'img/default_album_art.png' %}"; // Use a static default
+            const artists = track.artists_names ? track.artists_names.join(", ") : "Unknown Artist";
+            const album = track.album || "Unknown Album";
+
+            return `
+                <div class="track-item bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col" id="track-item-${track.id}">
+                    <img src="${imageUrl}" class="w-full h-40 object-cover" alt="Artwork for ${track.title}">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-1 truncate" title="${track.title}">${track.title.length > 40 ? track.title.substring(0,37)+'...' : track.title}</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 truncate" title="${artists}">${artists.length > 30 ? artists.substring(0,27)+'...' : artists}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-500 mb-3 truncate" title="${album}">${album.length > 25 ? album.substring(0,22)+'...' : album}</p>
+                        ${track.preview_url ? `<audio controls src="${track.preview_url}" class="w-full h-10 mb-2" preload="none"></audio>` : '<p class="text-xs text-center text-gray-400 dark:text-gray-500 mb-2 h-10 flex items-center justify-center">No preview</p>'}
+                        <div class="mt-auto">${removeButtonHTML}</div>
+                    </div>
+                </div>`;
+        }
+
+        function updateTrackCount() {
+            if(trackCountDisplay) {
+                trackCountDisplay.textContent = trackListContainer.querySelectorAll('.track-item').length;
+            }
+        }
+
+        // Event listener for removing tracks (WebSocket)
+        trackListContainer.addEventListener('click', function(event) {
+            const button = event.target.closest('.remove-track-ws-btn');
+            if (button) {
+                const trackId = button.dataset.trackId;
+                if (playlistSocket && playlistSocket.readyState === WebSocket.OPEN) {
+                    playlistSocket.send(JSON.stringify({ action: 'remove_track', track_id: trackId }));
+                } else {
+                    showNotification('WebSocket not connected. Cannot remove track.', 'warning');
+                }
+            }
+        });
+
+        // Event listener for adding tracks (WebSocket)
+        const addTrackForm = document.getElementById('add-track-form');
+        if (addTrackForm) {
+            addTrackForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const trackIdInput = document.getElementById('add-track-id-input');
+                const trackDbId = trackIdInput.value.trim();
+                if (trackDbId && playlistSocket && playlistSocket.readyState === WebSocket.OPEN) {
+                    playlistSocket.send(JSON.stringify({ action: 'add_track', track_id: trackDbId }));
+                    trackIdInput.value = '';
+                } else if (!trackDbId) {
+                    showNotification('Please enter a Track DB ID.', 'warning');
+                } else {
+                    showNotification('WebSocket not connected. Cannot add track.', 'warning');
+                }
+            });
+        }
+
+        // Delete Playlist Modal Handling
+        const deletePlaylistModal = document.getElementById('deletePlaylistModal');
+        const deletePlaylistBtn = document.getElementById('deletePlaylistBtn');
+        const confirmDeletePlaylistBtn = document.getElementById('confirmDeletePlaylistBtn');
+        const cancelDeletePlaylistBtn = document.getElementById('cancelDeletePlaylistBtn');
+
+        if(deletePlaylistBtn) {
+            deletePlaylistBtn.addEventListener('click', () => deletePlaylistModal.classList.remove('hidden'));
+        }
+        if(cancelDeletePlaylistBtn) {
+            cancelDeletePlaylistBtn.addEventListener('click', () => deletePlaylistModal.classList.add('hidden'));
+        }
+        if(confirmDeletePlaylistBtn) {
+            confirmDeletePlaylistBtn.addEventListener('click', () => {
+                // Create a form and submit it for deletion
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{% url 'delete_playlist' playlist.id %}"; // Assumes playlist.id is DB PK
+                const csrfTokenInput = document.querySelector('input[name=csrfmiddlewaretoken]');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : '{{ csrf_token }}';
+
+                const hiddenFieldCsrf = document.createElement('input');
+                hiddenFieldCsrf.type = 'hidden';
+                hiddenFieldCsrf.name = 'csrfmiddlewaretoken';
+                hiddenFieldCsrf.value = csrfToken;
+                form.appendChild(hiddenFieldCsrf);
+
+                // Django's DeleteView usually expects DELETE via POST, or a confirmation page
+                // For simplicity, we're POSTing. Ensure your view handles this.
+                // If it's a DeleteView, often it's a GET to confirm then POST.
+                // This JS assumes direct POST is fine for deletion.
+                 document.body.appendChild(form);
+                 form.submit();
+            });
+        }
+
+
+        function showNotification(message, type = 'info') {
+            const area = document.getElementById('notification-area');
+            if (!area) return;
+            const colors = {
+                info: 'bg-blue-500', success: 'bg-green-500',
+                warning: 'bg-yellow-500', danger: 'bg-red-500'
+            };
+            const notifId = `notif-${Date.now()}`;
+            const notifDiv = document.createElement('div');
+            notifDiv.id = notifId;
+            notifDiv.className = `p-4 mb-2 text-white rounded-md shadow-lg ${colors[type] || 'bg-gray-500'} transition-opacity duration-300 ease-in-out`;
+            notifDiv.textContent = message;
+            area.appendChild(notifDiv);
+            setTimeout(() => {
+                const el = document.getElementById(notifId);
+                if (el) {
+                    el.classList.add('opacity-0');
+                    setTimeout(() => el.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // Initial connection
+        if (playlistId) connectWebSocket();
+        updateTrackCount(); // Initial count
+    });
+    </script>
+{% endblock %}

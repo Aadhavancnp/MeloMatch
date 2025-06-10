@@ -1,29 +1,11 @@
-.pt-6 {
-    padding-top: 4.5rem !important
-}
+/* Removed Bootstrap dark mode theme rules as Tailwind handles dark mode via class. */
+/* The .pt-6 class previously here was for Bootstrap main content padding, now handled by Tailwind pt-16 in base.html. */
+/* [data-bs-theme="light"] { ... } */
+/* [data-bs-theme="dark"] { ... } */
+/* [data-bs-theme="dark"] .card { ... } */
+/* [data-bs-theme="dark"] .btn-outline-secondary { ... } */
+/* [data-bs-theme="dark"] .btn-outline-secondary:hover { ... } */
 
-/* Theme-specific styles */
-[data-bs-theme="light"] {
-    --bs-body-bg: #f8f9fa;
-    --bs-body-color: #212529;
-}
-
-[data-bs-theme="dark"] {
-    --bs-body-bg: #212529;
-    --bs-body-color: #f8f9fa;
-}
-
-/* Custom styles for better contrast in dark mode */
-[data-bs-theme="dark"] .card {
-    border-color: rgba(255, 255, 255, 0.125);
-}
-
-[data-bs-theme="dark"] .btn-outline-secondary {
-    color: #f8f9fa;
-    border-color: #f8f9fa;
-}
-
-[data-bs-theme="dark"] .btn-outline-secondary:hover {
-    color: #212529;
-    background-color: #f8f9fa;
-}
+/* Add any global custom non-utility styles here if needed. */
+/* For example, if you have a very specific component style that's hard to do with utilities. */
+/* Ensure these don't conflict with Tailwind's base styles or utilities. */

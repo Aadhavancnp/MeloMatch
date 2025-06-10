@@ -12,4 +12,8 @@ urlpatterns = [
     path('playlist/<str:playlist_id>/delete/', views.delete_playlist, name='delete_playlist'),
     path('playlist/<str:playlist_id>/delete-track/<str:track_id>/', views.delete_track, name='delete_track'),
 
+    # API URLs for live listening status
+    path('api/v1/listening_status/update/', views.api_update_listening_status, name='api_update_listening_status'),
+    path('api/v1/listening_status/clear/', views.api_clear_listening_status, name='api_clear_listening_status'),
+    path('api/v1/friends_listening_status/', views.api_get_initial_friends_listening_status, name='api_get_initial_friends_listening_status'),
 ]

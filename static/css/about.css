@@ -1,27 +1,14 @@
-.about-container {
-    padding: 20px 0;
-}
+/* static/css/about.css */
 
-.card {
-    border: none;
-    border-radius: 15px;
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
+/* All styles previously here are now handled by Tailwind utility classes
+   applied directly in the templates/core/about_us.html template.
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
+   - .about-container (padding): Replaced by Tailwind py-*, px-*.
+   - .card (border, radius, transitions, hover effects): Replaced by Tailwind utilities.
+   - .card-title (color, font-weight, margin): Styling handled by Tailwind text utilities.
+   - Media queries: Handled by Tailwind's responsive prefixes.
+*/
 
-.card-title {
-    color: var(--bs-primary);
-    font-weight: bold;
-    margin-bottom: 1rem;
-}
-
-@media (max-width: 768px) {
-    .about-container {
-        padding: 40px 0;
-    }
-}
+/* This file can be kept for any future, highly specific custom styles for this page,
+   but for now, it's effectively empty. */
 

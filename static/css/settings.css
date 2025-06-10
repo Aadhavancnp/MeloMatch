@@ -1,31 +1,16 @@
-.settings-container {
-    padding-top: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
-}
+/* static/css/settings.css */
 
-.card {
-    border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+/* All previous styles are now handled by Tailwind utility classes
+   applied directly in the templates/users/settings.html template.
 
-.card-title {
-    color: var(--bs-primary);
-    border-bottom: 2px solid var(--bs-primary);
-    padding-bottom: 0.5rem;
-}
+   - .settings-container: Replaced by Tailwind's max-w-*, mx-auto, py-*, px-*.
+   - .card: Replaced by Tailwind's bg-*, shadow-*, rounded-*.
+   - .card-title: Specific heading styles now use Tailwind text utilities.
+   - .form-select, .form-control: Styling handled by applying Tailwind classes to form elements.
+   - .btn-primary: Styling handled by applying Tailwind classes to buttons.
+   - Media queries: Handled by Tailwind's responsive prefixes.
+*/
 
-.form-select, .form-control {
-    border-radius: 0.25rem;
-}
-
-.btn-primary {
-    padding: 0.5rem 2rem;
-}
-
-@media (max-width: 768px) {
-    .settings-container {
-        padding-top: 1rem;
-    }
-}
+/* This file can be kept for any future, highly specific custom styles for the settings page
+   that cannot be easily achieved with Tailwind utilities. For now, it's empty. */
 

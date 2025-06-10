@@ -1,14 +1,6 @@
-.search-container {
-    padding-top: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
+/* static/css/search.css */
 
-.search-results-container {
-    position: relative;
-    min-height: 200px;
-}
-
+/* Keep custom animations and voice search specific styles */
 .fade-in {
     animation: fadeIn 0.5s ease-in-out;
 }
@@ -24,32 +16,30 @@
     }
 }
 
-.hover-effect {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
-
-.hover-effect:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
 .voice-animation {
-    display: none;
+    /* display: none; /* Controlled by JS */
     justify-content: center;
     align-items: center;
-    height: 100px;
-    margin-bottom: 20px;
+    height: 100px; /* Or use Tailwind h- utility if preferred and consistent */
+    margin-bottom: 1.25rem; /* Or use Tailwind mb- utility */
 }
 
 .voice-circle {
-    background-color: var(--bs-primary);
+    /* background-color: var(--bs-primary); /* Replace with Tailwind color or keep if var is defined elsewhere */
+    background-color: #0d6efd; /* Defaulting to a blue, assuming --bs-primary was Bootstrap blue */
+    /* Consider using theme('colors.blue.500') if this CSS is processed by Tailwind, otherwise hardcode or use CSS var */
     border-radius: 50%;
-    margin: 0 10px;
-    height: 20px;
-    width: 20px;
+    margin: 0 0.625rem; /* Or use Tailwind mx- utility */
+    height: 1.25rem; /* Or use Tailwind h- utility */
+    width: 1.25rem; /* Or use Tailwind w- utility */
     transform: scale(0);
     animation: pulse 1.5s infinite ease-in-out;
 }
+
+.dark .voice-circle {
+    background-color: #3b82f6; /* A lighter blue for dark mode, or use theme variable */
+}
+
 
 .voice-circle:nth-child(2) {
     animation-delay: 0.2s;
@@ -68,26 +58,12 @@
     }
 }
 
-#voice-search-btn {
-    transition: all 0.3s ease;
-}
-
-#voice-search-btn:hover {
-    transform: scale(1.1);
-}
-
-#voice-search-btn:active {
-    transform: scale(0.9);
-}
-
-.card-img-top {
-    height: 200px;
-    object-fit: cover;
-}
-
-@media (max-width: 768px) {
-    .search-container {
-        padding-top: 1rem;
-    }
-}
+/* Removed styles that will be handled by Tailwind utilities:
+   - .search-container (layout, max-width, padding)
+   - .search-results-container (layout)
+   - .hover-effect (Tailwind hover utilities)
+   - #voice-search-btn hover/active effects (Tailwind hover/active utilities)
+   - .card-img-top (Tailwind size and object-fit utilities)
+   - Media query for .search-container (Tailwind responsive prefixes)
+*/
 

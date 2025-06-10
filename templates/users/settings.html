@@ -4,52 +4,65 @@
 {% block title %}Settings - MeloMatch{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/settings.css' %}">
+    <link rel="stylesheet" href="{% static 'css/settings.css' %}"> {# Kept, even if empty, for consistency #}
 {% endblock %}
 
 {% block content %}
-    <div class="container settings-container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="card-title mb-4">User Preferences</h2>
-                        <form method="post">
-                            {% csrf_token %}
-                            <div class="mb-4">
-                                <label for="theme" class="form-label">Theme Preference</label>
-                                <select name="theme" id="theme" class="form-select">
-                                    <option value="light"
-                                            {% if user.userprofile.theme_preference == 'light' %}selected{% endif %}>
-                                        Light
-                                    </option>
-                                    <option value="dark"
-                                            {% if user.userprofile.theme_preference == 'dark' %}selected{% endif %}>Dark
-                                    </option>
-                                    <option value="system"
-                                            {% if user.userprofile.theme_preference == 'system' %}selected{% endif %}>
-                                        System Default
-                                    </option>
-                                </select>
-                            </div>
-                            {% for field in form %}
-                                <div class="mb-3">
-                                    {{ field.label_tag }}
-                                    {{ field }}
-                                    {% if field.help_text %}
-                                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                                    {% endif %}
-                                    {% for error in field.errors %}
-                                        <p class="text-danger">{{ error }}</p>
-                                    {% endfor %}
-                                </div>
-                            {% endfor %}
-                            <button type="submit" class="btn btn-primary">Save Preferences</button>
-                        </form>
-                    </div>
+<div class="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+        <div class="p-6 sm:p-8">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 pb-3 border-b border-gray-200 dark:border-gray-700">
+                User Preferences
+            </h2>
+
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                {# Theme Preference - Special handling as it's not part of the Django form #}
+                <div class="space-y-1">
+                    <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Theme Preference</label>
+                    <select name="theme" id="theme"
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="light" {% if user.theme_preference == 'light' %}selected{% endif %}>Light</option>
+                        <option value="dark" {% if user.theme_preference == 'dark' %}selected{% endif %}>Dark</option>
+                        <option value="system" {% if user.theme_preference == 'system' or not user.theme_preference %}selected{% endif %}>System Default</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Select your preferred theme. "System Default" will follow your operating system's setting.
+                        The theme switcher script in `base.html` handles applying this.
+                    </p>
                 </div>
-            </div>
+
+                {# Other form fields from UserPreferencesForm #}
+                {% for field in form.visible_fields %}
+                    <div class="space-y-1">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ field.label }}
+                        </label>
+                        {% if field.field.widget.input_type == 'select' %}
+                             {{ field.as_widget(attrs={'class': 'mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'}) }}
+                        {% else %}
+                             {{ field.as_widget(attrs={'class': 'appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm', 'placeholder': field.label }) }}
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ field.help_text|safe }}</p>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <div>
+                    <button type="submit"
+                            class="w-full sm:w-auto flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                        Save Preferences
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 {% endblock %}
 
