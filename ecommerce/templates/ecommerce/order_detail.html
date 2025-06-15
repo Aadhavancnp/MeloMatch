@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Order #{{ order.id }} Details{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Order #{{ order.id }}</h2>
+    <div class="card">
+        <div class="card-header">
+            <strong>Order Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}<br>
+            <strong>Order Status:</strong> <span class="badge badge-{{ order.status|lower }}">{{ order.get_status_display }}</span><br>
+            <strong>Order Total:</strong> ${{ order.total_price|floatformat:2 }}<br>
+            {% if order.stripe_charge_id %}
+                <strong>Stripe Reference:</strong> {{ order.stripe_charge_id }}
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Items in this Order:</h5>
+            {% if order.items.all %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Track</th>
+                            <th>Artist(s)</th>
+                            <th>Quantity</th>
+                            <th>Price Paid</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td>{{ item.track.title }}</td>
+                            <td>{{ item.track.artists_names|join:", " }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ item.price|floatformat:2 }}</td>
+                            <td>${{ item.subtotal|floatformat:2 }}</td> {# Assuming subtotal on OrderItem #}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>There are no items recorded for this order (this might indicate an issue).</p>
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <a href="{% url 'order_history' %}" class="btn btn-primary">Back to Order History</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

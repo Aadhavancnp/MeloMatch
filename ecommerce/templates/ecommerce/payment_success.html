@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Successful{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Payment Successful!</h1>
+    <p>Your payment was processed successfully.</p>
+    {% if session_id %}
+        <p>Session ID: {{ session_id }}</p>
+    {% endif %}
+    <p><a href="{% url 'dashboard' %}">Go to Dashboard</a></p>
+</div>
+{% endblock %}

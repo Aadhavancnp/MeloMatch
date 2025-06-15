@@ -6,14 +6,18 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.cache import cache_page
+from django.contrib.auth import get_user_model # Added for user checking
 
-from users.models import UserActivity
+from users.models import UserActivity, CustomUser # Added CustomUser
 from .models import Playlist, Track
+from .forms import PlaylistSettingsForm # Import the actual form
 from .spotify import get_recommendations, get_spotify_client, \
     search_jiosaavn, get_track_details_jiosaavn, get_user_top_tracks, get_user_recently_played, create_playlist_spotify, \
-    search_tracks, get_or_create_playlist, get_playlist_tracks, extract_audio_features, download_preview, \
+    search_tracks, get_or_create_playlist, get_playlist_tracks, \
     add_tracks_to_playlist_spotify, delete_playlist_spotify, remove_tracks_from_playlist_spotify
+    # Removed extract_audio_features, download_preview from this import
 from .utils import convert_image_to_base64
+from .tasks import extract_track_features_task # Import the Celery task
 
 
 @login_required
@@ -76,25 +80,52 @@ def callback(request):
 @login_required
 @cache_page(3600)
 def track_detail(request, track_id):
-    track = Track.objects.get(spotify_id=track_id)
+    # Optimized query for the main track
+    track = get_object_or_404(
+        Track.objects.select_related('genres').prefetch_related('artists'),
+        spotify_id=track_id
+    )
     sp = get_spotify_client(request)
-    top_tracks = get_user_top_tracks(sp)
-    recently_played = get_user_recently_played(sp)
-    recommendation_ids = get_recommendations(track_id, top_tracks + recently_played, limit=5)
-    recommendation_ids = list({track['id']: track for track in recommendation_ids}.values())
-    recommendations = [Track.objects.get(spotify_id=track['id']) for track in recommendation_ids]
+    top_tracks = get_user_top_tracks(sp) # Returns list of dicts
+    recently_played = get_user_recently_played(sp) # Returns list of dicts
+
+    # get_recommendations returns a list of dicts {'id': spotify_id, 'similarity': ...}
+    recommendation_data_list = get_recommendations(track.spotify_id, top_tracks + recently_played, limit=5)
+
+    # Extract spotify_ids from the recommendation data
+    recommendation_spotify_ids = [rec['id'] for rec in recommendation_data_list if isinstance(rec, dict) and 'id' in rec]
+
+    # Optimized query for fetching recommendation Track objects
+    # Ensure we only query if there are IDs to fetch
+    if recommendation_spotify_ids:
+        recommendations_qs = Track.objects.filter(spotify_id__in=recommendation_spotify_ids).prefetch_related('artists', 'genres')
+        # To maintain the order from get_recommendations if important:
+        recommendations_map = {t.spotify_id: t for t in recommendations_qs}
+        recommendations = [recommendations_map[sid] for sid in recommendation_spotify_ids if sid in recommendations_map]
+    else:
+        recommendations = []
     artists = [
         {'name': artist.name.strip(), 'url': reverse('artist_detail', args=[artist.name.strip()])}
         for artist in track.artists.all()]
 
-    query = f"{track.title} {"".join([artist.name for artist in track.artists.all()])} {track.album}".strip()
-    search_current_track = search_jiosaavn(query)
-    if search_current_track:
-        track_details = get_track_details_jiosaavn(search_current_track[0]['id'])
-        audio_features = extract_audio_features(download_preview(track_details['preview_url'], track.spotify_id))
-        track.audio_features = audio_features
-        track.preview_url = track_details['preview_url']
-        track.save()
+    # Direct Spotify audio feature fetching removed.
+    # Celery task queuing (if features are missing) is the primary mechanism now.
+    # Fallback to JioSaavn/Librosa for Celery task if still no audio_features
+    if not track.audio_features:
+        query = f"{track.title} {''.join([artist.name for artist in track.artists.all()])} {track.album}".strip()
+        search_current_track = search_jiosaavn(query)
+        if search_current_track:
+            # Assuming search_jiosaavn returns a list and we take the first result
+            jiosaavn_track_details = get_track_details_jiosaavn(search_current_track[0]['id'])
+            if jiosaavn_track_details and jiosaavn_track_details.get('preview_url'):
+                # Call the Celery task to extract features in the background
+                # Pass track.id (PK) and the preview_url obtained from JioSaavn
+                extract_track_features_task.delay(track.id, jiosaavn_track_details['preview_url'])
+                print(f"Queued feature extraction for track {track.id} using URL: {jiosaavn_track_details['preview_url']}")
+                # Optionally, update track.preview_url immediately if it's missing and JioSaavn provides one
+                if not track.preview_url:
+                    track.preview_url = jiosaavn_track_details['preview_url']
+                    track.save(update_fields=['preview_url']) # Save only preview_url field
 
     # Log user activity
     UserActivity.objects.create(
@@ -135,22 +166,61 @@ def artist_detail(request, artist_name):
 
 
 @login_required
-# @cache_page(3600)
+# @cache_page(3600) # Consider cache implications if content varies by user share
 def playlist_detail(request, playlist_id):
-    sp = get_spotify_client(request)
+    # The get_or_create_playlist might fetch from Spotify and create a local copy.
+    # We need to ensure the local Playlist object is fetched for permission checks.
+    # Assuming playlist_id is the Spotify ID.
 
-    playlist = get_or_create_playlist(playlist_id, request, sp)
-    if playlist:
-        # The tracks_data is now handled in get_playlist_tracks and get_or_create_playlist
-        spotify_tracks = get_playlist_tracks(sp, playlist_id)
-        playlist.tracks.set(spotify_tracks)
-        playlist.save()
+    # Try to get the local playlist first, with optimizations
+    try:
+        playlist = get_object_or_404(
+            Playlist.objects.select_related('user').prefetch_related(
+                'tracks__artists',
+                'tracks__genres',
+                'shared_with' # Assuming shared_with is a ManyToManyField to User
+            ),
+            spotify_id=playlist_id
+        )
+    except Http404: # Changed from Playlist.DoesNotExist because get_object_or_404 raises Http404
+        # If it doesn't exist locally, try to fetch and create it (if that's the desired behavior)
+        # Note: The get_or_create_playlist function might also need optimization if it's doing many queries.
+        sp = get_spotify_client(request)
+        playlist_data_from_spotify = sp.playlist(playlist_id) # Fetch details from Spotify
+        if not playlist_data_from_spotify:
+            raise Http404("Playlist not found on Spotify.")
 
-    if not playlist:
-        return redirect('dashboard')
+        # This part assumes get_or_create_playlist handles local creation based on Spotify data
+        # For simplicity, let's assume if it's not local, it's an error or needs creation flow.
+        # The original get_or_create_playlist might need adjustment.
+        # For now, let's rely on it creating/finding the local playlist instance.
+        sp = get_spotify_client(request) # re-init if needed
+        playlist = get_or_create_playlist(playlist_id, request, sp) # This should return a local model instance
+        if not playlist: # If still not found or created
+             return redirect('dashboard') # Or some error page
+
+    # Permission check
+    is_owner = (request.user == playlist.user)
+    can_view = playlist.is_public or is_owner or (request.user.is_authenticated and request.user in playlist.shared_with.all())
+
+    if not can_view:
+        messages.error(request, "You do not have permission to view this playlist.")
+        return HttpResponseForbidden("You do not have permission to view this playlist.")
+        # Or redirect: return redirect('some_error_page_or_dashboard')
+
+    # Sync tracks if owner or if needed (get_or_create_playlist might already do this)
+    if is_owner or not playlist.tracks.exists(): # Example condition to refresh tracks
+        sp = get_spotify_client(request)
+        spotify_tracks = get_playlist_tracks(sp, playlist.spotify_id) # Use playlist.spotify_id
+        if spotify_tracks: # Ensure tracks were actually fetched
+            playlist.tracks.set(spotify_tracks) # This expects Track model instances
+            # The get_playlist_tracks should ideally return local Track instances or handle their creation/retrieval
+            playlist.save() # Save if tracks were updated
 
     context = {
-        'playlist': playlist
+        'playlist': playlist,
+        'is_owner': is_owner,
+        'can_view': can_view, # Potentially useful in template
     }
 
     UserActivity.objects.create(
@@ -158,7 +228,6 @@ def playlist_detail(request, playlist_id):
         activity_type='view_playlist',
         description=f"Viewed playlist: {playlist.name}"
     )
-
     return render(request, 'music/playlist_detail.html', context)
 
 
@@ -218,6 +287,46 @@ def add_to_playlist(request):
 
             return redirect('playlist_detail', playlist_id=playlist_id)
     return JsonResponse({'status': 'error'}, status=400)
+
+
+@login_required
+def edit_playlist_settings(request, playlist_id):
+    playlist = get_object_or_404(Playlist, spotify_id=playlist_id)
+
+    if request.user != playlist.user:
+        messages.error(request, "You do not have permission to edit this playlist.")
+        return HttpResponseForbidden("You cannot edit this playlist.")
+
+    if request.method == 'POST':
+        # Pass instance to the form for update, and request.FILES if handling image uploads via this form
+        form = PlaylistSettingsForm(request.POST, request.FILES, instance=playlist)
+        if form.is_valid():
+            form.save() # This will save changes to 'name', 'description', 'is_public', 'shared_with', and 'image_url' if included
+
+            # Optional: Sync changes to Spotify if they were made locally
+            # sp = get_spotify_client(request)
+            # sp.playlist_change_details(
+            #     playlist.spotify_id,
+            #     name=playlist.name,
+            #     public=playlist.is_public,
+            #     description=playlist.description if playlist.description else "" # Spotify requires description to be string
+            # )
+            # If image_url was changed and represents a local file to upload to Spotify:
+            # if 'image_url' in form.changed_data and playlist.image_url: # Assuming image_url field is path to new local image
+            #    base64_img = convert_image_to_base64(playlist.image_url.path) # If it's a FileField
+            #    sp.playlist_upload_cover_image(playlist.spotify_id, base64_img)
+
+            messages.success(request, "Playlist settings updated successfully.")
+            return redirect('playlist_detail', playlist_id=playlist.spotify_id)
+    else:
+        # Populate form with existing playlist data
+        form = PlaylistSettingsForm(instance=playlist)
+
+    context = {
+        'form': form,
+        'playlist': playlist,
+    }
+    return render(request, 'music/edit_playlist_settings.html', context)
 
 
 @login_required
