@@ -37,8 +37,16 @@ class Track(models.Model):
     release_date = models.DateField(null=True, blank=True)
 
     artists = models.ManyToManyField(Artist, related_name='tracks')
-    genres = models.ForeignKey(Genre, on_delete=models.CASCADE)
-    audio_features = models.JSONField(null=True, blank=True)
+    genres = models.ForeignKey(Genre, on_delete=models.CASCADE) # Primary genre, usually from artist
+
+    # New fields from Spotify track data
+    explicit = models.BooleanField(default=False)
+    disc_number = models.IntegerField(null=True, blank=True)
+    track_number = models.IntegerField(null=True, blank=True)
+    is_local = models.BooleanField(default=False) # Indicates if the track is a local file on Spotify
+
+    audio_features = models.JSONField(null=True, blank=True) # For Librosa or detailed Spotify features
+    price = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True) # Added price field
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -64,6 +72,8 @@ class Playlist(models.Model):
     description = models.TextField(null=True, blank=True)
     tracks = models.ManyToManyField(Track, related_name='playlists')
     image_url = models.URLField(null=True, blank=True)
+    is_public = models.BooleanField(default=False)
+    shared_with = models.ManyToManyField('users.CustomUser', related_name='shared_playlists', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

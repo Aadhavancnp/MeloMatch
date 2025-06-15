@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Settings for {{ playlist.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Edit Settings for "{{ playlist.name }}"</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors|join:", " }}</div>{% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="invalid-feedback d-block">{{ form.description.errors|join:", " }}</div>{% endif %}
+        </div>
+
+        <div class="mb-3 form-check">
+            {{ form.is_public }}
+            <label for="{{ form.is_public.id_for_label }}" class="form-check-label">{{ form.is_public.label }}</label>
+            {% if form.is_public.errors %}<div class="invalid-feedback d-block">{{ form.is_public.errors|join:", " }}</div>{% endif %}
+            {% if form.is_public.help_text %}<small class="form-text text-muted d-block">{{ form.is_public.help_text }}</small>{% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">{{ form.shared_with.label }}</label>
+            <div class="card p-2" style="max-height: 200px; overflow-y: auto;"> {# Scrollable user list #}
+                {{ form.shared_with }}
+            </div>
+            {% if form.shared_with.errors %}<div class="invalid-feedback d-block">{{ form.shared_with.errors|join:", " }}</div>{% endif %}
+            {% if form.shared_with.help_text %}<small class="form-text text-muted d-block">{{ form.shared_with.help_text }}</small>{% endif %}
+        </div>
+
+        {% if form.image_url %} {# Assuming image_url might not always be part of the form #}
+        <div class="mb-3">
+            <label for="{{ form.image_url.id_for_label }}" class="form-label">{{ form.image_url.label }}</label>
+            <p>Current image: <img src="{{ playlist.image_url|default_if_none:'/static/images/default_playlist_cover.png' }}" alt="Playlist cover" style="max-width: 100px; max-height: 100px;"></p>
+            {{ form.image_url }}
+            <small class="form-text text-muted">If you manage cover images via Spotify, update it there. If you provide a URL here, it might be used as a local reference or for specific cases.</small>
+            {% if form.image_url.errors %}<div class="invalid-feedback d-block">{{ form.image_url.errors|join:", " }}</div>{% endif %}
+        </div>
+        {% endif %}
+
+        {# Add other form fields if necessary #}
+
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+        <a href="{% url 'playlist_detail' playlist.spotify_id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+{# Include for potential JS enhancements to user selection widget #}
+{# e.g. for Select2: <link href="https.cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" /> #}
+{# <script src="https.cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script> #}
+{# <script> $(document).ready(function() { $('.select2-widget-class').select2(); }); </script> #}
+
+{% endblock %}

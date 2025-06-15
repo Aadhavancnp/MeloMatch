@@ -58,33 +58,79 @@
                         {% endif %}
                     </div>
                 </div>
-                <h2 class="h3 mb-3">Similar Tracks</h2>
-                <div class="row row-cols-1 row-cols-md-2 g-4">
-                    {% for track in recommendations %}
-                        <div class="col">
-                            <div class="card h-100 similar-track-card">
-                                <div class="row g-0">
-                                    <div class="col-4">
-                                        <img src="{{ track.image_url }}" alt="{{ track.title }}"
-                                             class="img-fluid rounded-start h-100 object-fit-cover">
-                                    </div>
-                                    <div class="col-8">
-                                        <div class="card-body">
-                                            <h5 class="card-title">{{ track.title }}</h5>
-                                            <p class="card-text">
-                                                {% for artist in track.artists.all %}
-                                                    {{ artist.name }}{% if not forloop.last %}, {% endif %}
-                                                {% endfor %}                                            </p>
-                                            <p class="card-text"><small class="text-muted">{{ track.album }}</small></p>
-                                            <a href="{% url 'track_detail' track.spotify_id %}"
-                                               class="btn btn-primary btn-sm">View Details</a>
+                {% if recommendations %}
+                    <h2 class="h3 mb-3">Similar Tracks (AI Powered)</h2>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        {% for track_rec in recommendations %}
+                            <div class="col">
+                                <div class="card h-100 similar-track-card">
+                                    <div class="row g-0">
+                                        <div class="col-4">
+                                            <img src="{{ track_rec.image_url|default_if_none:'/static/images/default_track_cover.png' }}" alt="{{ track_rec.title }}"
+                                                 class="img-fluid rounded-start h-100 object-fit-cover">
+                                        </div>
+                                        <div class="col-8">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{{ track_rec.title }}</h5>
+                                                <p class="card-text">
+                                                    {% for artist in track_rec.artists.all %}
+                                                        {{ artist.name }}{% if not forloop.last %}, {% endif %}
+                                                    {% empty %}
+                                                        Unknown Artist
+                                                    {% endfor %}
+                                                </p>
+                                                <p class="card-text"><small class="text-muted">{{ track_rec.album }}</small></p>
+                                                <a href="{% url 'track_detail' track_rec.spotify_id %}"
+                                                   class="btn btn-primary btn-sm">View Details</a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
-                </div>
+                        {% endfor %}
+                    </div>
+                {% elif fallback_recommendations %}
+                    {% if fallback_type == "artist" %}
+                        <h2 class="h3 mb-3">More by {{ track.artists.first.name|default:"the same artists" }}</h2>
+                    {% elif fallback_type == "album" %}
+                        <h2 class="h3 mb-3">More from {{ track.album }}</h2>
+                    {% elif fallback_type == "artist_album" %}
+                        <h2 class="h3 mb-3">More by {{ track.artists.first.name|default:"the same artists" }} / From {{ track.album }}</h2>
+                    {% else %}
+                        <h2 class="h3 mb-3">You Might Also Like</h2>
+                    {% endif %}
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        {% for track_rec in fallback_recommendations %}
+                            <div class="col">
+                                <div class="card h-100 similar-track-card">
+                                    <div class="row g-0">
+                                        <div class="col-4">
+                                            <img src="{{ track_rec.image_url|default_if_none:'/static/images/default_track_cover.png' }}" alt="{{ track_rec.title }}"
+                                                 class="img-fluid rounded-start h-100 object-fit-cover">
+                                        </div>
+                                        <div class="col-8">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{{ track_rec.title }}</h5>
+                                                <p class="card-text">
+                                                    {% for artist in track_rec.artists.all %}
+                                                        {{ artist.name }}{% if not forloop.last %}, {% endif %}
+                                                    {% empty %}
+                                                        Unknown Artist
+                                                    {% endfor %}
+                                                </p>
+                                                <p class="card-text"><small class="text-muted">{{ track_rec.album }}</small></p>
+                                                <a href="{% url 'track_detail' track_rec.spotify_id %}"
+                                                   class="btn btn-primary btn-sm">View Details</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No recommendations available for this track at the moment.</p>
+                {% endif %}
             </div>
         </div>
     </div>

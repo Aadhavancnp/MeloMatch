@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ list_type }} for {{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3>{{ list_type }} for <a href="{% url 'user_profile' profile_user.username %}">{{ profile_user.username }}</a></h3>
+
+    {% if users_list %}
+        <div class="list-group">
+            {% for user_item in users_list %}
+                <a href="{% url 'user_profile' user_item.username %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <div>
+                            <img src="{{ user_item.profile_picture.url|default_if_none:'/static/images/default_profile_pic.png' }}"
+                                 alt="{{ user_item.username }}" class="rounded-circle me-2" width="40" height="40">
+                            <h5 class="mb-1 d-inline">{{ user_item.username }}</h5>
+                        </div>
+                        <small>{{ user_item.full_name|default_if_none:"" }}</small>
+                    </div>
+                    {% if user_item.bio %}
+                        <p class="mb-1 mt-1">{{ user_item.bio|truncatewords:20 }}</p>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>
+            {% if list_type == "Followers" %}
+                {{ profile_user.username }} has no followers yet.
+            {% else %}
+                {{ profile_user.username }} is not following anyone yet.
+            {% endif %}
+        </p>
+    {% endif %}
+
+    <div class="mt-3">
+        <a href="{% url 'user_profile' profile_user.username %}" class="btn btn-secondary">Back to {{ profile_user.username }}'s Profile</a>
+    </div>
+</div>
+{% endblock %}

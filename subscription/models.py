@@ -9,6 +9,7 @@ from users.models import CustomUser
 class SubscriptionPlan(models.Model):
     name = models.CharField(max_length=100, db_index=True)
     price = models.DecimalField(max_digits=6, decimal_places=2)
+    stripe_price_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
     duration_days = models.IntegerField(help_text="Duration in days")
     description = models.TextField()
     features = models.TextField()
@@ -25,9 +26,11 @@ class Subscription(models.Model):
     )
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='subscription')
     plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT, related_name='subscriptions')
-    start_date = models.DateTimeField(auto_now_add=True)
-    end_date = models.DateTimeField(db_index=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active', db_index=True)
+    stripe_subscription_id = models.CharField(max_length=255, null=True, blank=True, unique=True, db_index=True)
+    stripe_customer_id = models.CharField(max_length=255, null=True, blank=True, db_index=True) # Can be on User or here, or both
+    start_date = models.DateTimeField(auto_now_add=True) # May be overridden by Stripe data
+    end_date = models.DateTimeField(db_index=True) # May be overridden by Stripe data
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', db_index=True) # Increased max_length for Stripe statuses
 
     class Meta:
         indexes = [

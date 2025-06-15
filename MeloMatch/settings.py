@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'music.apps.MusicConfig',
     'subscription.apps.SubscriptionConfig',
     'users.apps.UsersConfig',
+    'ecommerce.apps.EcommerceConfig',
     'bootstrap_datepicker_plus',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -64,14 +65,29 @@ SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET')
 SPOTIFY_REDIRECT_URI = os.environ.get('SPOTIFY_REDIRECT_URI')
 SPOTIFY_SCOPE = os.environ.get('SPOTIFY_SCOPE')
 
+# Stripe API keys
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
 LOGIN_URL = '/users/login/'
 
+# Cache settings for Redis
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get('REDIS_CACHE_URL', "redis://127.0.0.1:6379/1"), # Using DB 1 for cache
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Optional: Add connection pool settings, serializers, etc.
+            # "CONNECTION_POOL_KWARGS": {"max_connections": 100},
+            # "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
+        },
+        # Optional: Key prefix to avoid collisions if Redis is shared
+        # "KEY_PREFIX": "melomatch_cache",
     }
 }
+
 
 TEMPLATES = [
     {
@@ -93,16 +109,19 @@ WSGI_APPLICATION = 'MeloMatch.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+db_url = os.getenv("DATABASE_URL")
+if isinstance(db_url, bytes):
+    db_url = db_url.decode()
+tmpPostgres = urlparse(db_url if db_url else "")
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
+        'NAME': tmpPostgres.path.replace('/', '') or 'dummy_db_name_for_migrations',
         'USER': tmpPostgres.username,
         'PASSWORD': tmpPostgres.password,
         'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
+        'PORT': tmpPostgres.port or 5432,
     }
 }
 
@@ -150,3 +169,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE # Use Django's TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True # Optional: to track task state
+CELERY_TASK_TIME_LIMIT = 30 * 60 # Optional: task time limit (e.g., 30 minutes)
