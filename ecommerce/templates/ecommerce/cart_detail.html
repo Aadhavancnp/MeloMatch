@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Your Cart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Shopping Cart</h2>
+    {% if cart.items.all %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Track</th>
+                    <th>Artist(s)</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart.items.all %}
+                <tr>
+                    <td>{{ item.track.title }}</td>
+                    <td>{{ item.track.artists_names|join:", " }}</td>
+                    <td>${{ item.track.price|floatformat:2 }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.subtotal|floatformat:2 }}</td> {# Assuming a subtotal method/property on CartItem #}
+                    <td>
+                        <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger btn-sm">Remove</a>
+                        {# Optional: Add update quantity form here #}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="text-right">
+            <h4>Cart Total: ${{ total_price|floatformat:2 }}</h4>
+            {% if cart.items.all %} {# Only show button if cart is not empty #}
+            <a href="{% url 'create_checkout_session' %}" class="btn btn-success">Proceed to Checkout</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>Your cart is empty.</p>
+        <p><a href="{% url 'search' %}">Continue shopping</a></p>
+    {% endif %}
+</div>
+
+<script>
+// Optional: Add JS for updating quantity dynamically if you implement that
+</script>
+{% endblock %}

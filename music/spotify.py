@@ -21,6 +21,8 @@ from music.models import Track, Playlist, Artist, Genre
 from concurrent.futures import ThreadPoolExecutor
 
 from music.utils import translate_text
+# Ensure Celery task is imported. If it's already there from a previous step, this is fine.
+from .tasks import extract_track_features_task
 
 
 @tiered_cache(maxsize=100)
@@ -60,6 +62,25 @@ def get_or_create_track(track_data, sp: Spotify):
     try:
         # Try to get the track first
         track = Track.objects.get(spotify_id=spotify_id)
+        # If track exists, check for audio features
+        if not track.audio_features and track.spotify_id: # Ensure spotify_id is not None
+            try:
+                spotify_features_list = sp.audio_features([track.spotify_id])
+                if spotify_features_list and spotify_features_list[0]:
+                    spotify_features = spotify_features_list[0]
+                    # Select specific keys and ensure they exist in spotify_features
+                    processed_features = {
+                        k: spotify_features[k] for k in [
+                            'acousticness', 'danceability', 'energy', 'instrumentalness',
+                            'liveness', 'loudness', 'speechiness', 'tempo', 'valence',
+                            'duration_ms', 'time_signature'
+                        ] if k in spotify_features and spotify_features[k] is not None
+                    }
+                    if processed_features: # Ensure we have some features to save
+                        track.audio_features = processed_features
+                        track.save()
+            except Exception as e:
+                print(f"Error fetching Spotify audio features for existing track {track.spotify_id}: {e}")
         return track
     except Track.DoesNotExist:
         # Only create a new track if it doesn't exist
@@ -114,10 +135,30 @@ def get_or_create_track(track_data, sp: Spotify):
             image_url=track_data['album'].get('images')[0].get('url') if track_data['album'].get('images') else None,
             popularity=track_data.get('popularity', 0),
             release_date=release_date,
-            audio_features={}
+            audio_features={} # Initialize as empty dict
         )
         track.artists.set(artists)
-        track.save()
+        # track.save() # Save once after attempting to fetch features
+
+        # Fetch audio features for the new track
+        if track.spotify_id: # Ensure spotify_id is not None
+            try:
+                spotify_features_list = sp.audio_features([track.spotify_id])
+                if spotify_features_list and spotify_features_list[0]:
+                    spotify_features = spotify_features_list[0]
+                    processed_features = {
+                        k: spotify_features[k] for k in [
+                            'acousticness', 'danceability', 'energy', 'instrumentalness',
+                            'liveness', 'loudness', 'speechiness', 'tempo', 'valence',
+                            'duration_ms', 'time_signature'
+                        ] if k in spotify_features and spotify_features[k] is not None
+                    }
+                    if processed_features:
+                        track.audio_features = processed_features
+            except Exception as e:
+                print(f"Error fetching Spotify audio features for new track {track.spotify_id}: {e}")
+
+        track.save() # Save the track, now potentially with audio_features
         return track
 
 
@@ -491,134 +532,112 @@ def download_preview(preview_url, track_id):
 #     recommendations = sorted(similarities, key=lambda x: x['similarity'], reverse=True)[:limit]
 #     return recommendations
 @tiered_cache('recommendations', timeout=3600)
-def get_recommendations(track_id, stored_tracks, limit=10):
-    track = Track.objects.get(spotify_id=track_id)
-
-    # Prepare a list to collect tracks that need audio feature extraction
-    tracks_to_process = []
-    target_preview_file = None
-
-    # First check if the target track needs feature extraction
-    if not track.audio_features:
-        # If no features, extract them
-        try:
-            search = f"{track.title} {track.artists.all().first().name}"
-            search_results = search_jiosaavn(search)
-
-            if not search_results:
-                return []
-
-            search_song = search_results[0]
-            target_track = get_track_details_jiosaavn(search_song['id'])
-
-            if not target_track:
-                return []
-
-            if not track.preview_url and target_track.get('preview_url'):
-                track.preview_url = target_track['preview_url']
-                track.save()
-
-            target_preview_file = download_preview(target_track['preview_url'], track_id)
-            if not target_preview_file:
-                return []
-
-            # Add target track to the list of tracks to process
-            tracks_to_process.append((track_id, target_preview_file))
-        except Exception as e:
-            print(f"Error preparing target track for feature extraction: {str(e)}")
-            return []
-    else:
-        target_features = track.audio_features
-
-    # Collect stored tracks that need feature extraction
-    tracks_needing_features = []
-    stored_track_map = {}
-
-    for stored_track in stored_tracks:
-        stored_track_map[stored_track['id']] = stored_track
-        try:
-            stored_song = Track.objects.get(spotify_id=stored_track['id'])
-            if stored_song.audio_features:
-                continue  # Skip tracks that already have features
-        except Track.DoesNotExist:
-            pass
-
-        # Track needs features extraction
-        search = f"{stored_track['name']} {stored_track['artist']}"
-        results = search_jiosaavn(search)
-        if not results:
-            continue
-
-        preview_path = download_preview(results[0]['preview_url'], stored_track['id'])
-        if not preview_path:
-            continue
-
-        tracks_to_process.append((stored_track['id'], preview_path))
-        tracks_needing_features.append(stored_track['id'])
-
-    # Extract features in batch if there are tracks to process
-    extracted_features = {}
-    if tracks_to_process:
-        extracted_features = batch_extract_audio_features(tracks_to_process)
-
-        # Update target track features if needed
-        if track_id in extracted_features:
-            target_features = extracted_features[track_id]
-            track.audio_features = target_features
-            track.save()
-
-        # Update stored tracks with extracted features
-        for track_id in tracks_needing_features:
-            if track_id in extracted_features:
-                try:
-                    stored_song = Track.objects.get(spotify_id=track_id)
-                    stored_song.audio_features = extracted_features[track_id]
-                    stored_song.save()
-                except Track.DoesNotExist:
-                    pass
-
-    # If we still don't have target features, return empty list
-    if not track.audio_features and track_id not in extracted_features:
+def get_recommendations(target_spotify_track_id, list_of_track_dicts_for_comparison, limit=10):
+    """
+    Generates recommendations based on audio feature similarity.
+    Audio features are fetched from Spotify if available, otherwise Librosa extraction is queued.
+    """
+    try:
+        target_track_obj = Track.objects.get(spotify_id=target_spotify_track_id)
+    except Track.DoesNotExist:
+        print(f"Target track {target_spotify_track_id} not found in database for recommendations.")
         return []
 
-    # Use the target features (either from DB or newly extracted)
-    if track_id in extracted_features:
-        target_features = extracted_features[track_id]
+    # Ensure target track has features, queue if not (after checking Spotify via get_or_create_track)
+    if not target_track_obj.audio_features:
+        # Attempt to get a preview_url if not already on track model for Librosa
+        preview_url_for_task = target_track_obj.preview_url
+        if not preview_url_for_task:
+            try:
+                search_query = f"{target_track_obj.title} {target_track_obj.artists.all().first().name if target_track_obj.artists.exists() else ''}"
+                jiosaavn_results = search_jiosaavn(search_query, limit=1)
+                if jiosaavn_results:
+                    jiosaavn_details = get_track_details_jiosaavn(jiosaavn_results[0]['id'])
+                    if jiosaavn_details and jiosaavn_details.get('preview_url'):
+                        preview_url_for_task = jiosaavn_details['preview_url']
+                        if not target_track_obj.preview_url:
+                           target_track_obj.preview_url = preview_url_for_task
+                           target_track_obj.save(update_fields=['preview_url'])
+            except Exception as e:
+                print(f"Error finding JioSaavn preview for target track {target_track_obj.id} in get_recommendations: {e}")
 
-    target_features_scalar = {k: float(v) for k, v in target_features.items()}
+        if preview_url_for_task:
+            extract_track_features_task.delay(target_track_obj.id, preview_url_for_task)
+            print(f"Queued Librosa feature extraction for target track {target_track_obj.id}")
+        else:
+            print(f"No preview URL for target track {target_track_obj.id}; cannot queue Librosa extraction.")
+        # Regardless of queuing, if no features now, cannot proceed with this track as target.
+        return []
 
-    # Calculate similarities
+    target_features = target_track_obj.audio_features
+    # Filter for numeric features only for cosine similarity
+    target_features_scalar = {k: float(v) for k, v in target_features.items() if isinstance(v, (int, float))}
+    if not target_features_scalar:
+        print(f"Target track {target_track_obj.id} has no numeric audio features.")
+        return []
+
     similarities = []
-    for stored_track in stored_tracks:
-        track_id = stored_track['id']
+    for track_dict_to_compare in list_of_track_dicts_for_comparison:
         try:
-            # Get features either from extracted batch or from database
-            if track_id in extracted_features:
-                stored_features = extracted_features[track_id]
-            else:
-                stored_song = Track.objects.get(spotify_id=track_id)
-                if stored_song.audio_features:
-                    stored_features = stored_song.audio_features
-                else:
-                    continue  # Skip if no features available
+            comparison_track_spotify_id = track_dict_to_compare.get('id')
+            if not comparison_track_spotify_id:
+                continue
 
-            stored_features_scalar = {k: float(v) for k, v in stored_features.items()}
-            target_vector = np.array(list(target_features_scalar.values()))
-            stored_vector = np.array(list(stored_features_scalar.values()))
+            comp_track_obj = Track.objects.get(spotify_id=comparison_track_spotify_id)
 
-            similarity = cosine_similarity(
-                target_vector.reshape(1, -1),
-                stored_vector.reshape(1, -1)
-            )[0][0]
+            if not comp_track_obj.audio_features:
+                # Queue Librosa extraction if no features (Spotify features should have been fetched by get_or_create_track)
+                preview_url_for_task = comp_track_obj.preview_url
+                if not preview_url_for_task: # Try to find one via JioSaavn
+                    try:
+                        search_query = f"{comp_track_obj.title} {comp_track_obj.artists.all().first().name if comp_track_obj.artists.exists() else ''}"
+                        jiosaavn_results = search_jiosaavn(search_query, limit=1)
+                        if jiosaavn_results:
+                            jiosaavn_details = get_track_details_jiosaavn(jiosaavn_results[0]['id'])
+                            if jiosaavn_details and jiosaavn_details.get('preview_url'):
+                                preview_url_for_task = jiosaavn_details['preview_url']
+                                if not comp_track_obj.preview_url:
+                                   comp_track_obj.preview_url = preview_url_for_task
+                                   comp_track_obj.save(update_fields=['preview_url'])
+                    except Exception as e:
+                        print(f"Error finding JioSaavn preview for comparison track {comp_track_obj.id}: {e}")
 
-            similarities.append({
-                'id': track_id,
-                'similarity': similarity
-            })
+                if preview_url_for_task:
+                    extract_track_features_task.delay(comp_track_obj.id, preview_url_for_task)
+                    print(f"Queued Librosa feature extraction for comparison track {comp_track_obj.id}")
+                # For current request, skip if features are missing
+                continue
+
+            comp_features = comp_track_obj.audio_features
+            comp_features_scalar = {k: float(v) for k, v in comp_features.items() if isinstance(v, (int, float))}
+            if not comp_features_scalar:
+                continue
+
+            # Align features for comparison (simple intersection of keys)
+            common_keys = set(target_features_scalar.keys()) & set(comp_features_scalar.keys())
+            if not common_keys:
+                continue
+
+            target_vector_list = [target_features_scalar[k] for k in common_keys]
+            comp_vector_list = [comp_features_scalar[k] for k in common_keys]
+
+            target_vector = np.array(target_vector_list).reshape(1, -1)
+            comp_vector = np.array(comp_vector_list).reshape(1, -1)
+
+            similarity = cosine_similarity(target_vector, comp_vector)[0][0]
+            similarities.append({'id': comp_track_obj.spotify_id, 'similarity': similarity, 'title': comp_track_obj.title})
+
+        except Track.DoesNotExist:
+            # This can happen if a track ID from stored_tracks (e.g. top tracks) isn't in our DB yet.
+            # get_or_create_track should handle this when those lists are generated.
+            # For safety, skip here.
+            print(f"Comparison track with Spotify ID {track_dict_to_compare.get('id')} not found in DB.")
+            continue
         except Exception as e:
-            print(f"Error calculating similarity for track {track_id}: {str(e)}")
+            print(f"Error processing comparison track {track_dict_to_compare.get('id')} for recommendations: {e}")
             continue
 
+    # Sort by similarity and return top N
     recommendations = sorted(similarities, key=lambda x: x['similarity'], reverse=True)[:limit]
     return recommendations
 
@@ -749,3 +768,41 @@ def get_favorite_genre(sp: Spotify, top_tracks):
     most_common_genre = Counter(all_genres).most_common(1)[0][0]
 
     return most_common_genre
+
+
+def get_spotify_api_recommendations(sp: Spotify, seed_tracks_ids=None, seed_artist_ids=None, seed_genres=None, limit=5):
+    """
+    Fetches track recommendations from Spotify's API based on seeds.
+    """
+    if not sp:
+        print("Spotify client (sp) not provided.")
+        return []
+
+    # Ensure at least one seed is provided, as required by Spotify API
+    if not seed_tracks_ids and not seed_artist_ids and not seed_genres:
+        print("No seeds provided for Spotify recommendations.")
+        return []
+
+    try:
+        recommendations = sp.recommendations(
+            seed_tracks=seed_tracks_ids if seed_tracks_ids else None,
+            seed_artists=seed_artist_ids if seed_artist_ids else None,
+            seed_genres=seed_genres if seed_genres else None, # Spotify expects genres as a list of strings
+            limit=limit
+        )
+
+        processed_recs = []
+        if recommendations and recommendations.get('tracks'):
+            for spotify_track_data in recommendations['tracks']:
+                if spotify_track_data and spotify_track_data.get('id'): # Basic check for valid track data
+                    # Use get_or_create_track to ensure these tracks are in our DB
+                    # and have their Spotify features fetched if not already present.
+                    track_obj = get_or_create_track(spotify_track_data, sp) # Pass 'sp' client
+                    if track_obj:
+                        processed_recs.append(track_obj)
+        return processed_recs
+    except Exception as e:
+        print(f"Error fetching recommendations from Spotify API: {e}")
+        # This could be due to invalid seed, scope issues, API errors, etc.
+        # Log the error for diagnosis.
+        return []

@@ -9,22 +9,42 @@
 
 
 {% block content %}
-    <div class="container-fluid playlist-header" style="background-image: url('{{ playlist.image_url }}');">
+    <div class="container-fluid playlist-header" style="background-image: url('{{ playlist.image_url|default_if_none:"/static/images/default_playlist_cover.png" }}');">
         <div class="container py-5">
             <div class="row align-items-center">
                 <div class="col-md-4 mb-4 mb-md-0">
-                    <img src="{{ playlist.image_url }}" class="img-fluid rounded shadow playlist-image"
+                    <img src="{{ playlist.image_url|default_if_none:"/static/images/default_playlist_cover.png" }}" class="img-fluid rounded shadow playlist-image"
                          alt="{{ playlist.name }}">
                 </div>
                 <div class="col-md-8 text-white">
                     <h1 class="display-4 mb-3">{{ playlist.name }}</h1>
-                    <p class="lead mb-3">{{ playlist.description }}</p>
-                    <p class="mb-4"><i class="fa-solid fa-music me-2"></i>
+                    <p class="lead mb-1">{{ playlist.description }}</p>
+                    <p class="mb-1">
+                        Created by:
+                        <a href="{% url 'user_profile' playlist.user.username %}" class="text-white-50">{{ playlist.user.username }}</a>
+                    </p>
+                    <p class="mb-1">
+                        Status:
+                        {% if playlist.is_public %}
+                            <span class="badge bg-success">Public</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Private</span>
+                            {% if playlist.shared_with.count > 0 %}
+                                (Shared with {{ playlist.shared_with.count }} user{{ playlist.shared_with.count|pluralize }})
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                    <p class="mb-3"><i class="fa-solid fa-music me-2"></i>
                         <small id="track-count">{{ playlist.track_count }}</small> tracks</p>
-                    {% if user.is_authenticated and user == playlist.user %}
+
+                    {% if is_owner %}
                         <div class="btn-group">
-                            <button id="editButton" class="btn btn-outline-light">Edit Playlist</button>
-                            <button id="deleteButton" class="btn btn-outline-danger">Delete Playlist</button>
+                            <a href="{% url 'edit_playlist_settings' playlist.spotify_id %}" class="btn btn-outline-light">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <button id="deleteButton" class="btn btn-outline-danger">
+                                <i class="fas fa-trash"></i> Delete Playlist
+                            </button>
                         </div>
                     {% endif %}
                 </div>
@@ -38,7 +58,7 @@
                 <div class="input-group">
                     <span class="input-group-text bg-primary text-white"><i
                             class="fa-solid fa-magnifying-glass"></i></span>
-                    <input type="text" id="track-search" class="form-control" placeholder="Search tracks...">
+                    <input type="text" id="track-search" class="form-control" placeholder="Search tracks in this playlist...">
                 </div>
             </div>
         </div>
@@ -50,8 +70,12 @@
                         <div class="card h-100 bg-body-tertiary track-card">
                             <img src="{{ track.image_url }}" class="card-img-top" alt="{{ track.album }}">
                             <div class="card-body">
-                                <h2 class="card-title h5">{{ track.title }}</h2>
-                                <p class="card-text">{{ track.artists.all|join:", " }}</p>
+                                <h2 class="card-title h5"><a href="{% url 'track_detail' track.spotify_id %}">{{ track.title }}</a></h2>
+                                <p class="card-text">
+                                    {% for artist in track.artists.all %}
+                                        <a href="{% url 'artist_detail' artist.name %}">{{ artist.name }}</a>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </p>
                                 <p class="card-text"><small class="text-body-secondary">{{ track.album }}</small></p>
                             </div>
                             <div class="card-footer bg-transparent border-0">
@@ -63,12 +87,13 @@
                                 {% else %}
                                     <p class="text-body-secondary">No preview available</p>
                                 {% endif %}
-                                {% if user.is_authenticated and user == playlist.user %}
+                                {% if is_owner %} {# Assuming only owner can remove tracks from their playlist like this #}
                                     <div class="mt-2 delete-track-button"
-                                         style="display: none;">
-                                        <button class="btn btn-danger w-100 delete-track"
-                                                data-track-id="{{ track.spotify_id }}">
-                                            <i class="fa-solid fa-trash-can"></i>&nbsp;Delete
+                                         style="display: block;"> {# Made visible for owners #}
+                                        <button class="btn btn-danger btn-sm w-100 delete-track"
+                                                data-track-id="{{ track.spotify_id }}"
+                                                data-playlist-id="{{ playlist.spotify_id }}"> {# Added playlist_id for JS #}
+                                            <i class="fa-solid fa-trash-can"></i>&nbsp;Remove from Playlist
                                         </button>
                                     </div>
                                 {% endif %}
@@ -108,5 +133,37 @@
 
 {% block extra_js %}
     <script src="{% static 'js/playlist_detail.js' %}"></script>
+    {# Add specific JS for delete_track button if not already in playlist_detail.js #}
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteTrackButtons = document.querySelectorAll('.delete-track');
+        deleteTrackButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const trackId = this.dataset.trackId;
+                const playlistId = this.dataset.playlistId;
+                if (confirm('Are you sure you want to remove this track from the playlist?')) {
+                    fetch(`/music/playlist/${playlistId}/delete-track/${trackId}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}', // Make sure CSRF token is available
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Reload page or remove track element from DOM
+                            window.location.reload();
+                        } else {
+                            alert('Failed to delete track. Please try again.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting track:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+                }
+            });
+        });
+    });
+    </script>
 {% endblock %}
-

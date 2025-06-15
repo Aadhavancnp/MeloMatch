@@ -21,6 +21,8 @@ class CustomUser(AbstractUser):
     birth_date = models.DateField(null=True, blank=True)
     theme_preference = models.CharField(max_length=10, choices=THEME_CHOICES, default='system')
     last_active = models.DateTimeField(default=timezone.now)
+    following = models.ManyToManyField('self', related_name='followers', symmetrical=False, blank=True)
+    stripe_customer_id = models.CharField(max_length=255, null=True, blank=True, unique=True, db_index=True)
 
     class Meta:
         indexes = [
