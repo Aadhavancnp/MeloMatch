@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load duration_filters %}
+
+{% block title %}
+{{ track.title }} - MeloMatch
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .feature-bar-bg {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .feature-bar-fill {
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+  }
+  /* Custom scrollbar for lyrics if we add them later */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 text-white pb-20">
+  <!-- Hero Section -->
+  <div class="relative w-full h-[500px] overflow-hidden">
+    <!-- Background Image with Blur -->
+    <div class="absolute inset-0">
+      <img
+        src="{{ track.image_url }}"
+        alt="Background"
+        class="w-full h-full object-cover blur-2xl opacity-40 scale-110"
+      />
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/80 to-gray-900"
+      ></div>
+    </div>
+
+    <!-- Content -->
+    <div
+      class="relative z-10 container mx-auto px-4 h-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-8 pt-20"
+    >
+      <!-- Album Art -->
+      <div class="flex-shrink-0 animate-fade-in-up">
+        <img
+          src="{{ track.image_url }}"
+          alt="{{ track.title }}"
+          class="w-64 h-64 md:w-80 md:h-80 rounded-2xl shadow-2xl border border-white/10 hover:scale-105 transition-transform duration-500"
+        />
+      </div>
+
+      <!-- Track Info -->
+      <div
+        class="flex flex-col items-center md:items-start text-center md:text-left animate-fade-in-up"
+        style="animation-delay: 0.1s"
+      >
+        <h1
+          class="text-4xl md:text-6xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300"
+        >
+          {{ track.title }}
+        </h1>
+
+        <div
+          class="flex flex-wrap items-center justify-center md:justify-start gap-2 text-lg md:text-xl text-gray-300 mb-6"
+        >
+          {% for artist in artists %}
+          <a
+            href="{{ artist.url }}"
+            class="hover:text-white hover:underline transition-colors"
+          >
+            {{ artist.name }}
+          </a>
+          {% if not forloop.last %}
+          <span class="text-gray-500">•</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="flex items-center gap-4 text-sm text-gray-400 mb-8">
+          <span class="flex items-center gap-1">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              ></path>
+            </svg>
+            {{ track.album }}
+          </span>
+          <span>•</span>
+          <span class="flex items-center gap-1">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            {{ track.duration|duration_format }}
+          </span>
+          {% if track.release_date %}
+          <span>•</span>
+          <span>{{ track.release_date|date:"Y" }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-4">
+          {% if track.preview_url %}
+          <button
+            onclick="togglePreview(this)"
+            data-url="{{ track.preview_url }}"
+            class="px-8 py-3 bg-green-500 hover:bg-green-400 text-black font-bold rounded-full transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg shadow-green-500/20"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            Play Preview
+          </button>
+          {% endif %}
+
+          <button
+            onclick="openPlaylistModal('{{ track.spotify_id }}')"
+            class="px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-semibold rounded-full transition-all border border-white/10 flex items-center gap-2"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              ></path>
+            </svg>
+            Add to Playlist
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 mt-12">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column: Audio Features -->
+      <div
+        class="lg:col-span-2 space-y-8 animate-fade-in-up"
+        style="animation-delay: 0.2s"
+      >
+        <div class="glass-panel rounded-2xl p-6">
+          <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+            <svg
+              class="w-6 h-6 text-purple-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              ></path>
+            </svg>
+            Audio Features
+          </h2>
+
+          {% if track.audio_features %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for feature, value in track.audio_features.items %}
+            <div
+              class="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-colors"
+            >
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-gray-300 font-medium capitalize"
+                  >{{ feature }}</span
+                >
+                <span class="text-purple-300 font-bold"
+                  >{{ value|floatformat:2 }}</span
+                >
+              </div>
+              <div
+                class="h-2 w-full feature-bar-bg rounded-full overflow-hidden"
+              >
+                <div
+                  class="h-full feature-bar-fill rounded-full transition-all duration-1000 ease-out"
+                  style="width: 0%"
+                  data-width="{{ value|multiply:100 }}%"
+                ></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-12 text-gray-400">
+            {% if track.preview_url %}
+            <div class="animate-pulse flex flex-col items-center">
+              <svg
+                class="w-10 h-10 text-purple-500 mb-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                ></path>
+              </svg>
+              <p>Analyzing audio features...</p>
+              <p class="text-sm text-gray-500 mt-1">
+                This may take a few moments.
+              </p>
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center">
+              <svg
+                class="w-10 h-10 text-gray-600 mb-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                ></path>
+              </svg>
+              <p>Audio features unavailable.</p>
+              <p class="text-sm text-gray-500 mt-1">
+                No preview source found for analysis.
+              </p>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right Column: Recommendations -->
+      <div
+        class="lg:col-span-1 animate-fade-in-up"
+        style="animation-delay: 0.3s"
+      >
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <svg
+            class="w-6 h-6 text-blue-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            ></path>
+          </svg>
+          Similar Tracks
+        </h2>
+
+        <div class="space-y-4">
+          {% for rec in recommendations %}
+          <a href="{% url 'track_detail' rec.spotify_id %}" class="block group">
+            <div
+              class="glass-panel rounded-xl p-3 flex items-center gap-4 hover:bg-white/10 transition-all duration-300 group-hover:translate-x-1"
+            >
+              <img
+                src="{{ rec.image_url }}"
+                alt="{{ rec.title }}"
+                class="w-16 h-16 rounded-lg object-cover shadow-md group-hover:shadow-lg transition-shadow"
+              />
+              <div class="flex-1 min-w-0">
+                <h4
+                  class="font-bold text-white truncate group-hover:text-purple-300 transition-colors"
+                >
+                  {{ rec.title }}
+                </h4>
+                <p class="text-sm text-gray-400 truncate">
+                  {{ rec.artists_names|join:", " }}
+                </p>
+              </div>
+              <div
+                class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <svg
+                  class="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </div>
+          </a>
+          {% empty %}
+          <p class="text-gray-400">No recommendations available yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Playlist Modal -->
+<div id="playlistModal" class="fixed inset-0 z-50 hidden">
+  <div
+    class="absolute inset-0 bg-black/80 backdrop-blur-sm"
+    onclick="closePlaylistModal()"
+  ></div>
+  <div
+    class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md"
+  >
+    <div
+      class="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden"
+    >
+      <div
+        class="p-6 border-b border-gray-700 flex justify-between items-center"
+      >
+        <h3 class="text-xl font-bold text-white">Add to Playlist</h3>
+        <button
+          onclick="closePlaylistModal()"
+          class="text-gray-400 hover:text-white"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+        <!-- Playlist content will be loaded here via JS or simple list if we pass it -->
+        <!-- For now, we'll use a placeholder form -->
+        <form
+          id="addToPlaylistForm"
+          method="POST"
+          action="{% url 'add_to_playlist' %}"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="track_id" id="modalTrackId" />
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-400 mb-2"
+              >Select Playlist</label
+            >
+            <!-- Ideally this should be populated dynamically or passed in context -->
+            <!-- Since we don't have playlists in context, we might need to fetch them or assume user has some -->
+            <select
+              name="playlist_id"
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              required
+            >
+              <option value="" disabled selected>Choose a playlist...</option>
+              {% for playlist in playlists %}
+              <option value="{{ playlist.spotify_id }}">
+                {{ playlist.name }}
+              </option>
+              {% empty %}
+              <option value="" disabled>
+                No playlists found. Create one first!
+              </option>
+              {% endfor %}
+            </select>
+            {% if not playlists %}
+            <a
+              href="{% url 'create_playlist' %}"
+              class="block text-center text-purple-400 hover:text-purple-300 text-sm mt-2"
+              >Create a new playlist</a
+            >
+            {% endif %}
+          </div>
+          <button
+            type="submit"
+            class="w-full mt-6 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-colors"
+          >
+            Add to Playlist
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Audio Preview Logic
+  let currentAudio = null;
+  let currentUrl = null;
+
+  function togglePreview(btn) {
+    const url = btn.dataset.url;
+
+    // Debug: log the URL being requested
+    console.log("Play button clicked, URL:", url);
+
+    if (!url) {
+      console.error("No preview URL found on button");
+      return;
+    }
+
+    // If same URL is playing, toggle play/pause
+    if (currentAudio && currentUrl === url) {
+      if (currentAudio.paused) {
+        currentAudio.play().catch(handleAudioError);
+        updateButtonState(btn, true);
+      } else {
+        currentAudio.pause();
+        updateButtonState(btn, false);
+      }
+      return;
+    }
+
+    // Stop any currently playing audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+
+    // Create new audio instance with cache-busting
+    const audioUrl = url + (url.includes("?") ? "&" : "?") + "_t=" + Date.now();
+    console.log("Loading audio from:", audioUrl);
+
+    currentAudio = new Audio(audioUrl);
+    currentAudio.volume = 0.5;
+    currentUrl = url;
+
+    // Handle loading state
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.416" stroke-dashoffset="10"></circle></svg> Loading...`;
+
+    currentAudio.addEventListener(
+      "canplaythrough",
+      () => {
+        btn.disabled = false;
+        currentAudio.play().catch(handleAudioError);
+        updateButtonState(btn, true);
+      },
+      { once: true }
+    );
+
+    currentAudio.addEventListener(
+      "error",
+      (e) => {
+        console.error("Audio load error:", e, "URL:", audioUrl);
+        btn.disabled = false;
+        handleAudioError(e);
+      },
+      { once: true }
+    );
+
+    currentAudio.onended = () => {
+      updateButtonState(btn, false);
+      currentAudio = null;
+      currentUrl = null;
+    };
+
+    // Start loading the audio
+    currentAudio.load();
+  }
+
+  function handleAudioError(e) {
+    console.error("Audio playback error:", e);
+    // Find the play button and reset it
+    const btn = document.querySelector('button[onclick^="togglePreview"]');
+    if (btn) {
+      btn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Error`;
+      setTimeout(() => {
+        updateButtonState(btn, false);
+      }, 2000);
+    }
+    currentAudio = null;
+    currentUrl = null;
+  }
+
+  function updateButtonState(btn, isPlaying) {
+    if (isPlaying) {
+      btn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pause Preview`;
+      btn.classList.add("bg-green-400", "scale-105");
+      btn.classList.remove("bg-green-500");
+    } else {
+      btn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Play Preview`;
+      btn.classList.remove("bg-green-400", "scale-105");
+      btn.classList.add("bg-green-500");
+    }
+  }
+
+  // Modal Logic
+  function openPlaylistModal(trackId) {
+    document.getElementById("modalTrackId").value = trackId;
+    document.getElementById("playlistModal").classList.remove("hidden");
+
+    // Fetch playlists if select is empty (simple implementation)
+    const select = document.querySelector('select[name="playlist_id"]');
+    if (select.options.length <= 1) {
+      // This assumes we have an API endpoint to get playlists.
+      // Since we don't have a dedicated API for this yet, we might need to rely on server-side rendering
+      // or create a quick endpoint.
+      // For now, let's just show an alert if no playlists are available in the dropdown
+      // In a real implementation, we'd fetch /api/user/playlists/
+    }
+  }
+
+  function closePlaylistModal() {
+    document.getElementById("playlistModal").classList.add("hidden");
+  }
+
+  // Animate Progress Bars on Load
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      document.querySelectorAll(".feature-bar-fill").forEach((bar) => {
+        bar.style.width = bar.dataset.width;
+      });
+    }, 500);
+  });
+</script>
+{% endblock %}

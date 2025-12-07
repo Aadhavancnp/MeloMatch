@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity History - MeloMatch{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="layout-container flex h-full grow flex-col bg-background text-foreground">
+    <!-- Header -->
+    <header class="flex items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6 lg:px-10">
+        <div class="flex items-center gap-4">
+            <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}" class="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
+                <div class="size-8">
+                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-primary">
+                        <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">MeloMatch</h2>
+            </a>
+            <span class="text-muted-foreground">|</span>
+            <h2 class="text-lg font-medium leading-tight tracking-[-0.015em]">Activity History</h2>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="{% url 'dashboard' %}" class="text-sm font-medium hover:text-primary transition-colors">Back to Dashboard</a>
+        </div>
+    </header>
+
+    <div class="flex flex-1 justify-center px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
+        <div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+            {% if activities %}
+                <div class="relative border-l border-border ml-3 space-y-8">
+                    {% for activity in activities %}
+                        <div class="relative pl-8 group">
+                            <!-- Timeline Icon -->
+                            <div class="absolute -left-[18px] top-0 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background ring-4 ring-background group-hover:border-primary group-hover:text-primary transition-colors">
+                                {% if activity.activity_type == 'listen' %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
+                                    </svg>
+                                {% elif activity.activity_type == 'search' %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                                    </svg>
+                                {% elif activity.activity_type == 'view_artist' %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M232,128a104,104,0,1,1-104-104A104.11,104.11,0,0,1,232,128Zm-40,0a64,64,0,1,0-64,64A64.07,64.07,0,0,0,192,128Z"></path>
+                                    </svg>
+                                {% elif 'playlist' in activity.activity_type %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+                                    </svg>
+                                {% else %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M210.3,56.34l-80-24A8,8,0,0,0,120,40V148.26A48,48,0,1,0,136,184V98.75l69.7,20.91A8,8,0,0,0,216,112V64A8,8,0,0,0,210.3,56.34ZM88,216a32,32,0,1,1,32-32A32,32,0,0,1,88,216ZM200,101.25l-64-19.2V50.75L200,70Z"></path>
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                                <div class="flex flex-col gap-1">
+                                    <h3 class="text-base font-semibold text-foreground">
+                                        {{ activity.activity_type|title|cut:"_"|title }}
+                                    </h3>
+                                    <p class="text-sm text-muted-foreground">{{ activity.description }}</p>
+                                </div>
+                                <span class="text-xs text-muted-foreground whitespace-nowrap">
+                                    {{ activity.timestamp|date:"M d, Y H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="bg-secondary rounded-full p-4 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-foreground mb-2">No activity yet</h3>
+                    <p class="text-muted-foreground mb-6">Start exploring music to see your history here!</p>
+                    <a href="{% url 'search' %}" class="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-medium transition-colors">
+                        Browse Music
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

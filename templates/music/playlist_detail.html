@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ playlist.name }} - MeloMatch{% endblock %}
+
+{% block content %}
+  <div class="layout-container flex flex-col w-full h-full">
+    <!-- Hero Section -->
+    <!-- Hero Section -->
+    <div class="relative w-full overflow-hidden bg-background border-b border-border">
+      <!-- Background Blur -->
+      <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110"
+           style="background-image: url('{{ playlist.image_url|default:"/static/img/default_playlist_cover.png" }}');">
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background"></div>
+
+      <!-- Content -->
+      <div class="relative z-10 max-w-[1400px] mx-auto w-full px-6 py-10 sm:px-10 sm:py-12">
+        <div class="flex flex-col sm:flex-row gap-8 items-end animate-fade-in-up">
+          <!-- Playlist Image -->
+          <div class="relative w-48 h-48 sm:w-60 sm:h-60 flex-shrink-0 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 group mx-auto sm:mx-0">
+             <img src="{{ playlist.image_url|default:"/static/img/default_playlist_cover.png" }}"
+                 class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                 alt="{{ playlist.name }}">
+          </div>
+
+          <!-- Info -->
+          <div class="flex-1 min-w-0 text-center sm:text-left">
+            <span class="text-sm font-bold uppercase tracking-wider text-primary mb-2 block">Playlist</span>
+            <h1 class="text-3xl sm:text-5xl lg:text-7xl font-black text-foreground mb-4 tracking-tight leading-none break-words">
+              {{ playlist.name }}
+            </h1>
+            <p class="text-muted-foreground text-lg mb-6 max-w-2xl line-clamp-2 sm:mx-0 mx-auto">{{ playlist.description }}</p>
+            
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm font-medium text-muted-foreground">
+              <a href="{% url 'user_profile' playlist.user.username %}" class="flex items-center gap-2 hover:text-foreground transition-colors">
+                {% if playlist.user.profile_picture %}
+                    <img src="{{ playlist.user.profile_picture.url }}" class="w-6 h-6 rounded-full object-cover" alt="{{ playlist.user.username }}">
+                {% else %}
+                    <div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground">
+                        {{ playlist.user.username|make_list|first|upper }}
+                    </div>
+                {% endif %}
+                <span class="text-foreground">{{ playlist.user.username }}</span>
+              </a>
+              <span class="w-1 h-1 rounded-full bg-muted-foreground/50"></span>
+              <span>{{ playlist.track_count }} tracks</span>
+              <span class="w-1 h-1 rounded-full bg-muted-foreground/50"></span>
+              
+              {% if playlist.is_public %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
+                  Public
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                  Private
+                </span>
+                {% if playlist.shared_with.count > 0 %}
+                    <span class="text-xs ml-1">(Shared with {{ playlist.shared_with.count }})</span>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Actions -->
+          {% if is_owner %}
+            <div class="flex gap-3 mb-2 sm:ml-auto justify-center w-full sm:w-auto">
+                <a href="{% url 'edit_playlist_settings' playlist.spotify_id %}" class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-secondary hover:bg-secondary/80 text-foreground transition-colors shadow-lg" title="Settings">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </a>
+                <button id="deleteButton" class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors shadow-lg" title="Delete Playlist" data-bs-toggle="modal" data-bs-target="#deletePlaylistModal">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="flex-1 max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-10 py-8">
+      
+      <!-- Search -->
+      <div class="mb-8 max-w-md mx-auto">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="text" id="track-search" 
+                   class="pl-8 block w-full pr-3 py-2 border border-input rounded-xl leading-5 bg-background placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-all" 
+                   placeholder="Search in playlist...">
+        </div>
+      </div>
+
+      <!-- Track List -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="track-list">
+        {% for track in playlist.tracks.all %}
+            <div class="group relative bg-card border border-border rounded-xl p-3 flex items-center gap-4 hover:bg-accent/50 transition-all duration-300 track-item animate-fade-in-up" style="animation-delay: {{ forloop.counter0|add:1|divisibleby:10 }}00ms;">
+                <!-- Track Image -->
+                <div class="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-secondary">
+                    {% if track.image_url %}
+                        <img src="{{ track.image_url }}" alt="{{ track.title }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Play Overlay -->
+                    {% if track.preview_url %}
+                        <button class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white" onclick="togglePlay(this, '{{ track.preview_url }}')">
+                            <svg class="w-8 h-8 play-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <svg class="w-8 h-8 pause-icon hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                    {% endif %}
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-foreground truncate">
+                        <a href="{% url 'track_detail' track.spotify_id %}" class="hover:underline">{{ track.title }}</a>
+                    </h3>
+                    <p class="text-sm text-muted-foreground truncate">
+                        {% for artist in track.artists.all %}
+                            {% if artist.name %}
+                                <a href="{% url 'artist_detail' artist.name %}" class="hover:text-primary transition-colors">{{ artist.name }}</a>{% if not forloop.last %}, {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
+
+                <!-- Actions -->
+                {% if is_owner %}
+                    <button class="delete-track opacity-0 group-hover:opacity-100 transition-opacity p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
+                            data-track-id="{{ track.spotify_id }}"
+                            data-playlist-id="{{ playlist.spotify_id }}"
+                            title="Remove from Playlist">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="col-span-full flex flex-col items-center justify-center py-20 text-center opacity-50">
+                <svg class="w-16 h-16 text-muted-foreground mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                </svg>
+                <p class="text-xl font-medium text-muted-foreground">This playlist is empty.</p>
+                <a href="{% url 'search' %}" class="mt-4 text-primary hover:underline">Add tracks</a>
+            </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Playlist Modal (Tailwind) -->
+  <div id="deletePlaylistModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"></div>
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-2xl bg-card text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-border">
+          <div class="bg-card px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-destructive/10 sm:mx-0 sm:h-10 sm:w-10">
+                <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                <h3 class="text-base font-semibold leading-6 text-foreground" id="modal-title">Delete Playlist</h3>
+                <div class="mt-2">
+                  <p class="text-sm text-muted-foreground">Are you sure you want to delete this playlist? This action cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-secondary/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <button type="button" id="confirmDeletePlaylist" class="inline-flex w-full justify-center rounded-xl bg-destructive px-3 py-2 text-sm font-semibold text-destructive-foreground shadow-sm hover:bg-destructive/90 sm:ml-3 sm:w-auto transition-colors">Delete</button>
+            <button type="button" class="mt-3 inline-flex w-full justify-center rounded-xl bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm ring-1 ring-inset ring-border hover:bg-secondary sm:mt-0 sm:w-auto transition-colors" onclick="closeModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{ playlist.spotify_id|json_script:"playlist-id" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Audio Playback
+    let currentAudio = null;
+    let currentButton = null;
+    let currentUrl = null;
+
+    function togglePlay(button, url) {
+        const playIcon = button.querySelector('.play-icon');
+        const pauseIcon = button.querySelector('.pause-icon');
+        
+        console.log('togglePlay called with URL:', url);
+
+        // Compare by stored URL, not audio.src (which becomes a full URL)
+        if (currentAudio && currentUrl === url) {
+            if (currentAudio.paused) {
+                currentAudio.play();
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                currentAudio.pause();
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        } else {
+            // Stop any currently playing audio
+            if (currentAudio) {
+                currentAudio.pause();
+                if (currentButton) {
+                    currentButton.querySelector('.play-icon').classList.remove('hidden');
+                    currentButton.querySelector('.pause-icon').classList.add('hidden');
+                }
+            }
+            
+            // Create new Audio with the URL
+            currentAudio = new Audio(url);
+            currentButton = button;
+            currentUrl = url;  // Store the original URL for comparison
+            
+            currentAudio.play().catch(err => {
+                console.error('Audio playback error:', err);
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            });
+            
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+
+            currentAudio.onended = () => {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                currentAudio = null;
+                currentButton = null;
+                currentUrl = null;
+            };
+        }
+    }
+
+    // Search
+    document.getElementById('track-search').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const items = document.querySelectorAll('.track-item');
+        
+        items.forEach(item => {
+            const title = item.querySelector('h3').textContent.toLowerCase();
+            const artist = item.querySelector('p').textContent.toLowerCase();
+            if (title.includes(searchTerm) || artist.includes(searchTerm)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    // Modal Logic
+    const modal = document.getElementById('deletePlaylistModal');
+    const deleteBtn = document.getElementById('deleteButton');
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+        });
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    // Delete Playlist
+    document.getElementById('confirmDeletePlaylist').addEventListener('click', function() {
+        const playlistId = JSON.parse(document.getElementById('playlist-id').textContent);
+        fetch(`/music/playlist/${playlistId}/delete/`, { // Verify URL in urls.py
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.href = "{% url 'dashboard' %}";
+            } else {
+                alert('Failed to delete playlist');
+            }
+        });
+    });
+
+    // Delete Track
+    document.querySelectorAll('.delete-track').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!confirm('Remove this track from playlist?')) return;
+            
+            const trackId = this.dataset.trackId;
+            const playlistId = this.dataset.playlistId;
+            
+            fetch(`/music/playlist/${playlistId}/delete-track/${trackId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    this.closest('.track-item').remove();
+                } else {
+                    alert('Failed to remove track');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

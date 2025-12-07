@@ -1,0 +1,41 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-03 20:10+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "User Preferences"
+msgstr "用户偏好"
+
+msgid "Theme Preference"
+msgstr "主题偏好"
+
+msgid "Save Preferences"
+msgstr "保存偏好"
+
+msgid "Light"
+msgstr "浅色"
+
+msgid "Dark"
+msgstr "深色"
+
+msgid "System Default"
+msgstr "系统默认"
+
+msgid "Manage your account settings and appearance."
+msgstr "管理您的帐户设置和外观。"
+
+msgid "Select your preferred color theme for the application."
+msgstr "选择您喜欢的应用程序颜色主题。"
+

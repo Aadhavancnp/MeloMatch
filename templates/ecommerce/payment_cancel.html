@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Cancelled - MeloMatch{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="layout-container flex h-full grow flex-col bg-background text-foreground">
+    <!-- Header -->
+    <header class="flex items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6 lg:px-10">
+        <div class="flex items-center gap-4">
+            <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}" class="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
+                <div class="size-8">
+                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-primary">
+                        <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">MeloMatch</h2>
+            </a>
+        </div>
+    </header>
+
+    <div class="flex flex-1 justify-center items-center px-4 sm:px-6 lg:px-10 py-8 sm:py-12 min-h-[calc(100vh-80px)]">
+        <div class="max-w-2xl w-full my-8">
+            <!-- Cancel Container -->
+            <div class="bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
+                <!-- Cancel Icon -->
+                <div class="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 px-8 py-12 sm:p-12 text-center">
+                    <div class="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-orange-500 rounded-full mb-4 sm:mb-6">
+                        <svg class="w-10 h-10 sm:w-12 sm:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-black text-foreground mb-2 sm:mb-3">Payment Cancelled</h1>
+                    <p class="text-base sm:text-lg text-muted-foreground max-w-md mx-auto">
+                        Your payment was not processed. No charges were made to your account.
+                    </p>
+                </div>
+
+                <!-- Information -->
+                <div class="p-6 sm:p-8 space-y-4 sm:space-y-6">
+                    <div class="flex items-center gap-4 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+                        <div class="flex-shrink-0">
+                            <svg class="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-foreground">What happened?</h3>
+                            <p class="text-sm text-muted-foreground">The payment process was cancelled or interrupted before completion.</p>
+                        </div>
+                    </div>
+
+                    <!-- Why might this happen -->
+                    <div class="border-t border-border pt-6">
+                        <h3 class="font-bold text-foreground mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Common Reasons
+                        </h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-muted-foreground">You clicked the back button or closed the payment window</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-muted-foreground">Payment session expired due to inactivity</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-muted-foreground">An error occurred during payment processing</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- What to do next -->
+                    <div class="bg-secondary/20 rounded-xl p-4 border border-border">
+                        <h3 class="font-bold text-foreground mb-2 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            What to do next?
+                        </h3>
+                        <p class="text-sm text-muted-foreground">Your cart items are still saved. You can try checking out again whenever you're ready.</p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                        <a href="{% url 'view_cart' %}" class="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold text-center transition-colors shadow-lg hover:shadow-primary/25 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            Return to Cart
+                        </a>
+                        <a href="{% url 'search' %}" class="flex-1 bg-secondary hover:bg-secondary/80 text-foreground px-6 py-3 rounded-xl font-medium text-center transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Continue Shopping
+                        </a>
+                    </div>
+
+                    <div class="text-center pt-4">
+                        <a href="{% url 'dashboard' %}" class="text-primary hover:text-primary/80 text-sm font-medium inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                            </svg>
+                            Go to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-muted-foreground">
+                    Having trouble? 
+                    <a href="{% url 'contact' %}" class="text-primary hover:text-primary/80 font-medium">Contact Support</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

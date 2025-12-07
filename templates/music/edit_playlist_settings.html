@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Settings - {{ playlist.name }}{% endblock %}
+
+{% block content %}
+  <div class="layout-container flex flex-col w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="bg-card text-card-foreground rounded-2xl shadow-sm border border-border overflow-hidden animate-fade-in-up">
+      <!-- Header -->
+      <div class="px-6 py-8 border-b border-border bg-secondary/30">
+        <h1 class="text-2xl font-black text-foreground tracking-tight">Playlist Settings</h1>
+        <p class="text-muted-foreground mt-2">Update details for "{{ playlist.name }}"</p>
+      </div>
+
+      <!-- Form -->
+      <div class="p-6 sm:p-8">
+        <form method="post" enctype="multipart/form-data" class="flex flex-col gap-8">
+          {% csrf_token %}
+          
+          <!-- Playlist Name -->
+          <div class="space-y-3">
+            <label for="{{ form.name.id_for_label }}" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Playlist Name</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                </div>
+                <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" value="{{ form.name.value|default:'' }}" required
+                       class="pl-8 flex h-12 w-full rounded-xl border border-input bg-background pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+            </div>
+            {% if form.name.errors %}
+              <p class="text-sm text-destructive">{{ form.name.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-3">
+            <label for="{{ form.description.id_for_label }}" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Description</label>
+            <div class="relative">
+                <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="3"
+                          class="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none">{{ form.description.value|default:'' }}</textarea>
+            </div>
+            {% if form.description.errors %}
+              <p class="text-sm text-destructive">{{ form.description.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Cover Image -->
+          <div class="space-y-3">
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Cover Image</label>
+            <div class="flex items-center gap-6">
+                <!-- Preview -->
+                <div class="relative w-32 h-32 rounded-xl overflow-hidden bg-secondary border border-border flex items-center justify-center group">
+                    <img id="cover-preview" src="{{ playlist.image_url|default:'/static/img/default_playlist_cover.png' }}" alt="Cover Preview" class="w-full h-full object-cover">
+                </div>
+
+                <!-- Input -->
+                <div class="flex-1">
+                    <label for="cover-image" class="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full sm:w-auto">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Change Image
+                    </label>
+                    <input type="file" id="cover-image" name="cover_image" accept="image/*" class="hidden">
+                    <p class="text-xs text-muted-foreground mt-2">Recommended size: 500x500px. Max size: 2MB.</p>
+                </div>
+            </div>
+          </div>
+
+          <!-- Visibility -->
+          <div class="flex items-center justify-between rounded-xl border border-border p-4">
+            <div class="space-y-0.5">
+              <label for="{{ form.is_public.id_for_label }}" class="text-base font-medium text-foreground">Public Playlist</label>
+              <p class="text-sm text-muted-foreground">Allow anyone to view this playlist.</p>
+            </div>
+            <div class="flex items-center">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" name="{{ form.is_public.name }}" id="{{ form.is_public.id_for_label }}" class="sr-only peer" {% if form.is_public.value %}checked{% endif %}>
+                  <div class="w-11 h-6 bg-secondary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+            </div>
+          </div>
+
+          <!-- Shared With (Only if not public) -->
+          <div class="space-y-3" id="shared-with-section">
+            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Share with Users</label>
+            <div class="rounded-xl border border-input bg-background p-4 max-h-60 overflow-y-auto space-y-2 custom-scrollbar">
+                {{ form.shared_with }}
+            </div>
+             <p class="text-xs text-muted-foreground">Select users to privately share this playlist with.</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="pt-8 border-t border-border flex items-center justify-end gap-4">
+            <a href="{% url 'playlist_detail' playlist.spotify_id %}" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-12 px-6">
+                Cancel
+            </a>
+            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 shadow-lg hover:shadow-primary/25 transform hover:-translate-y-0.5 transition-all duration-200">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Image Preview
+    document.getElementById('cover-image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('cover-preview').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Toggle Shared With visibility based on Public switch
+    const publicSwitch = document.getElementById('{{ form.is_public.id_for_label }}');
+    const sharedSection = document.getElementById('shared-with-section');
+
+    function toggleSharedSection() {
+        if (publicSwitch.checked) {
+            sharedSection.classList.add('opacity-50', 'pointer-events-none');
+        } else {
+            sharedSection.classList.remove('opacity-50', 'pointer-events-none');
+        }
+    }
+
+    publicSwitch.addEventListener('change', toggleSharedSection);
+    toggleSharedSection(); // Initial state
+</script>
+<style>
+    /* Custom styling for the checkbox list generated by Django */
+    #shared-with-section ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.5rem;
+    }
+    #shared-with-section li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    #shared-with-section input[type="checkbox"] {
+        @apply h-4 w-4 rounded border-input text-primary focus:ring-primary;
+    }
+    #shared-with-section label {
+        @apply text-sm text-foreground cursor-pointer;
+    }
+</style>
+{% endblock %}

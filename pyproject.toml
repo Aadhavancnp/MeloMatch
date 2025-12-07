@@ -1,0 +1,41 @@
+[project]
+name = "melomatch"
+version = "0.1.0"
+description = "Advanced Music Platform"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "Django>=6.0",
+    "djangorestframework>=3.16.1",
+    "drf-spectacular>=0.29.0",
+    "stripe>=14.0.1",
+    "celery>=5.6.0",
+    "redis>=7.1.0",
+    "django-redis>=6.0.0",
+    "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.2.1",
+    "pillow>=12.0.0",
+    "spotipy>=2.25.2",
+    "librosa>=0.11.0",
+    "resampy>=0.4.3",
+    "numpy>=2.3.5",
+    "scikit-learn>=1.7.2",
+    "gunicorn>=23.0.0",
+    "uvicorn>=0.38.0",
+    "whitenoise>=6.11.0",
+    "boto3>=1.42.4",
+    "django-storages>=1.14.6",
+    "django-cors-headers>=4.9.0",
+    "yt-dlp>=2025.11.12",
+    "httpx>=0.28.1",
+    "pydub>=0.25.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+]

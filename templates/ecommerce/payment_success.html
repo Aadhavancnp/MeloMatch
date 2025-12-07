@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Successful - MeloMatch{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="layout-container flex h-full grow flex-col bg-background text-foreground">
+    <!-- Header -->
+    <header class="flex items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6 lg:px-10">
+        <div class="flex items-center gap-4">
+            <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}" class="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
+                <div class="size-8">
+                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-primary">
+                        <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">MeloMatch</h2>
+            </a>
+        </div>
+    </header>
+
+    <div class="flex flex-1 justify-center items-center px-4 sm:px-6 lg:px-10 py-8 sm:py-12 min-h-[calc(100vh-80px)]">
+        <div class="max-w-2xl w-full my-8">
+            <!-- Success Animation Container -->
+            <div class="bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
+                <!-- Success Icon -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-8 py-12 sm:p-12 text-center">
+                    <div class="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-green-500 rounded-full mb-4 sm:mb-6 animate-bounce-slow">
+                        <svg class="w-10 h-10 sm:w-12 sm:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-black text-foreground mb-2 sm:mb-3">Payment Successful!</h1>
+                    <p class="text-base sm:text-lg text-muted-foreground max-w-md mx-auto">
+                        Your order has been confirmed and is being processed.
+                    </p>
+                </div>
+
+                <!-- Order Details -->
+                <div class="p-6 sm:p-8 space-y-4 sm:space-y-6">
+                    <div class="flex items-center gap-4 p-4 bg-secondary/30 rounded-xl">
+                        <div class="flex-shrink-0">
+                            <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-foreground">Order Confirmed</h3>
+                            <p class="text-sm text-muted-foreground">You'll receive an email confirmation shortly</p>
+                        </div>
+                    </div>
+
+                    {% if session_id %}
+                    <div class="bg-secondary/20 rounded-xl p-4 border border-border">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="text-sm font-medium text-muted-foreground">Transaction Reference</span>
+                        </div>
+                        <code class="text-xs text-foreground font-mono break-all bg-background px-3 py-2 rounded-lg block">{{ session_id }}</code>
+                    </div>
+                    {% endif %}
+
+                    <!-- What's Next -->
+                    <div class="border-t border-border pt-6">
+                        <h3 class="font-bold text-foreground mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                            What's Next?
+                        </h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-muted-foreground">Check your email for order confirmation and receipt</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-muted-foreground">View your order details in your order history</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-muted-foreground">Start enjoying your music immediately</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                        <a href="{% url 'order_history' %}" class="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold text-center transition-colors shadow-lg hover:shadow-primary/25">
+                            View Order History
+                        </a>
+                        <a href="{% url 'dashboard' %}" class="flex-1 bg-secondary hover:bg-secondary/80 text-foreground px-6 py-3 rounded-xl font-medium text-center transition-colors">
+                            Go to Dashboard
+                        </a>
+                    </div>
+
+                    <div class="text-center pt-4">
+                        <a href="{% url 'search' %}" class="text-primary hover:text-primary/80 text-sm font-medium inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-muted-foreground">
+                    Need help? 
+                    <a href="{% url 'contact' %}" class="text-primary hover:text-primary/80 font-medium">Contact Support</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes bounce-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+.animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Local data
+*.sqlite3
+db.sqlite3
+.cache
+
+# Media uploads (will be mounted as volume)
+media/
+
+# Node
+node_modules/
+
+# Test and coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Docker
+Dockerfile
+docker-compose*.yaml
+.dockerignore
+
+# Environment
+.env
+.env.local

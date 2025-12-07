@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Your Cart - MeloMatch{% endblock %}
+
+{% block content %}
+  <div class="layout-container flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-black text-foreground mb-8 tracking-tight">Your Shopping Cart</h1>
+
+    {% if cart.items.all %}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Cart Items List -->
+        <div class="lg:col-span-2 space-y-4">
+          <!-- Clear Cart Button -->
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Cart Items (<span id="cart-item-count">{{ cart.items.count }}</span>)</h2>
+            <form method="POST" action="{% url 'clear_cart' %}" onsubmit="return confirm('Are you sure you want to clear your cart?');">
+              {% csrf_token %}
+              <button type="submit" class="text-sm text-destructive hover:text-destructive/80 font-medium transition-colors flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Clear All
+              </button>
+            </form>
+          </div>
+
+          {% for item in cart.items.all %}
+            <div id="item-{{ item.id }}" class="cart-item bg-card text-card-foreground rounded-xl shadow-sm border border-border overflow-hidden animate-fade-in-up" 
+                 data-item-id="{{ item.id }}" style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+              <!-- Main Item Info -->
+              <div class="p-4 sm:p-6">
+                <!-- Track Image -->
+                <div class="relative w-full aspect-square max-w-[200px] mx-auto rounded-lg overflow-hidden bg-secondary mb-4">
+                  {% if item.track.image_url %}
+                    <img src="{{ item.track.image_url }}" alt="{{ item.track.title }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                    </div>
+                  {% endif %}
+                </div>
+
+                <!-- Track Info -->
+                <div class="text-center mb-4">
+                  <h3 class="font-bold text-lg sm:text-xl mb-2">{{ item.track.title }}</h3>
+                  <p class="text-muted-foreground text-sm mb-3">{{ item.track.artists_names|join:", " }}</p>
+                  <div class="flex flex-wrap items-center justify-center gap-2 text-sm">
+                    <span class="text-muted-foreground whitespace-nowrap">${{ item.track.price|floatformat:2 }} each</span>
+                    <span class="bg-secondary px-2 py-0.5 rounded-full text-xs whitespace-nowrap">Track</span>
+                  </div>
+                  <div class="item-subtotal font-bold text-2xl text-primary mt-3">${{ item.subtotal|floatformat:2 }}</div>
+                </div>
+              </div>
+
+              <!-- Quantity, Price & Actions Card -->
+              <div class="border-t border-border bg-secondary/20 px-4 sm:px-6 py-3">
+                <div class="flex items-center justify-between gap-4">
+                  <!-- Quantity Controls -->
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-muted-foreground font-medium">Quantity:</span>
+                    <form method="POST" action="{% url 'update_cart_quantity' item.id %}" class="flex items-center gap-1" id="qty-form-{{ item.id }}">
+                      {% csrf_token %}
+                      <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}"
+                              {% if item.quantity <= 1 %}disabled{% endif %}
+                              class="w-8 h-8 flex items-center justify-center rounded-md bg-background hover:bg-primary hover:text-white transition-colors border border-border disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                      </button>
+                      <span class="w-14 px-2 py-1.5 text-center border border-border rounded-md bg-background text-foreground font-semibold">{{ item.quantity }}</span>
+                      <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}"
+                              {% if item.quantity >= 99 %}disabled{% endif %}
+                              class="w-8 h-8 flex items-center justify-center rounded-md bg-background hover:bg-primary hover:text-white transition-colors border border-border disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                      </button>
+                    </form>
+                  </div>
+
+                  <!-- Price (Mobile) & Remove Button -->
+                  <div class="flex items-center gap-4">
+                    <div class="sm:hidden">
+                      <div class="font-bold text-lg text-foreground">${{ item.subtotal|floatformat:2 }}</div>
+                    </div>
+                    
+                    <form method="POST" action="{% url 'remove_from_cart' item.id %}" onsubmit="return confirm('Remove this item from cart?');">
+                      {% csrf_token %}
+                      <button type="submit"
+                              class="text-destructive hover:text-destructive/80 font-medium transition-colors p-2 hover:bg-destructive/10 rounded-lg flex items-center gap-1"
+                              title="Remove item">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <span class="hidden sm:inline text-sm">Remove</span>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+          <div class="bg-card text-card-foreground rounded-xl shadow-sm border border-border p-6 sticky top-24">
+            <h2 class="text-xl font-bold mb-6">Order Summary</h2>
+            
+            <div class="space-y-4 mb-6">
+              <div class="flex justify-between text-muted-foreground">
+                <span>Subtotal</span>
+                <span id="cart-subtotal">${{ total_price|floatformat:2 }}</span>
+              </div>
+              <div class="flex justify-between text-muted-foreground">
+                <span>Tax</span>
+                <span>$0.00</span>
+              </div>
+              <div class="border-t border-border pt-4 flex justify-between font-bold text-lg text-foreground">
+                <span>Total</span>
+                <span id="cart-total">${{ total_price|floatformat:2 }}</span>
+              </div>
+            </div>
+
+            <a href="{% url 'create_checkout_session' %}" class="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-4 rounded-xl font-bold text-center block transition-all shadow-lg hover:shadow-primary/25 transform hover:-translate-y-0.5">
+              Proceed to Checkout
+            </a>
+            
+            <div class="mt-6 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              Secure Checkout
+            </div>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
+        <div class="bg-secondary/50 p-8 rounded-full mb-6">
+          <svg class="w-20 h-20 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-foreground mb-2">Your cart is empty</h2>
+        <p class="text-muted-foreground mb-8 max-w-md">
+          Looks like you haven't added any tracks yet. Start exploring to find your next favorite song!
+        </p>
+        <a href="{% url 'search' %}" class="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold transition-colors shadow-lg hover:shadow-primary/25">
+          Start Shopping
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // Preserve scroll position on form submissions
+    (function() {
+      // Save scroll before any form submission
+      document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+          form.addEventListener('submit', function(e) {
+            // Store current scroll position
+            sessionStorage.setItem('cartScrollPos', window.pageYOffset || document.documentElement.scrollTop);
+          });
+        });
+      });
+
+      // Restore scroll position immediately
+      const savedScroll = sessionStorage.getItem('cartScrollPos');
+      if (savedScroll !== null) {
+        // Use requestAnimationFrame for smoother restoration
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(savedScroll));
+          sessionStorage.removeItem('cartScrollPos');
+        });
+      }
+    })();
+  </script>
+{% endblock %}

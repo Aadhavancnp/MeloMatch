@@ -1,0 +1,41 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-03 20:10+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "User Preferences"
+msgstr "Preferenze Utente"
+
+msgid "Theme Preference"
+msgstr "Preferenza Tema"
+
+msgid "Save Preferences"
+msgstr "Salva Preferenze"
+
+msgid "Light"
+msgstr "Chiaro"
+
+msgid "Dark"
+msgstr "Scuro"
+
+msgid "System Default"
+msgstr "Predefinito del Sistema"
+
+msgid "Manage your account settings and appearance."
+msgstr "Gestisci le impostazioni e l'aspetto del tuo account."
+
+msgid "Select your preferred color theme for the application."
+msgstr "Seleziona il tema colore preferito per l'applicazione."
+

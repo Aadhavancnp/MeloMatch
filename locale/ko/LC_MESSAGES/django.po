@@ -1,0 +1,41 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-03 20:10+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Settings"
+msgstr "설정"
+
+msgid "User Preferences"
+msgstr "사용자 환경설정"
+
+msgid "Theme Preference"
+msgstr "테마 환경설정"
+
+msgid "Save Preferences"
+msgstr "환경설정 저장"
+
+msgid "Light"
+msgstr "라이트"
+
+msgid "Dark"
+msgstr "다크"
+
+msgid "System Default"
+msgstr "시스템 기본값"
+
+msgid "Manage your account settings and appearance."
+msgstr "계정 설정 및 모양을 관리합니다."
+
+msgid "Select your preferred color theme for the application."
+msgstr "애플리케이션에 대한 선호하는 색상 테마를 선택하십시오."
+

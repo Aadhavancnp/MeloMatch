@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Settings" %} - MeloMatch{% endblock %}
+
+{% block content %}
+  <div class="layout-container flex flex-col w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="bg-card text-card-foreground rounded-2xl shadow-sm border border-border overflow-hidden animate-fade-in-up">
+      <!-- Header -->
+      <div class="px-6 py-8 border-b border-border bg-secondary/30">
+        <h1 class="text-2xl font-black text-foreground tracking-tight">{% trans "User Preferences" %}</h1>
+        <p class="text-muted-foreground mt-2">{% trans "Manage your account settings and appearance." %}</p>
+      </div>
+
+      <!-- Form -->
+      <div class="p-6 sm:p-8">
+        <form method="post" class="flex flex-col gap-8">
+          {% csrf_token %}
+          
+          <!-- Theme Preference -->
+          <div class="space-y-3">
+            <label for="theme" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{% trans "Theme Preference" %}</label>
+            <div class="relative">
+              <select name="theme" id="theme" class="flex h-12 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none">
+                <option value="light" {% if user.theme_preference == 'light' %}selected{% endif %}>{% trans "Light" %}</option>
+                <option value="dark" {% if user.theme_preference == 'dark' %}selected{% endif %}>{% trans "Dark" %}</option>
+                <option value="system" {% if user.theme_preference == 'system' %}selected{% endif %}>{% trans "System Default" %}</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+            <p class="text-[0.8rem] text-muted-foreground">{% trans "Select your preferred color theme for the application." %}</p>
+          </div>
+
+          <!-- Dynamic Form Fields -->
+          {% for field in form %}
+            <div class="space-y-3">
+              <label for="{{ field.id_for_label }}" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                {{ field.label }}
+              </label>
+              
+              {% if field.field.widget.input_type == 'select' %}
+                <div class="relative">
+                  <select name="{{ field.name }}" 
+                          id="{{ field.id_for_label }}" 
+                          class="flex h-12 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                          {% if field.field.required %}required{% endif %}>
+                    {% for choice_value, choice_label in field.field.choices %}
+                      <option value="{{ choice_value }}" {% if field.value == choice_value %}selected{% endif %}>{{ choice_label }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+              {% elif field.field.widget.input_type == 'checkbox' %}
+                <div class="flex items-center space-x-2">
+                    {{ field }}
+                </div>
+              {% else %}
+                <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}" 
+                       value="{{ field.value|default:'' }}"
+                       class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                       {% if field.field.required %}required{% endif %}>
+              {% endif %}
+
+              {% if field.help_text %}
+                <p class="text-[0.8rem] text-muted-foreground">{{ field.help_text }}</p>
+              {% endif %}
+              
+              {% for error in field.errors %}
+                <p class="text-[0.8rem] font-medium text-destructive">{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          <!-- Actions -->
+          <div class="border-t border-border flex items-center justify-between">
+            <button type="submit" class="mt-4 inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 w-full sm:w-auto shadow-lg hover:shadow-primary/25 transform hover:-translate-y-0.5 transition-all duration-200">
+              {% trans "Save Preferences" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const themeSelect = document.getElementById('theme');
+    
+    // Sync localStorage with server-side theme preference on page load
+    const serverTheme = '{{ user.theme_preference }}';
+    if (serverTheme && serverTheme !== 'null') {
+        const currentLocalTheme = localStorage.getItem('theme');
+        if (currentLocalTheme !== serverTheme) {
+            localStorage.setItem('theme', serverTheme);
+            // Apply theme immediately
+            if (serverTheme === 'dark' || (serverTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+    }
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Update localStorage with new theme before form submits
+            const selectedTheme = themeSelect.value;
+            localStorage.setItem('theme', selectedTheme);
+            
+            // Let form submit normally - the redirect will reload with new language
+        });
+    }
+});
+</script>
+{% endblock %}

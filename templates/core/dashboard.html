@@ -1,0 +1,538 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - MeloMatch{% endblock %}
+
+{% block content %}
+  <!-- Main Content -->
+  <div class="flex flex-1 flex-col lg:flex-row gap-1 px-2 sm:px-4 lg:px-6 py-2 sm:py-5">
+    <!-- Sidebar -->
+    <div class="hidden lg:flex flex-col w-80">
+      <div class="flex h-full min-h-[700px] flex-col justify-between bg-sidebar p-4 rounded-xl">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-full bg-sidebar-accent" href="{% url 'dashboard' %}">
+              <div class="text-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                     viewBox="0 0 256 256">
+                  <path
+                    d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
+                </svg>
+              </div>
+              <p class="text-foreground text-sm font-medium leading-normal">Home</p>
+            </a>
+            <a href="{% url 'search' %}"
+               class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-sidebar-accent rounded-full transition-colors">
+              <div class="text-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                     viewBox="0 0 256 256">
+                  <path
+                    d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                </svg>
+              </div>
+              <p class="text-foreground text-sm font-medium leading-normal">Search</p>
+            </a>
+            <a href="{% url 'user_activities' %}"
+               class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-sidebar-accent rounded-full transition-colors">
+              <div class="text-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24px" height="24px"
+                     fill="currentColor">
+                  <path
+                    d="M48 106.7L48 56c0-13.3-10.7-24-24-24S0 42.7 0 56L0 168c0 13.3 10.7 24 24 24l112 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-55.3 0c37-57.8 101.7-96 175.3-96c114.9 0 208 93.1 208 208s-93.1 208-208 208c-42.5 0-81.9-12.7-114.7-34.5c-11-7.3-25.9-4.3-33.3 6.7s-4.3 25.9 6.7 33.3C155.2 496.4 203.8 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C170.3 0 94.4 42.1 48 106.7zM256 128c-13.3 0-24 10.7-24 24l0 104c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65 0-94.1c0-13.3-10.7-24-24-24z"></path>
+                </svg>
+              </div>
+              <p class="text-foreground text-sm font-medium leading-normal">History</p>
+            </a>
+            <div
+              class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-sidebar-accent rounded-full transition-colors"
+              onclick="location.href='{% url 'view_cart' %}'">
+              <div class="text-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="8" cy="21" r="1"></circle>
+                  <circle cx="19" cy="21" r="1"></circle>
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                </svg>
+              </div>
+              <p class="text-foreground text-sm font-medium leading-normal">Cart</p>
+            </div>
+            <div
+              class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-sidebar-accent rounded-full transition-colors"
+              onclick="location.href='{% url 'order_history' %}'">
+              <div class="text-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                     viewBox="0 0 512 512">
+                  <path
+                    d="M258.8 50.7c-1.8-.7-3.8-.7-5.7 0L63.6 122.6 256 198.2l192.4-75.6L258.8 50.7zM48 377.9c0 3.3 2.1 6.3 5.2 7.5L232 453.2l0-212.9L48 168.1l0 209.8zm232 75.3l178.8-67.8c3.1-1.2 5.2-4.2 5.2-7.5l0-209.8L280 240.4l0 212.9zM236.1 5.9c12.8-4.9 26.9-4.9 39.7 0l200 75.9C497.6 90 512 110.8 512 134.1l0 243.8c0 23.3-14.4 44.1-36.1 52.4l-200 75.9c-12.8 4.9-26.9 4.9-39.7 0l-200-75.9C14.4 422 0 401.2 0 377.9L0 134.1C0 110.8 14.4 90 36.1 81.7l200-75.9z"></path>
+                </svg>
+              </div>
+              <p class="text-foreground text-sm font-medium leading-normal">Orders</p>
+            </div>
+            <div
+              class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-sidebar-accent rounded-full transition-colors"
+              onclick="location.href='{% url 'settings' %}'">
+              <div class="text-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                     viewBox="0 0 512 512">
+                  <path
+                    d="M256 0c17 0 33.6 1.7 49.8 4.8c7.9 1.5 21.8 6.1 29.4 20.1c2 3.7 3.6 7.6 4.6 11.8l9.3 38.5C350.5 81 360.3 86.7 366 85l38-11.2c4-1.2 8.1-1.8 12.2-1.9c16.1-.5 27 9.4 32.3 15.4c22.1 25.1 39.1 54.6 49.9 86.3c2.6 7.6 5.6 21.8-2.7 35.4c-2.2 3.6-4.9 7-8 10L459 246.3c-4.2 4-4.2 15.5 0 19.5l28.7 27.3c3.1 3 5.8 6.4 8 10c8.2 13.6 5.2 27.8 2.7 35.4c-10.8 31.7-27.8 61.1-49.9 86.3c-5.3 6-16.3 15.9-32.3 15.4c-4.1-.1-8.2-.8-12.2-1.9L366 427c-5.7-1.7-15.5 4-16.9 9.8l-9.3 38.5c-1 4.2-2.6 8.2-4.6 11.8c-7.7 14-21.6 18.5-29.4 20.1C289.6 510.3 273 512 256 512s-33.6-1.7-49.8-4.8c-7.9-1.5-21.8-6.1-29.4-20.1c-2-3.7-3.6-7.6-4.6-11.8l-9.3-38.5c-1.4-5.8-11.2-11.5-16.9-9.8l-38 11.2c-4 1.2-8.1 1.8-12.2 1.9c-16.1 .5-27-9.4-32.3-15.4c-22-25.1-39.1-54.6-49.9-86.3c-2.6-7.6-5.6-21.8 2.7-35.4c2.2-3.6 4.9-7 8-10L53 265.7c4.2-4 4.2-15.5 0-19.5L24.2 218.9c-3.1-3-5.8-6.4-8-10C8 195.3 11 181.1 13.6 173.6c10.8-31.7 27.8-61.1 49.9-86.3c5.3-6 16.3-15.9 32.3-15.4c4.1 .1 8.2 .8 12.2 1.9L146 85c5.7 1.7 15.5-4 16.9-9.8l9.3-38.5c1-4.2 2.6-8.2 4.6-11.8c7.7-14 21.6-18.5 29.4-20.1C222.4 1.7 239 0 256 0zM218.1 51.4l-8.5 35.1c-7.8 32.3-45.3 53.9-77.2 44.6L97.9 120.9c-16.5 19.3-29.5 41.7-38 65.7l26.2 24.9c24 22.8 24 66.2 0 89L59.9 325.4c8.5 24 21.5 46.4 38 65.7l34.6-10.2c31.8-9.4 69.4 12.3 77.2 44.6l8.5 35.1c24.6 4.5 51.3 4.5 75.9 0l8.5-35.1c7.8-32.3 45.3-53.9 77.2-44.6l34.6 10.2c16.5-19.3 29.5-41.7 38-65.7l-26.2-24.9c-24-22.8-24-66.2 0-89l26.2-24.9c-8.5-24-21.5-46.4-38-65.7l-34.6 10.2c-31.8 9.4-69.4-12.3-77.2-44.6l-8.5-35.1c-24.6-4.5-51.3-4.5-75.9 0zM208 256a48 48 0 1 0 96 0 48 48 0 1 0 -96 0zm48 96a96 96 0 1 1 0-192 96 96 0 1 1 0 192z"></path>
+                </svg>
+              </div>
+              <p class="text-foreground text-sm font-medium leading-normal">Settings</p>
+            </div>
+          </div>
+
+          <!-- User Stats Section -->
+          <div class="mt-6 bg-sidebar-accent rounded-xl p-4">
+            <h3 class="text-foreground text-base font-medium mb-3">Your Stats</h3>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-muted-foreground text-sm">Listening Time</span>
+                <span
+                  class="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">{{ listening_time|floatformat:2 }}h</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-muted-foreground text-sm">Favorite Genre</span>
+                <span
+                  class="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">{{ favorite_genre|default:"N/A" }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-muted-foreground text-sm">Playlists</span>
+                <span
+                  class="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">{{ playlist_count }}</span>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Recent Activity -->
+          <div class="mt-4 bg-sidebar-accent rounded-xl p-4">
+            <h3 class="text-foreground text-base font-medium mb-3">Recent Activity</h3>
+            <div class="space-y-2">
+              {% for activity in recent_activities|slice:":3" %}
+                <div class="text-primary-foreground text-sm">
+                  {{ activity.description }}
+                  <div class="text-xs text-secondary-foreground mt-1">{{ activity.timestamp|timesince }} ago</div>
+                </div>
+              {% endfor %}
+            </div>
+            <a href="{% url 'user_activities' %}"
+               class="text-accent-foreground text-sm hover:underline mt-2 inline-block">View
+              all</a>
+          </div>
+
+          <!-- Subscription Status -->
+          <div class="mt-4 bg-sidebar-accent rounded-xl p-4">
+            <h3 class="text-foreground text-base font-medium mb-3">Subscription</h3>
+            {% if subscription %}
+              <div class="text-accent-foreground text-sm">
+                <p><strong class="bg-primary rounded-xl p-3 text-white">{{ subscription.plan.name }}</strong>
+                </p>
+                <p class="text-xs mt-4">Expires: {{ subscription.end_date }}</p>
+              </div>
+            {% else %}
+              <p class="text-primary-foreground text-sm mb-2">No active subscription</p>
+              <a href="{% url 'subscription_plans' %}"
+                 class="bg-primary text-white text-xs px-3 py-1.5 rounded-full hover:bg-primary/90 transition-colors">
+                Subscribe Now
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-col max-w-none lg:max-w-[960px] flex-1">
+      <h2
+        class="text-foreground tracking-light text-xl sm:text-2xl lg:text-[28px] font-bold leading-tight px-2 sm:px-4 text-left pb-3 pt-2 sm:pt-5">
+        Good evening, {{ user.username }}
+      </h2>
+
+      <!-- Quick Access Playlists -->
+      <div
+        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 p-2 sm:p-4">
+        {% for playlist in user_playlists|slice:":12" %}
+          <div
+            class="flex flex-col gap-2 sm:gap-3 cursor-pointer hover:bg-secondary p-2 rounded-xl transition-colors group"
+            onclick="location.href='{% url 'playlist_detail' playlist.spotify_id %}'">
+            <div
+              class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl group-hover:opacity-90 transition-opacity"
+              style='background-image: url("{{ playlist.image_url|default:"https://via.placeholder.com/300x300/312843/a798c3?text=Playlist" }}");'></div>
+            <p
+              class="text-foreground text-xs sm:text-sm md:text-base font-medium leading-normal text-center truncate">{{ playlist.name }}</p>
+          </div>
+        {% empty %}
+          <!-- Create Playlist Item - Fixed to single grid cell -->
+          <div
+            class="flex flex-col gap-2 sm:gap-3 cursor-pointer hover:bg-secondary p-2 rounded-xl transition-colors group"
+            onclick="location.href='{% url 'create_playlist' %}'">
+            <div
+              class="w-full bg-secondary aspect-square rounded-xl flex items-center justify-center group-hover:bg-accent transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                   class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-muted-foreground group-hover:text-accent-foreground transition-colors"
+                   fill="currentColor"
+                   viewBox="0 0 256 256">
+                <path
+                  d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+              </svg>
+            </div>
+            <p class="text-foreground text-xs sm:text-sm md:text-base font-medium leading-normal text-center">Create
+              Playlist</p>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Recommended for You -->
+      <h2
+        class="text-foreground text-lg sm:text-xl lg:text-[22px] font-bold leading-tight tracking-[-0.015em] px-2 sm:px-4 pb-3 pt-5">
+        Recommended for You</h2>
+      <div class="flex overflow-x-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div class="flex items-stretch p-2 sm:p-4 gap-2 sm:gap-3">
+          {% for track in recommended_tracks %}
+            <div
+              class="flex h-full flex-1 flex-col gap-2 sm:gap-4 min-w-32 sm:min-w-40 cursor-pointer hover:bg-secondary p-2 rounded-xl transition-colors"
+              onclick="location.href='{% url 'track_detail' track.spotify_id %}'">
+              <div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl flex flex-col"
+                   style='background-image: url("{{ track.image_url|default:"https://via.placeholder.com/300x300/312843/a798c3?text=Track" }}");'></div>
+              <div>
+                <p
+                  class="text-foreground text-sm sm:text-base font-medium leading-normal truncate">{{ track.title }}</p>
+                <p
+                  class="text-muted-foreground text-xs sm:text-sm font-normal leading-normal truncate">{{ track.artists.all|join:", " }}</p>
+              </div>
+              <button
+                class="bg-secondary text-foreground text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-accent transition-colors mt-auto"
+                onclick="event.stopPropagation(); addToPlaylist('{{ track.spotify_id }}')">
+                Add to Playlist
+              </button>
+            </div>
+          {% empty %}
+            <div class="text-muted-foreground p-2 sm:p-4 text-sm sm:text-base">
+              No recommendations available. Start listening to get personalized suggestions!
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Your Playlists -->
+      {% if user_playlists %}
+        <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Your
+          Playlists</h2>
+        <div
+          class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+          <div class="flex items-stretch p-4 gap-3">
+            {% for playlist in user_playlists %}
+              <div
+                class="flex h-full flex-1 flex-col gap-4 min-w-40 cursor-pointer hover:bg-[#312843] p-2 rounded-xl transition-colors"
+                onclick="location.href='{% url 'playlist_detail' playlist.spotify_id %}'">
+                <div
+                  class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl flex flex-col"
+                  style='background-image: url("{{ playlist.image_url|default:"https://via.placeholder.com/300x300/312843/a798c3?text=Playlist" }}");'
+                ></div>
+                <div>
+                  <p class="text-white text-base font-medium leading-normal">{{ playlist.name }}</p>
+                  <p class="text-[#a798c3] text-sm font-normal leading-normal">{{ playlist.track_count }} tracks</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2">
+    <div class="flex justify-around items-center">
+      <a href="{% url 'dashboard' %}" class="flex flex-col items-center gap-1 p-2 text-foreground" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+          <path
+            d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
+        </svg>
+        <span class="text-xs">Home</span>
+      </a>
+      <a href="{% url 'search' %}" class="flex flex-col items-center gap-1 p-2 text-muted-foreground">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+          <path
+            d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+        </svg>
+        <span class="text-xs">Search</span>
+      </a>
+      <a href="{% url 'view_cart' %}" class="flex flex-col items-center gap-1 p-2 text-muted-foreground">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+        <span class="text-xs">Cart</span>
+      </a>
+      <a href="{% url 'settings' %}" class="flex flex-col items-center gap-1 p-2 text-muted-foreground">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor"
+             viewBox="0 0 512 512">
+          <path
+            d="M256 0c17 0 33.6 1.7 49.8 4.8c7.9 1.5 21.8 6.1 29.4 20.1c2 3.7 3.6 7.6 4.6 11.8l9.3 38.5C350.5 81 360.3 86.7 366 85l38-11.2c4-1.2 8.1-1.8 12.2-1.9c16.1-.5 27 9.4 32.3 15.4c22.1 25.1 39.1 54.6 49.9 86.3c2.6 7.6 5.6 21.8-2.7 35.4c-2.2 3.6-4.9 7-8 10L459 246.3c-4.2 4-4.2 15.5 0 19.5l28.7 27.3c3.1 3 5.8 6.4 8 10c8.2 13.6 5.2 27.8 2.7 35.4c-10.8 31.7-27.8 61.1-49.9 86.3c-5.3 6-16.3 15.9-32.3 15.4c-4.1-.1-8.2-.8-12.2-1.9L366 427c-5.7-1.7-15.5 4-16.9 9.8l-9.3 38.5c-1 4.2-2.6 8.2-4.6 11.8c-7.7 14-21.6 18.5-29.4 20.1C289.6 510.3 273 512 256 512s-33.6-1.7-49.8-4.8c-7.9-1.5-21.8-6.1-29.4-20.1c-2-3.7-3.6-7.6-4.6-11.8l-9.3-38.5c-1.4-5.8-11.2-11.5-16.9-9.8l-38 11.2c-4 1.2-8.1 1.8-12.2 1.9c-16.1 .5-27-9.4-32.3-15.4c-22-25.1-39.1-54.6-49.9-86.3c-2.6-7.6-5.6-21.8 2.7-35.4c2.2-3.6 4.9-7 8-10L53 265.7c4.2-4 4.2-15.5 0-19.5L24.2 218.9c-3.1-3-5.8-6.4-8-10C8 195.3 11 181.1 13.6 173.6c10.8-31.7 27.8-61.1 49.9-86.3c5.3-6 16.3-15.9 32.3-15.4c4.1 .1 8.2 .8 12.2 1.9L146 85c5.7 1.7 15.5-4 16.9-9.8l9.3-38.5c1-4.2 2.6-8.2 4.6-11.8c7.7-14 21.6-18.5 29.4-20.1C222.4 1.7 239 0 256 0zM218.1 51.4l-8.5 35.1c-7.8 32.3-45.3 53.9-77.2 44.6L97.9 120.9c-16.5 19.3-29.5 41.7-38 65.7l26.2 24.9c24 22.8 24 66.2 0 89L59.9 325.4c8.5 24 21.5 46.4 38 65.7l34.6-10.2c31.8-9.4 69.4 12.3 77.2 44.6l8.5 35.1c24.6 4.5 51.3 4.5 75.9 0l8.5-35.1c7.8-32.3 45.3-53.9 77.2-44.6l34.6 10.2c16.5-19.3 29.5-41.7 38-65.7l-26.2-24.9c-24-22.8-24-66.2 0-89l26.2-24.9c-8.5-24-21.5-46.4-38-65.7l-34.6 10.2c-31.8 9.4-69.4-12.3-77.2-44.6l-8.5-35.1c-24.6-4.5-51.3-4.5-75.9 0zM208 256a48 48 0 1 0 96 0 48 48 0 1 0 -96 0zm48 96a96 96 0 1 1 0-192 96 96 0 1 1 0 192z"></path>
+        </svg>
+        <span class="text-xs">Settings</span>
+      </a>
+    </div>
+  </nav>
+
+  <div id="addToPlaylistModal"
+       class="fixed inset-0 z-50 hidden items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+    <div
+      class="relative w-full max-w-md mx-auto bg-card border border-border rounded-xl shadow-2xl transform transition-all duration-300 scale-95 opacity-0 modal-content">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-4 sm:p-6 border-b border-border">
+        <h3 class="text-lg font-semibold text-card-foreground">Add to Playlist</h3>
+        <button type="button" onclick="closeModal()"
+                class="text-muted-foreground hover:text-foreground transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-opacity-50 rounded-lg p-1">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 sm:p-6">
+        {% if user_playlists %}
+          <select id="playlistSelect"
+                  class="w-full bg-background text-foreground border border-input rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200">
+            <option value="" class="bg-background text-muted-foreground">Select a playlist...</option>
+            {% for playlist in user_playlists %}
+              <option value="{{ playlist.spotify_id }}"
+                      class="bg-background text-foreground">{{ playlist.name }}</option>
+            {% endfor %}
+          </select>
+        {% else %}
+          <div class="text-center py-8">
+            <div class="text-muted-foreground mb-4">
+              <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+              </svg>
+            </div>
+            <p class="text-muted-foreground mb-4">You don't have any playlists yet.</p>
+            <button onclick="location.href='{% url 'create_playlist' %}'"
+                    class="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-opacity-50">
+              Create Your First Playlist
+            </button>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Modal Footer -->
+      {% if user_playlists %}
+        <div class="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-border">
+          <button type="button" onclick="closeModal()"
+                  class="px-4 py-2 text-muted-foreground hover:text-foreground border border-input hover:border-ring rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-opacity-50">
+            Cancel
+          </button>
+          <button type="button" onclick="confirmAddToPlaylist()"
+                  class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  id="confirmButton" disabled>
+            Add to Playlist
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    let currentTrackId = "";
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const playlistSelect = document.getElementById("playlistSelect");
+      const confirmButton = document.getElementById("confirmButton");
+
+      if (playlistSelect && confirmButton) {
+        playlistSelect.addEventListener("change", function() {
+          confirmButton.disabled = !this.value;
+        });
+      }
+    });
+
+    function addToPlaylist(trackId) {
+      currentTrackId = trackId;
+      showModal();
+    }
+
+    function showModal() {
+      const modal = document.getElementById("addToPlaylistModal");
+      const modalContent = modal.querySelector(".modal-content");
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+        modalContent.classList.remove("scale-95", "opacity-0");
+        modalContent.classList.add("scale-100", "opacity-100", "modal-show");
+      });
+
+      // Reset form
+      const playlistSelect = document.getElementById("playlistSelect");
+      const confirmButton = document.getElementById("confirmButton");
+
+      if (playlistSelect) {
+        playlistSelect.value = "";
+      }
+      if (confirmButton) {
+        confirmButton.disabled = true;
+      }
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("addToPlaylistModal");
+      const modalContent = modal.querySelector(".modal-content");
+
+      modalContent.classList.remove("modal-show");
+      modalContent.classList.add("modal-hide");
+
+      setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        modalContent.classList.remove("scale-100", "opacity-100", "modal-hide");
+        modalContent.classList.add("scale-95", "opacity-0");
+        currentTrackId = "";
+      }, 200);
+    }
+
+    // Close modal when clicking outside
+    document.getElementById("addToPlaylistModal")?.addEventListener("click", function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") {
+        const modal = document.getElementById("addToPlaylistModal");
+        if (modal && !modal.classList.contains("hidden")) {
+          closeModal();
+        }
+      }
+    });
+
+    function confirmAddToPlaylist() {
+      const playlistId = document.getElementById("playlistSelect").value;
+
+      if (!playlistId) {
+        showToast("Error", "Please select a playlist", "error");
+        return;
+      }
+
+      // Show loading state
+      const confirmButton = document.getElementById("confirmButton");
+      const originalText = confirmButton.textContent;
+      confirmButton.textContent = "Adding...";
+      confirmButton.disabled = true;
+
+      fetch("http://127.0.0.1:8000/music/playlist/add-track", {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: `track_id=${currentTrackId}&playlist_id=${playlistId}`
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            showToast("Success", "Track added to playlist successfully!", "success");
+            closeModal();
+            // Optional: Refresh page or update UI
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            showToast("Error", data.message || "Failed to add track to playlist. Please try again.", "error");
+          }
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          showToast("Error", "An error occurred. Please try again.", "error");
+        })
+        .finally(() => {
+          // Reset button state
+          confirmButton.textContent = originalText;
+          confirmButton.disabled = false;
+        });
+    }
+
+    function showToast(title, message, type) {
+      const toastContainer = document.getElementById("toast-container");
+      if (!toastContainer) {
+        const container = document.createElement("div");
+        container.id = "toast-container";
+        container.className = "fixed top-4 right-4 z-50 space-y-2";
+        document.body.appendChild(container);
+      }
+
+      const toastId = `toast-${Date.now()}`;
+      const toastHtml = `
+    <div id="${toastId}" class="max-w-sm w-full bg-card border border-border rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0">
+      <div class="flex items-center p-4">
+        <div class="flex-shrink-0">
+          ${type === "success"
+        ? "<div class=\"w-5 h-5 text-green-500\"><svg fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg></div>"
+        : "<div class=\"w-5 h-5 text-red-500\"><svg fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg></div>"
+      }
+        </div>
+        <div class="ml-3 w-0 flex-1">
+          <p class="text-sm font-medium text-card-foreground">${title}</p>
+          <p class="text-sm text-muted-foreground">${message}</p>
+        </div>
+        <div class="ml-4 flex-shrink-0 flex">
+          <button class="inline-flex text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-md p-1" onclick="removeToast('${toastId}')">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+      toastContainer.insertAdjacentHTML("beforeend", toastHtml);
+      const toastElement = document.getElementById(toastId);
+
+      // Animate in
+      requestAnimationFrame(() => {
+        toastElement.classList.remove("translate-x-full", "opacity-0");
+        toastElement.classList.add("translate-x-0", "opacity-100");
+      });
+
+      // Auto remove after 5 seconds
+      setTimeout(() => removeToast(toastId), 5000);
+    }
+
+    function removeToast(toastId) {
+      const toastElement = document.getElementById(toastId);
+      if (toastElement) {
+        toastElement.classList.add("translate-x-full", "opacity-0");
+        setTimeout(() => toastElement.remove(), 300);
+      }
+    }
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  </script>
+{% endblock %}

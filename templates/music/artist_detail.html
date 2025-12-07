@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ artist.name }} - MeloMatch{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+  <div class="layout-container flex h-full grow flex-col bg-background text-foreground">
+    <!-- Header -->
+    <header class="flex items-center justify-between whitespace-nowrap border-b border-border bg-background px-4 py-3 sm:px-6 lg:px-10">
+      <div class="flex items-center gap-4 sm:gap-8">
+        <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}" class="flex items-center gap-2 sm:gap-4 text-foreground hover:opacity-80 transition-opacity">
+          <div class="size-8">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-primary">
+              <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+            </svg>
+          </div>
+          <h2 class="text-foreground text-lg font-bold leading-tight tracking-[-0.015em]">MeloMatch</h2>
+        </a>
+      </div>
+      <div class="flex flex-1 justify-end gap-2 sm:gap-4">
+        <button id="themeToggle" class="flex cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 bg-secondary text-foreground hover:bg-accent transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+        <a href="{% url 'my_profile' %}" class="block">
+          {% if user.profile_picture %}
+            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-transparent hover:ring-primary transition-all" style='background-image: url("{{ user.profile_picture.url }}");'></div>
+          {% else %}
+            <div class="bg-secondary rounded-full size-10 flex items-center justify-center text-foreground font-bold text-base ring-2 ring-transparent hover:ring-primary transition-all">
+              {{ user.username|make_list|first|upper }}
+            </div>
+          {% endif %}
+        </a>
+      </div>
+    </header>
+
+    <!-- Artist Hero Section -->
+    <div class="relative w-full overflow-hidden bg-background border-b border-border">
+      <!-- Background Image with Gradient Overlay -->
+      <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110" 
+           style="background-image: url('{{ artist.images.0.url }}');">
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background"></div>
+      
+      <!-- Content -->
+      <div class="relative z-10 max-w-[1400px] mx-auto w-full px-6 py-10 sm:px-10 sm:py-12">
+        <div class="flex flex-col sm:flex-row gap-8 items-end animate-fade-in-up">
+          {% if artist.images.0.url %}
+            <div class="relative w-48 h-48 sm:w-60 sm:h-60 flex-shrink-0 rounded-full overflow-hidden shadow-2xl ring-4 ring-background/50 mx-auto sm:mx-0">
+                <img src="{{ artist.images.0.url }}" alt="{{ artist.name }}" class="w-full h-full object-cover" />
+            </div>
+          {% endif %}
+          
+          <div class="flex-1 min-w-0 text-center sm:text-left">
+            <p class="text-sm font-bold uppercase tracking-wider text-primary mb-2 block">Artist</p>
+            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-foreground mb-4 tracking-tight leading-none break-words">{{ artist.name }}</h1>
+            
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-muted-foreground mb-6">
+              <div class="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-full">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span class="font-semibold text-sm">{{ artist.popularity }}% Popularity</span>
+              </div>
+              {% if artist.followers.total %}
+                <div class="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-full">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                  </svg>
+                  <span class="font-semibold text-sm">{{ artist.followers.total|floatformat:0 }} Followers</span>
+                </div>
+              {% endif %}
+            </div>
+
+            {% if artist.genres %}
+              <div class="flex flex-wrap justify-center sm:justify-start gap-2 mb-6">
+                {% for genre in artist.genres %}
+                  <span class="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-medium uppercase tracking-wide">{{ genre }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <a href="{{ artist.external_urls.spotify }}" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-[#1DB954] hover:bg-[#1ed760] text-white rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 transform duration-200">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+              </svg>
+              Open in Spotify
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="flex flex-1 px-4 sm:px-6 lg:px-10 py-8">
+      <div class="layout-content-container flex flex-col max-w-[1400px] flex-1">
+        
+        <!-- Top Tracks Section -->
+        <div class="mb-12">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-black text-foreground tracking-tight">Popular Tracks</h2>
+          </div>
+          <div class="space-y-2">
+            {% for track in top_tracks %}
+              <div class="group flex items-center gap-4 p-4 rounded-xl hover:bg-secondary/50 transition-all cursor-pointer">
+                <span class="text-muted-foreground font-semibold text-lg w-6">{{ forloop.counter }}</span>
+                <img src="{{ track.album.images.0.url }}" alt="{{ track.name }}" class="w-16 h-16 rounded-lg shadow-md" />
+                <div class="flex-1 min-w-0">
+                  <a href="/music/track/{{ track.id }}/" class="text-foreground font-semibold text-lg hover:text-primary transition-colors block truncate">{{ track.name }}</a>
+                  <p class="text-muted-foreground text-sm truncate">{{track.album.name }}</p>
+                </div>
+                <div class="hidden sm:flex items-center gap-3">
+                  <span class="text-muted-foreground text-sm">{{ track.duration_ms|floatformat:0|slice:":-3" }}:{{ track.duration_ms|floatformat:0|slice:"-2:" }}</span>
+                  <a href="{{ track.external_urls.spotify }}" target="_blank" class="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-primary/10 rounded-full">
+                    <svg class="w-5 h-5 text-[#1DB954]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Albums Section -->
+        <div>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-black text-foreground tracking-tight">Albums</h2>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {% for album in albums %}
+              <div class="group cursor-pointer">
+                <div class="relative mb-4 overflow-hidden rounded-lg shadow-md aspect-square">
+                  {% if album.images %}
+                    <img src="{{ album.images.0.url }}" alt="{{ album.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  {% endif %}
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center">
+                    <a href="{{ album.external_urls.spotify }}" target="_blank" class="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div class="w-14 h-14 bg-[#1DB954] rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+                <h3 class="text-foreground font-semibold text-base mb-1 truncate">{{ album.name }}</h3>
+                <p class="text-muted-foreground text-sm">{{ album.release_date|slice:":4" }} • {{ album.album_type|title }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <style>
+    :root {
+      --color-background-rgb: 255, 255, 255;
+    }
+    [data-theme="dark"] {
+      --color-background-rgb: 13, 17, 23;
+    }
+  </style>
+
+  <script>
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order History - MeloMatch{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="layout-container flex h-full grow flex-col bg-background text-foreground">
+    <!-- Header -->
+    <header class="flex items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6 lg:px-10">
+        <div class="flex items-center gap-4">
+            <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}" class="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
+                <div class="size-8">
+                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-primary">
+                        <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">MeloMatch</h2>
+            </a>
+            <span class="text-muted-foreground">|</span>
+            <h2 class="text-lg font-medium leading-tight tracking-[-0.015em]">Order History</h2>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="{% url 'dashboard' %}" class="text-sm font-medium hover:text-primary transition-colors">Back to Dashboard</a>
+        </div>
+    </header>
+
+    <div class="flex flex-1 justify-center px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
+        <div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+            {% if orders %}
+                <div class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-muted text-muted-foreground">
+                                <tr>
+                                    <th class="px-6 py-3 font-medium">Order ID</th>
+                                    <th class="px-6 py-3 font-medium">Date</th>
+                                    <th class="px-6 py-3 font-medium">Total Price</th>
+                                    <th class="px-6 py-3 font-medium">Status</th>
+                                    <th class="px-6 py-3 font-medium text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border">
+                                {% for order in orders %}
+                                    <tr class="hover:bg-muted/50 transition-colors">
+                                        <td class="px-6 py-4 font-medium text-foreground">#{{ order.id }}</td>
+                                        <td class="px-6 py-4 text-muted-foreground">{{ order.created_at|date:"M d, Y" }}</td>
+                                        <td class="px-6 py-4 font-medium text-foreground">${{ order.total_price|floatformat:2 }}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                                                {% if order.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                                                {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                                                {% else %}bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <a href="{% url 'order_detail' order.id %}" class="text-primary hover:text-primary/80 font-medium transition-colors">View Details</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="bg-secondary rounded-full p-4 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,160H40V56H216V200ZM176,88a48,48,0,0,1-96,0,8,8,0,0,1,16,0,32,32,0,0,0,64,0,8,8,0,0,1,16,0Z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-foreground mb-2">No orders yet</h3>
+                    <p class="text-muted-foreground mb-6">You haven't made any purchases yet.</p>
+                    <a href="{% url 'search' %}" class="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-medium transition-colors">
+                        Browse Music
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

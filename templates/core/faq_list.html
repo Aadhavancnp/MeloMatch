@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FAQ - MeloMatch{% endblock %}
+
+{% block content %}
+  <div class="px-4 sm:px-6 lg:px-40 flex flex-1 justify-center py-5">
+    <div class="flex flex-col max-w-[960px] flex-1">
+      <h2 class="text-foreground text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Frequently
+        Asked Questions</h2>
+      <p class="text-[#a48dce] px-4 text-sm font-normal leading-normal">Find answers to common questions about using
+        MeloMatch.</p>
+      <div class="px-4 py-3 mt-4">
+        <label class="flex flex-col min-w-40 h-12 w-full">
+          <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+            <div
+              class="text-[#6545a1] flex border-none bg-[#ebe6f4] focus:outline-none focus:ring-2 focus:ring-primary items-center justify-center pl-4 rounded-l-lg border-r-0"
+              data-icon="MagnifyingGlass"
+              data-size="24px"
+              data-weight="regular"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                   viewBox="0 0 256 256">
+                <path
+                  d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"
+                ></path>
+              </svg>
+            </div>
+            <input
+              type="text"
+              id="faqSearch"
+              placeholder="Search FAQs..."
+              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#120c1d] focus:outline-0 focus:ring-0 border-none bg-[#ebe6f4] focus:border-none h-full placeholder:text-[#6545a1] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+            />
+          </div>
+        </label>
+      </div>
+      <div class="flex flex-col p-4 gap-3" id="faqList">
+        {% for faq in faqs %}
+          <details
+            class="flex flex-col rounded-lg border border-border bg-primary/80 px-[15px] py-[7px] group faq-item">
+            <summary class="flex cursor-pointer items-center justify-between gap-6 py-2">
+              <p class="text-white text-sm font-medium leading-normal">{{ faq.question }}</p>
+              <div class="text-white group-open:rotate-180" data-icon="CaretDown" data-size="20px"
+                   data-weight="regular">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor"
+                     viewBox="0 0 256 256">
+                  <path
+                    d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+                </svg>
+              </div>
+            </summary>
+            <p class="text-white text-sm font-normal leading-normal pb-2">{{ faq.answer }}</p>
+          </details>
+        {% empty %}
+          <p class="text-center text-white">No FAQs available at the moment.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+      const searchInput = document.getElementById("faqSearch");
+      const faqItems = document.querySelectorAll(".faq-item");
+
+      searchInput.addEventListener("input", function() {
+        const searchTerm = this.value.toLowerCase();
+
+        faqItems.forEach(item => {
+          const question = item.querySelector("summary p").textContent.toLowerCase();
+          const answer = item.querySelector("summary + p").textContent.toLowerCase();
+
+          if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+            item.style.display = "flex";
+          } else {
+            item.style.display = "none";
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{
+  "[html]": {
+    "editor.formatOnSave": false
+  },
+  "[django-html]": {
+    "editor.formatOnSave": false
+  },
+  "files.associations": {
+    "templates/**/*.html": "django-html"
+  }
+}

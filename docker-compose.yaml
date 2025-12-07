@@ -1,0 +1,62 @@
+services:
+  redis:
+    image: redis:8.4.0-alpine
+    container_name: melomatch_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: melomatch_web
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py seed_data &&
+             python manage.py collectstatic --noinput &&
+             gunicorn MeloMatch.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 4 --timeout 120"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_ENV=development
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_CACHE_URL=redis://redis:6379/1
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build: .
+    container_name: melomatch_celery_worker
+    command: celery -A MeloMatch worker -l info --concurrency=4
+    volumes:
+      - media_volume:/app/media
+    environment:
+      - DEBUG=True
+      - DJANGO_ENV=development
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_CACHE_URL=redis://redis:6379/1
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis_data:
+  static_volume:
+  media_volume:
