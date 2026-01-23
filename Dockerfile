@@ -20,6 +20,7 @@ RUN apt-get update && \
     libsndfile1 \
     ffmpeg \
     curl \
+    unzip \
     postgresql-client \
     # Build dependencies (will be removed)
     build-essential \
@@ -32,14 +33,22 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Install Bun for Tailwind CSS build
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
+    ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
+
 # Install uv for faster package management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy dependency files
-COPY requirements.txt pyproject.toml ./
+COPY requirements.txt pyproject.toml package.json ./
 
 # Install Python dependencies using uv with --system flag
 RUN uv pip install --system --no-cache-dir -r requirements.txt
+
+# Install Bun dependencies for Tailwind CSS
+RUN bun install
 
 # Remove build tools to save ~200MB
 RUN apt-get purge -y --auto-remove \
@@ -55,6 +64,9 @@ RUN apt-get purge -y --auto-remove \
 
 # Copy application code
 COPY . .
+
+# Build Tailwind CSS
+RUN bun run build:css
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/staticfiles /app/media

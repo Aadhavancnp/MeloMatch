@@ -20,7 +20,7 @@ dependencies = [
     "resampy>=0.4.3",
     "numpy>=2.3.5",
     "scikit-learn>=1.7.2",
-    "gunicorn>=23.0.0",
+    "gunicorn>=24.0.0",
     "uvicorn>=0.38.0",
     "whitenoise>=6.11.0",
     "boto3>=1.42.4",
@@ -36,6 +36,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = [
-    "pytest>=9.0.1",
-]
+dev = ["pytest>=9.0.1"]

@@ -1,0 +1,14 @@
+{
+    "name": "melomatch",
+    "version": "1.0.0",
+    "description": "MeloMatch - Music Discovery Platform",
+    "scripts": {
+        "build:css": "bunx tailwindcss -i ./static/css/styles.css -o ./static/css/dist/styles.css",
+        "watch:css": "bunx tailwindcss -i ./static/css/styles.css -o ./static/css/dist/styles.css --watch"
+    },
+    "dependencies": {
+        "tailwindcss": "^4.1.18",
+        "@tailwindcss/cli": "^4.1.18"
+    },
+    "devDependencies": {}
+}

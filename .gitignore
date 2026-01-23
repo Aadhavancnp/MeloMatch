@@ -60,3 +60,5 @@ celerybeat.pid
 
 # Redis
 dump.rdb
+
+*.lock
